@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Tweaker",
+  "description": "Inspect and tweak CSS on any page with a DialKit-inspired panel.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Toggle DialKit"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

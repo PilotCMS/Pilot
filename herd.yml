@@ -1,0 +1,4 @@
+# Herd configuration - run `herd init` to apply
+# This creates a site-specific nginx config so we can fix the 413 upload limit
+name: Pilot
+php: "8.2"

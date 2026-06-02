@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Livewire\Admin\Spaces;
+
+use App\Models\Space;
+use Illuminate\Support\Str;
+use Livewire\Component;
+
+class Create extends Component
+{
+    public $name = '';
+
+    public $slug = '';
+
+    protected $rules = [
+        'name' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|unique:spaces,slug',
+    ];
+
+    public function updatedName($value)
+    {
+        $this->slug = Str::slug($value);
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        $space = Space::create([
+            'name' => $this->name,
+            'slug' => $this->slug,
+        ]);
+
+        // Create default locale
+        $space->locales()->create([
+            'code' => 'en',
+            'name' => 'English',
+            'is_default' => true,
+        ]);
+
+        return $this->redirect(route('admin.spaces.index'), navigate: true);
+    }
+
+    public function render()
+    {
+        return view('livewire.admin.spaces.create')
+            ->layout('layouts.admin');
+    }
+}
