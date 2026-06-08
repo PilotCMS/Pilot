@@ -3,16 +3,22 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
+use App\Models\CmsSetting;
 use App\Models\Content;
 use App\Models\Space;
+use App\Support\Cms\ContentRenderer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class PageController extends Controller
 {
+    public function __construct(
+        protected ContentRenderer $renderer,
+    ) {}
+
     public function home(): View
     {
-        return $this->renderPage(config('cms.home_slug', 'home'));
+        return $this->renderPage(CmsSetting::get('home_slug', config('cms.home_slug', 'home')));
     }
 
     public function show(string $slug): View
@@ -40,50 +46,26 @@ class PageController extends Controller
             ])
             ->firstOrFail();
 
-        $blocks = $content->blocks
-            ->map(fn ($block) => $this->transformBlock($block, app()->getLocale()))
-            ->values();
+        $payload = $this->renderer->fromModel($content, CmsSetting::get('default_locale', app()->getLocale()));
 
-        $theme = config('cms.theme', 'default');
+        $theme = CmsSetting::get('theme', config('cms.theme', 'default'));
 
         return view("themes.{$theme}.page", [
-            'content' => $content,
+            'content' => $payload,
             'space' => $space,
-            'blocks' => $blocks,
+            'blocks' => collect($payload->toArray()['body']),
             'theme' => $theme,
         ]);
     }
 
     protected function resolveSpace(): ?Space
     {
-        $spaceSlug = config('cms.default_space');
+        $spaceSlug = CmsSetting::get('default_space', config('cms.default_space'));
 
         if ($spaceSlug) {
             return Space::query()->where('slug', $spaceSlug)->first();
         }
 
         return Space::query()->orderBy('id')->first();
-    }
-
-    protected function transformBlock($block, string $locale): array
-    {
-        $data = $block->data ?? [];
-
-        foreach ($data as $key => $value) {
-            if (is_array($value) && array_key_exists($locale, $value)) {
-                $data[$key] = $value[$locale];
-            }
-        }
-
-        return [
-            'id' => $block->id,
-            'component' => $block->type,
-            'data' => $data,
-            'children' => $block->children
-                ->sortBy('position')
-                ->map(fn ($child) => $this->transformBlock($child, $locale))
-                ->values()
-                ->all(),
-        ];
     }
 }

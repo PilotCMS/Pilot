@@ -27,6 +27,10 @@ class Editor extends Component
 
     public $addBlockPosition = null; // 'above'|'below'|null, when set opens library to insert at position
 
+    public $addBlockParentId = null;
+
+    public $addBlockColumnIndex = null;
+
     public $drawerOpen = true;
 
     public $leftSidebarCollapsed = false;
@@ -59,7 +63,11 @@ class Editor extends Component
 
     public function loadBlocks()
     {
-        $this->blocks = $this->content->blocks()->orderBy('position')->get()->toArray();
+        $this->blocks = $this->content->blocks()
+            ->with(['children' => fn ($query) => $query->orderBy('position')])
+            ->orderBy('position')
+            ->get()
+            ->toArray();
     }
 
     public function toggleLeftSidebar()
@@ -84,33 +92,43 @@ class Editor extends Component
     public function addBlock($blockTypeKey, $position = null)
     {
         $blockType = BlockType::where('key', $blockTypeKey)->firstOrFail();
+        $parentId = $this->addBlockParentId ? (int) $this->addBlockParentId : null;
 
         $insertPosition = 0;
         if ($position !== null && is_numeric($position)) {
             $insertPosition = (int) $position;
+        } elseif ($this->addBlockPosition === 'inside' && $parentId) {
+            $insertPosition = Block::where('content_id', $this->content->id)
+                ->where('parent_block_id', $parentId)
+                ->count();
         } elseif ($this->addBlockPosition === 'above' && $this->selectedBlockId) {
-            $idx = array_search($this->selectedBlockId, array_column($this->blocks, 'id'));
-            $insertPosition = $idx !== false ? $idx : count($this->blocks);
+            $selectedBlock = Block::where('content_id', $this->content->id)->findOrFail($this->selectedBlockId);
+            $parentId = $selectedBlock->parent_block_id;
+            $insertPosition = $selectedBlock->position;
         } elseif ($this->addBlockPosition === 'below' && $this->selectedBlockId) {
-            $idx = array_search($this->selectedBlockId, array_column($this->blocks, 'id'));
-            $insertPosition = $idx !== false ? $idx + 1 : count($this->blocks);
+            $selectedBlock = Block::where('content_id', $this->content->id)->findOrFail($this->selectedBlockId);
+            $parentId = $selectedBlock->parent_block_id;
+            $insertPosition = $selectedBlock->position + 1;
         } else {
             $insertPosition = $this->blocks ? max(array_column($this->blocks, 'position')) + 1 : 0;
         }
 
         // Shift positions
         Block::where('content_id', $this->content->id)
-            ->whereNull('parent_block_id')
+            ->when($parentId, fn ($query) => $query->where('parent_block_id', $parentId), fn ($query) => $query->whereNull('parent_block_id'))
             ->where('position', '>=', $insertPosition)
             ->increment('position');
 
         $block = Block::create([
             'content_id' => $this->content->id,
+            'parent_block_id' => $parentId,
             'type' => $blockType->key,
             'position' => $insertPosition,
-            'data' => $this->getDefaultDataForBlockType($blockType),
+            'data' => $this->getDefaultDataForBlockType($blockType, $this->addBlockColumnIndex),
         ]);
 
+        $this->addBlockParentId = null;
+        $this->addBlockColumnIndex = null;
         $this->addBlockPosition = null;
         $this->blockLibraryOpen = false;
         $this->loadBlocks();
@@ -128,15 +146,36 @@ class Editor extends Component
 
     public function addBlockAbove($blockId)
     {
+        $block = Block::where('content_id', $this->content->id)->findOrFail($blockId);
         $this->addBlockPosition = 'above';
+        $this->addBlockParentId = $block->parent_block_id;
+        $this->addBlockColumnIndex = $block->data['_column'] ?? null;
         $this->selectedBlockId = $blockId;
         $this->blockLibraryOpen = true;
     }
 
     public function addBlockBelow($blockId)
     {
+        $block = Block::where('content_id', $this->content->id)->findOrFail($blockId);
         $this->addBlockPosition = 'below';
+        $this->addBlockParentId = $block->parent_block_id;
+        $this->addBlockColumnIndex = $block->data['_column'] ?? null;
         $this->selectedBlockId = $blockId;
+        $this->blockLibraryOpen = true;
+    }
+
+    public function addNestedBlock($parentBlockId, $columnIndex = null): void
+    {
+        $parentBlock = Block::where('content_id', $this->content->id)->findOrFail($parentBlockId);
+
+        if (! $this->blockCanContainBlocks($parentBlock->type)) {
+            return;
+        }
+
+        $this->addBlockParentId = $parentBlock->id;
+        $this->addBlockColumnIndex = $columnIndex !== null ? (int) $columnIndex : null;
+        $this->addBlockPosition = 'inside';
+        $this->selectedBlockId = $parentBlock->id;
         $this->blockLibraryOpen = true;
     }
 
@@ -147,12 +186,13 @@ class Editor extends Component
 
         $newPosition = $original->position + 1;
         Block::where('content_id', $this->content->id)
-            ->whereNull('parent_block_id')
+            ->when($original->parent_block_id, fn ($query) => $query->where('parent_block_id', $original->parent_block_id), fn ($query) => $query->whereNull('parent_block_id'))
             ->where('position', '>=', $newPosition)
             ->increment('position');
 
         $block = Block::create([
             'content_id' => $this->content->id,
+            'parent_block_id' => $original->parent_block_id,
             'type' => $original->type,
             'position' => $newPosition,
             'data' => $original->data,
@@ -251,7 +291,7 @@ class Editor extends Component
         $block->delete();
 
         Block::where('content_id', $this->content->id)
-            ->whereNull('parent_block_id')
+            ->when($block->parent_block_id, fn ($query) => $query->where('parent_block_id', $block->parent_block_id), fn ($query) => $query->whereNull('parent_block_id'))
             ->where('position', '>', $position)
             ->decrement('position');
 
@@ -336,14 +376,8 @@ class Editor extends Component
         // Restore blocks
         if (isset($snapshot['blocks'])) {
             Block::where('content_id', $this->content->id)->delete();
-            foreach ($snapshot['blocks'] as $i => $b) {
-                Block::create([
-                    'content_id' => $this->content->id,
-                    'type' => $b['type'],
-                    'position' => $i,
-                    'data' => $b['data'] ?? [],
-                    'parent_block_id' => null,
-                ]);
+            foreach ($snapshot['blocks'] as $index => $blockSnapshot) {
+                $this->restoreSnapshotBlock($blockSnapshot, null, $index);
             }
         }
 
@@ -354,7 +388,10 @@ class Editor extends Component
 
     protected function getContentSnapshot(): array
     {
-        $blocks = $this->content->blocks()->orderBy('position')->get();
+        $blocks = $this->content->blocks()
+            ->with('children')
+            ->orderBy('position')
+            ->get();
 
         return [
             'content' => [
@@ -363,11 +400,45 @@ class Editor extends Component
                 'status' => $this->content->status,
                 'meta' => $this->content->meta,
             ],
-            'blocks' => $blocks->map(fn ($b) => [
-                'type' => $b->type,
-                'data' => $b->data,
-            ])->toArray(),
+            'blocks' => $blocks->map(fn (Block $block): array => $this->snapshotBlock($block))->toArray(),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function snapshotBlock(Block $block): array
+    {
+        return [
+            'type' => $block->type,
+            'position' => $block->position,
+            'data' => $block->data ?? [],
+            'children' => $block->children
+                ->sortBy('position')
+                ->map(fn (Block $child): array => $this->snapshotBlock($child))
+                ->values()
+                ->toArray(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $blockSnapshot
+     */
+    protected function restoreSnapshotBlock(array $blockSnapshot, ?int $parentBlockId, int $fallbackPosition): Block
+    {
+        $block = Block::create([
+            'content_id' => $this->content->id,
+            'type' => $blockSnapshot['type'],
+            'position' => $blockSnapshot['position'] ?? $fallbackPosition,
+            'data' => $blockSnapshot['data'] ?? [],
+            'parent_block_id' => $parentBlockId,
+        ]);
+
+        foreach ($blockSnapshot['children'] ?? [] as $index => $childSnapshot) {
+            $this->restoreSnapshotBlock($childSnapshot, $block->id, $index);
+        }
+
+        return $block;
     }
 
     protected function markSaved(): void
@@ -380,7 +451,7 @@ class Editor extends Component
 
     public function setSelectedBlockFromPreview(int $blockId): void
     {
-        if (! collect($this->blocks)->pluck('id')->contains($blockId)) {
+        if (! $this->findBlockInTree($blockId)) {
             return;
         }
 
@@ -460,6 +531,11 @@ class Editor extends Component
         return $this->content->revisions()->with('user')->take(20)->get();
     }
 
+    public function getSelectedBlockProperty(): ?array
+    {
+        return $this->selectedBlockId ? $this->findBlockInTree((int) $this->selectedBlockId) : null;
+    }
+
     public function getPreviewUrlProperty(): string
     {
         return PreviewController::signedUrl($this->content);
@@ -470,7 +546,7 @@ class Editor extends Component
         return route('admin.content.preview', ['content' => $this->content]).'?v='.$this->previewVersion;
     }
 
-    protected function getDefaultDataForBlockType($blockType): array
+    protected function getDefaultDataForBlockType($blockType, ?int $columnIndex = null): array
     {
         $data = [];
         foreach ($blockType->schema['fields'] ?? [] as $field) {
@@ -483,7 +559,35 @@ class Editor extends Component
             }
         }
 
+        if ($columnIndex !== null) {
+            $data['_column'] = $columnIndex;
+        }
+
         return $data;
+    }
+
+    protected function findBlockInTree(int $blockId, ?array $blocks = null): ?array
+    {
+        foreach ($blocks ?? $this->blocks as $block) {
+            if ((int) $block['id'] === $blockId) {
+                return $block;
+            }
+
+            $child = $this->findBlockInTree($blockId, $block['children'] ?? []);
+
+            if ($child) {
+                return $child;
+            }
+        }
+
+        return null;
+    }
+
+    protected function blockCanContainBlocks(string $blockTypeKey): bool
+    {
+        $blockType = $this->blockTypes[$blockTypeKey] ?? BlockType::where('key', $blockTypeKey)->first();
+
+        return (bool) ($blockType?->schema['can_contain_blocks'] ?? false);
     }
 
     public function render()

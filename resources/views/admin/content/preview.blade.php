@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $content->name }} Preview</title>
     @vite(['resources/css/app.css'])
 </head>
@@ -21,6 +22,10 @@
                     @endphp
                     <section
                         data-preview-block="{{ $block->id }}"
+                        data-pilot-editable="block"
+                        data-pilot-block-id="{{ $block->id }}"
+                        data-pilot-component="{{ $block->type }}"
+                        data-pilot-component-path="{{ $content->type }}/{{ $block->type }}"
                         class="rounded-lg border border-transparent transition-colors hover:border-teal-300 hover:bg-teal-50/30"
                     >
                         @if(view()->exists($blockView))
@@ -47,5 +52,10 @@
             });
         });
     </script>
+    @auth
+        @if(config('cms.frontend_editor.enabled', true))
+            <script src="{{ route('cms.frontend-editor.script') }}"></script>
+        @endif
+    @endauth
 </body>
 </html>

@@ -2,6 +2,10 @@
 
 This guide explains how developers should pull CMS content into websites and map block components safely.
 
+For the complete current delivery, templating, REST, and live-preview contract, see:
+
+- `/Users/kylemcgowan/Herd/Pilot/docs/cms-delivery-live-preview.md`
+
 ## 1) Public website rendering in this repo
 
 Public rendering is server-side and route-driven:
@@ -26,17 +30,19 @@ This prevents draft content from leaking publicly.
 
 The controller passes these variables to the theme page view:
 
-- `$content` (`App\Models\Content`)
+- `$content` (`App\Support\Cms\ContentPayload`)
 - `$space` (`App\Models\Space`)
-- `$blocks` (`Collection<array{id,component,data,children}>`)
+- `$blocks` (`Collection<array<string,mixed>>`)
 - `$theme` (string)
 
 Each block arrives as:
 
-- `id`: numeric block id
+- `_uid`: numeric block id or headless draft uid
+- `id`: numeric block id or headless draft uid
 - `component`: block type key (e.g. `hero`, `image`)
 - `data`: locale-flattened fields for current app locale
 - `children`: nested blocks with the same shape
+- `editor`: editor metadata for preview contexts
 
 ## 3) Theme structure
 
@@ -83,7 +89,7 @@ Signed preview endpoint:
 1. Create/edit block schema in Admin -> Block types.
 2. Implement matching theme component view: `components/{block-key}.blade.php`.
 3. Keep fallback component in place for unmapped blocks.
-4. Add/update tests for published render and fallback behavior.
+4. Add/update tests for published render, fallback behavior, and live preview when relevant.
 
 ## 7) Recommended rollout for production sites
 

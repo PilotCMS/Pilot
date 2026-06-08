@@ -1,36 +1,316 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
+<div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
+    <header class="z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
         <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Datasources</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Connect external data to your content</p>
+            <h1 class="text-lg font-bold tracking-tight text-slate-900">Datasources</h1>
+            <p class="mt-0.5 text-xs text-slate-500">Manage reusable option lists for block fields</p>
         </div>
+
+        @can('manage datasources')
+            <flux:button wire:click="openCreateDatasource" variant="primary" size="sm">
+                <flux:icon.plus class="size-4" />
+                New Datasource
+            </flux:button>
+        @endcan
     </header>
 
-    <div class="flex flex-1 min-h-0">
-    <main class="flex-1 min-w-0 overflow-y-auto">
-        <div class="w-full p-6 md:p-8">
-    <div class="mb-6">
-        <flux:heading>Datasources</flux:heading>
-        <flux:text class="text-muted-foreground text-sm mt-1">Connect external data to your content</flux:text>
+    <div class="flex min-h-0 flex-1">
+        <main class="min-w-0 flex-1 overflow-y-auto">
+            <div class="w-full space-y-8 p-6 md:p-8">
+                <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Datasources</p>
+                        <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format($datasources->count()) }}</p>
+                    </div>
+
+                    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Entries</p>
+                        <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format($datasources->sum('entries_count')) }}</p>
+                    </div>
+
+                    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Selected Space</p>
+                        <p class="mt-2 truncate text-2xl font-bold text-slate-900">{{ $spaces->firstWhere('id', $spaceId)?->name ?? 'None' }}</p>
+                    </div>
+                </section>
+
+                <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                    <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <flux:heading size="md">Option lists</flux:heading>
+                            <flux:text class="mt-1 text-sm text-slate-500">Reference these slugs from block select fields using a `datasource` key.</flux:text>
+                        </div>
+
+                        <div class="flex flex-col gap-3 sm:flex-row">
+                            <flux:select wire:model.live="spaceId" class="sm:w-56">
+                                @foreach($spaces as $space)
+                                    <option value="{{ $space->id }}">{{ $space->name }}</option>
+                                @endforeach
+                            </flux:select>
+
+                            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search datasources..." icon="magnifying-glass" class="sm:w-72" />
+                        </div>
+                    </div>
+
+                    <flux:table>
+                        <flux:table.head>
+                            <flux:table.row>
+                                <flux:table.header>Name</flux:table.header>
+                                <flux:table.header>Slug</flux:table.header>
+                                <flux:table.header>Entries</flux:table.header>
+                                <flux:table.header>Updated</flux:table.header>
+                                <flux:table.header class="text-right">Actions</flux:table.header>
+                            </flux:table.row>
+                        </flux:table.head>
+
+                        <flux:table.body>
+                            @forelse($datasources as $datasource)
+                                <flux:table.row wire:key="datasource-row-{{ $datasource->id }}" class="transition-colors hover:bg-slate-50">
+                                    <flux:table.cell>
+                                        <button type="button" wire:click="selectDatasource({{ $datasource->id }})" class="text-left">
+                                            <span class="block font-medium text-slate-900">{{ $datasource->name }}</span>
+                                            <span class="block text-sm text-slate-500">{{ $datasource->space->name }}</span>
+                                        </button>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        <code class="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{{ $datasource->slug }}</code>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        <span class="text-sm text-slate-600">{{ $datasource->entries_count }}</span>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        <span class="text-sm text-slate-500">{{ $datasource->updated_at->format('M d, Y') }}</span>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell class="text-right">
+                                        <flux:button wire:click="selectDatasource({{ $datasource->id }})" size="sm" variant="ghost">
+                                            <flux:icon.pencil class="size-4" />
+                                            Manage
+                                        </flux:button>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="5" class="py-16">
+                                        <div class="flex flex-col items-center justify-center text-center">
+                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-teal-100">
+                                                <i class="ph ph-database text-2xl text-teal-600"></i>
+                                            </div>
+                                            <flux:heading size="sm" class="mt-4">No datasources found</flux:heading>
+                                            <flux:text class="mt-2 max-w-sm text-sm text-slate-500">Create an option list for select fields, labels, statuses, themes, or reusable content choices.</flux:text>
+                                            @can('manage datasources')
+                                                <flux:button wire:click="openCreateDatasource" variant="primary" class="mt-6">
+                                                    <flux:icon.plus class="size-4" />
+                                                    Create datasource
+                                                </flux:button>
+                                            @endcan
+                                        </div>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
+                        </flux:table.body>
+                    </flux:table>
+                </section>
+            </div>
+        </main>
+
+        <aside class="z-20 flex w-[var(--admin-rail-width)] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-xl" aria-label="Details">
+            <div class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
+                <h2 class="text-sm font-bold text-slate-800">{{ $selectedDatasource ? 'Manage datasource' : 'Details' }}</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5">
+                @if($selectedDatasource)
+                    <div class="space-y-6">
+                        <section class="space-y-4 border-b border-slate-100 pb-6">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Block schema reference</p>
+                                <code class="mt-2 block rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">'datasource' => '{{ $selectedDatasource->slug }}'</code>
+                            </div>
+
+                            @can('manage datasources')
+                                <form wire:submit="saveDatasource" class="space-y-4">
+                                    <flux:field>
+                                        <flux:label>Name</flux:label>
+                                        <flux:input wire:model="editName" />
+                                        <flux:error name="editName" />
+                                    </flux:field>
+
+                                    <flux:field>
+                                        <flux:label>Slug</flux:label>
+                                        <flux:input wire:model="editSlug" />
+                                        <flux:error name="editSlug" />
+                                    </flux:field>
+
+                                    <div class="flex items-center justify-between gap-3">
+                                        <flux:button
+                                            type="button"
+                                            wire:click="deleteDatasource"
+                                            wire:confirm="Delete this datasource and all of its entries?"
+                                            variant="ghost"
+                                            class="text-red-600 hover:text-red-700"
+                                        >
+                                            Delete
+                                        </flux:button>
+
+                                        <flux:button type="submit" variant="primary">
+                                            Save
+                                        </flux:button>
+                                    </div>
+                                </form>
+                            @else
+                                <dl class="space-y-3 text-sm">
+                                    <div class="flex justify-between gap-4">
+                                        <dt class="text-slate-500">Name</dt>
+                                        <dd class="font-medium text-slate-900">{{ $selectedDatasource->name }}</dd>
+                                    </div>
+                                    <div class="flex justify-between gap-4">
+                                        <dt class="text-slate-500">Slug</dt>
+                                        <dd class="font-mono text-slate-900">{{ $selectedDatasource->slug }}</dd>
+                                    </div>
+                                </dl>
+                            @endcan
+                        </section>
+
+                        <section class="space-y-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900">Entries</h3>
+                                <p class="mt-1 text-sm text-slate-500">Entry keys are stored in content. Labels are shown to editors.</p>
+                            </div>
+
+                            @can('manage datasources')
+                                <form wire:submit="createEntry" class="space-y-3 rounded-lg border border-slate-200 p-3">
+                                    <div class="grid grid-cols-1 gap-3">
+                                        <flux:field>
+                                            <flux:label>Key</flux:label>
+                                            <flux:input wire:model="newEntryKey" placeholder="primary" />
+                                            <flux:error name="newEntryKey" />
+                                        </flux:field>
+
+                                        <flux:field>
+                                            <flux:label>Label</flux:label>
+                                            <flux:input wire:model="newEntryValue" placeholder="Primary" />
+                                            <flux:error name="newEntryValue" />
+                                        </flux:field>
+                                    </div>
+
+                                    <div class="flex justify-end">
+                                        <flux:button type="submit" variant="primary" size="sm">
+                                            Add entry
+                                        </flux:button>
+                                    </div>
+                                </form>
+                            @endcan
+
+                            <div class="space-y-2">
+                                @forelse($entries as $entry)
+                                    <div wire:key="datasource-entry-{{ $entry->id }}" class="rounded-lg border border-slate-200 p-3">
+                                        @if($editingEntryId === $entry->id)
+                                            <form wire:submit="saveEntry" class="space-y-3">
+                                                <flux:field>
+                                                    <flux:label>Key</flux:label>
+                                                    <flux:input wire:model="editEntryKey" />
+                                                    <flux:error name="editEntryKey" />
+                                                </flux:field>
+
+                                                <flux:field>
+                                                    <flux:label>Label</flux:label>
+                                                    <flux:input wire:model="editEntryValue" />
+                                                    <flux:error name="editEntryValue" />
+                                                </flux:field>
+
+                                                <div class="flex justify-end gap-2">
+                                                    <flux:button type="button" wire:click="cancelEntryEdit" variant="ghost" size="sm">Cancel</flux:button>
+                                                    <flux:button type="submit" variant="primary" size="sm">Save</flux:button>
+                                                </div>
+                                            </form>
+                                        @else
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <p class="truncate text-sm font-semibold text-slate-900">{{ $entry->value['en'] ?? $entry->key }}</p>
+                                                    <p class="mt-1 truncate font-mono text-xs text-slate-500">{{ $entry->key }}</p>
+                                                </div>
+
+                                                @can('manage datasources')
+                                                    <div class="flex shrink-0 items-center gap-1">
+                                                        <button type="button" wire:click="moveEntryUp({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move up">
+                                                            <i class="ph ph-arrow-up text-sm"></i>
+                                                        </button>
+                                                        <button type="button" wire:click="moveEntryDown({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move down">
+                                                            <i class="ph ph-arrow-down text-sm"></i>
+                                                        </button>
+                                                        <button type="button" wire:click="editEntry({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Edit">
+                                                            <i class="ph ph-pencil-simple text-sm"></i>
+                                                        </button>
+                                                        <button type="button" wire:click="deleteEntry({{ $entry->id }})" wire:confirm="Delete this entry?" class="flex size-7 items-center justify-center rounded text-red-500 hover:bg-red-50" title="Delete">
+                                                            <i class="ph ph-trash text-sm"></i>
+                                                        </button>
+                                                    </div>
+                                                @endcan
+                                            </div>
+                                        @endif
+                                    </div>
+                                @empty
+                                    <div class="rounded-lg border border-dashed border-slate-200 p-6 text-center">
+                                        <p class="text-sm font-medium text-slate-700">No entries yet</p>
+                                        <p class="mt-1 text-sm text-slate-500">Add entries to make this datasource available in select fields.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </section>
+                    </div>
+                @else
+                    <div class="flex h-full items-center justify-center text-center">
+                        <div>
+                            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                                <i class="ph ph-database text-xl text-slate-500"></i>
+                            </div>
+                            <p class="mt-4 text-sm font-medium text-slate-800">Select a datasource</p>
+                            <p class="mt-1 max-w-xs text-sm text-slate-500">Manage entries and copy the datasource slug for block schema fields.</p>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </aside>
     </div>
 
-    <div class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 py-20 text-center">
-        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-900/40">
-            <flux:icon.table-cells class="size-8 text-violet-600 dark:text-violet-400" />
+    <flux:modal wire:model="showCreateModal">
+        <div class="space-y-1">
+            <flux:heading size="lg">Create datasource</flux:heading>
+            <flux:text class="text-sm text-slate-500">Create a reusable option list for select fields.</flux:text>
         </div>
-        <flux:heading size="md" class="mt-6">Coming soon</flux:heading>
-        <flux:text class="mt-3 max-w-md text-center text-sm text-muted-foreground">
-            Datasources will let you pull in data from APIs, databases, or external services and use it dynamically in your pages and blocks.
-        </flux:text>
-        <flux:text class="mt-2 text-xs text-muted-foreground">
-            This feature is in development. Check back soon.
-        </flux:text>
-    </div>
-        </div>
-    </main>
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Details">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0"><h2 class="text-sm font-bold text-slate-800">Details</h2></div>
-        <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-500 flex items-center justify-center"><p>Select a datasource.</p></div>
-    </aside>
-    </div>
+
+        <form wire:submit="createDatasource" class="mt-5 space-y-4">
+            <flux:field>
+                <flux:label>Space</flux:label>
+                <flux:select wire:model="spaceId">
+                    @foreach($spaces as $space)
+                        <option value="{{ $space->id }}">{{ $space->name }}</option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="spaceId" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model.live="name" placeholder="CTA Styles" />
+                <flux:error name="name" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Slug</flux:label>
+                <flux:input wire:model="slug" placeholder="cta-styles" />
+                <flux:error name="slug" />
+            </flux:field>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <flux:button type="button" wire:click="$set('showCreateModal', false)" variant="ghost">Cancel</flux:button>
+                <flux:button type="submit" variant="primary">
+                    Create datasource
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

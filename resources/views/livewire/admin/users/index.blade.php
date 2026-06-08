@@ -1,36 +1,298 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
+<div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
+    <header class="z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
         <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Users & Roles</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Manage team members and permissions</p>
+            <h1 class="text-lg font-bold tracking-tight text-slate-900">Users & Roles</h1>
+            <p class="mt-0.5 text-xs text-slate-500">Manage team members and permissions</p>
         </div>
+
+        <flux:button wire:click="openCreateUser" variant="primary" size="sm">
+            <flux:icon.plus class="size-4" />
+            New User
+        </flux:button>
     </header>
 
-    <div class="flex flex-1 min-h-0">
-    <main class="flex-1 min-w-0 overflow-y-auto">
-        <div class="w-full p-6 md:p-8">
-    <div class="mb-6">
-        <flux:heading>Users & Roles</flux:heading>
-        <flux:text class="text-muted-foreground text-sm mt-1">Manage team members and permissions</flux:text>
+    <div class="flex min-h-0 flex-1">
+        <main class="min-w-0 flex-1 overflow-y-auto">
+            <div class="w-full space-y-8 p-6 md:p-8">
+                <section class="grid grid-cols-1 gap-4 lg:grid-cols-4">
+                    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Users</p>
+                        <p class="mt-2 text-2xl font-bold text-slate-900">{{ number_format($users->count()) }}</p>
+                    </div>
+
+                    @foreach($roles as $role)
+                        <button
+                            type="button"
+                            wire:click="$set('search', '{{ $role->name }}')"
+                            class="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50/50"
+                        >
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm font-semibold text-slate-900">{{ $role->name }}</p>
+                                <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">{{ $role->users_count }}</span>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">{{ $role->permissions->count() }} permissions</p>
+                        </button>
+                    @endforeach
+                </section>
+
+                <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                    <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <flux:heading size="md">Team members</flux:heading>
+                            <flux:text class="mt-1 text-sm text-slate-500">Create users, assign roles, and control admin access.</flux:text>
+                        </div>
+
+                        <div class="w-full md:w-80">
+                            <flux:input wire:model.live.debounce.300ms="search" placeholder="Search users or roles..." icon="magnifying-glass" />
+                        </div>
+                    </div>
+
+                    <flux:table>
+                        <flux:table.head>
+                            <flux:table.row>
+                                <flux:table.header>User</flux:table.header>
+                                <flux:table.header>Role</flux:table.header>
+                                <flux:table.header>Email verified</flux:table.header>
+                                <flux:table.header>Created</flux:table.header>
+                                <flux:table.header class="text-right">Actions</flux:table.header>
+                            </flux:table.row>
+                        </flux:table.head>
+
+                        <flux:table.body>
+                            @forelse($users as $user)
+                                <flux:table.row wire:key="user-row-{{ $user->id }}" class="transition-colors hover:bg-slate-50">
+                                    <flux:table.cell>
+                                        <button type="button" wire:click="selectUser({{ $user->id }})" class="flex items-center gap-3 text-left">
+                                            <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">
+                                                {{ $user->initials() }}
+                                            </span>
+                                            <span>
+                                                <span class="block font-medium text-slate-900">{{ $user->name }}</span>
+                                                <span class="block text-sm text-slate-500">{{ $user->email }}</span>
+                                            </span>
+                                        </button>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        @forelse($user->roles as $role)
+                                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{{ $role->name }}</span>
+                                        @empty
+                                            <span class="text-sm text-slate-400">No role</span>
+                                        @endforelse
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        @if($user->email_verified_at)
+                                            <span class="inline-flex items-center gap-1 text-sm text-emerald-700">
+                                                <i class="ph ph-check-circle text-base"></i>
+                                                Verified
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-sm text-amber-700">
+                                                <i class="ph ph-warning-circle text-base"></i>
+                                                Pending
+                                            </span>
+                                        @endif
+                                    </flux:table.cell>
+
+                                    <flux:table.cell>
+                                        <span class="text-sm text-slate-500">{{ $user->created_at->format('M d, Y') }}</span>
+                                    </flux:table.cell>
+
+                                    <flux:table.cell class="text-right">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <flux:button wire:click="selectUser({{ $user->id }})" size="sm" variant="ghost">
+                                                <flux:icon.pencil class="size-4" />
+                                                Edit
+                                            </flux:button>
+
+                                            @if($user->is(auth()->user()))
+                                                <flux:button size="sm" variant="ghost" class="text-slate-300" disabled>
+                                                    <flux:icon.trash class="size-4" />
+                                                </flux:button>
+                                            @else
+                                                <flux:button
+                                                    wire:click="deleteUser({{ $user->id }})"
+                                                    wire:confirm="Delete {{ $user->name }}? This cannot be undone."
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    class="text-red-600 hover:text-red-700"
+                                                >
+                                                    <flux:icon.trash class="size-4" />
+                                                </flux:button>
+                                            @endif
+                                        </div>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="5" class="py-16">
+                                        <div class="flex flex-col items-center justify-center text-center">
+                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-teal-100">
+                                                <flux:icon.users class="size-7 text-teal-600" />
+                                            </div>
+                                            <flux:heading size="sm" class="mt-4">No users found</flux:heading>
+                                            <flux:text class="mt-2 max-w-sm text-sm text-slate-500">Adjust your search or create a new user.</flux:text>
+                                            <flux:button wire:click="openCreateUser" variant="primary" class="mt-6">
+                                                <flux:icon.plus class="size-4" />
+                                                Create user
+                                            </flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
+                        </flux:table.body>
+                    </flux:table>
+                </section>
+            </div>
+        </main>
+
+        <aside class="z-20 flex w-[var(--admin-rail-width)] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-xl" aria-label="Details">
+            <div class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
+                <h2 class="text-sm font-bold text-slate-800">{{ $selectedUser ? 'Edit user' : 'Role details' }}</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5">
+                @if($selectedUser)
+                    <form wire:submit="updateSelectedUser" class="space-y-5">
+                        <div class="flex items-center gap-3 border-b border-slate-100 pb-5">
+                            <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-base font-bold text-teal-700">
+                                {{ $selectedUser->initials() }}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-slate-900">{{ $selectedUser->name }}</p>
+                                <p class="truncate text-xs text-slate-500">{{ $selectedUser->email }}</p>
+                            </div>
+                        </div>
+
+                        <flux:error name="selectedUserId" />
+
+                        <flux:field>
+                            <flux:label>Name</flux:label>
+                            <flux:input wire:model="editName" />
+                            <flux:error name="editName" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Email</flux:label>
+                            <flux:input type="email" wire:model="editEmail" />
+                            <flux:error name="editEmail" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Password</flux:label>
+                            <flux:input type="password" wire:model="editPassword" placeholder="Leave blank to keep current password" />
+                            <flux:error name="editPassword" />
+                        </flux:field>
+
+                        <flux:field>
+                            <flux:label>Role</flux:label>
+                            @if($selectedUser->is(auth()->user()))
+                                <flux:select wire:model="editRoleName" disabled>
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                            @else
+                                <flux:select wire:model="editRoleName">
+                                    @foreach($roles as $role)
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                            @endif
+                            <flux:error name="editRoleName" />
+                            @if($selectedUser->is(auth()->user()))
+                                <p class="mt-2 text-xs text-slate-500">You cannot change your own role from this screen.</p>
+                            @endif
+                        </flux:field>
+
+                        <div class="flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
+                            @if($selectedUser->is(auth()->user()))
+                                <flux:button type="button" variant="ghost" class="text-slate-300" disabled>
+                                    Delete
+                                </flux:button>
+                            @else
+                                <flux:button
+                                    type="button"
+                                    wire:click="deleteSelectedUser"
+                                    wire:confirm="Delete this user? This cannot be undone."
+                                    variant="ghost"
+                                    class="text-red-600 hover:text-red-700"
+                                >
+                                    Delete
+                                </flux:button>
+                            @endif
+
+                            <flux:button type="submit" variant="primary">
+                                Save changes
+                            </flux:button>
+                        </div>
+                    </form>
+                @else
+                    <div class="space-y-5">
+                        <p class="text-sm text-slate-500">Select a user to edit their profile and role. Current roles are seeded from Pilot permissions.</p>
+
+                        @foreach($roles as $role)
+                            <section class="rounded-lg border border-slate-200 p-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <h3 class="text-sm font-semibold text-slate-900">{{ $role->name }}</h3>
+                                    <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">{{ $role->users_count }} users</span>
+                                </div>
+
+                                <div class="mt-3 flex flex-wrap gap-1.5">
+                                    @foreach($role->permissions as $permission)
+                                        <span class="rounded-full bg-slate-50 px-2 py-1 text-xs text-slate-600">{{ $permission->name }}</span>
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </aside>
     </div>
 
-    <div class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 py-20 text-center">
-        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 dark:bg-blue-900/40">
-            <flux:icon.users class="size-8 text-blue-600 dark:text-blue-400" />
+    <flux:modal wire:model="showCreateModal">
+        <div class="space-y-1">
+            <flux:heading size="lg">Create user</flux:heading>
+            <flux:text class="text-sm text-slate-500">Add a team member and assign their starting role.</flux:text>
         </div>
-        <flux:heading size="md" class="mt-6">Coming soon</flux:heading>
-        <flux:text class="mt-3 max-w-md text-center text-sm text-muted-foreground">
-            User management will let you invite team members, assign roles, and control who can edit content, manage assets, or access admin settings.
-        </flux:text>
-        <flux:text class="mt-2 text-xs text-muted-foreground">
-            This feature is in development. Check back soon.
-        </flux:text>
-    </div>
-        </div>
-    </main>
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Details">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0"><h2 class="text-sm font-bold text-slate-800">Details</h2></div>
-        <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-500 flex items-center justify-center"><p>Select a user.</p></div>
-    </aside>
-    </div>
+
+        <form wire:submit="createUser" class="mt-5 space-y-4">
+            <flux:field>
+                <flux:label>Name</flux:label>
+                <flux:input wire:model="name" placeholder="Jane Doe" />
+                <flux:error name="name" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Email</flux:label>
+                <flux:input type="email" wire:model="email" placeholder="jane@example.com" />
+                <flux:error name="email" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Password</flux:label>
+                <flux:input type="password" wire:model="password" />
+                <flux:error name="password" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Role</flux:label>
+                <flux:select wire:model="roleName">
+                    @foreach($roles as $role)
+                        <option value="{{ $role->name }}">{{ $role->name }}</option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="roleName" />
+            </flux:field>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <flux:button type="button" wire:click="$set('showCreateModal', false)" variant="ghost">Cancel</flux:button>
+                <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
+                    Create user
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>

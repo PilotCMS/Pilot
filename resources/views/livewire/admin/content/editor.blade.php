@@ -67,6 +67,10 @@
                 <i class="ph ph-clock-counter-clockwise"></i>
                 <span x-text="savedJustNow ? 'Saved just now' : 'Last saved 2m ago'">Last saved 2m ago</span>
             </div>
+            <a href="{{ route('admin.content.preview', $content) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
+                <i class="ph ph-eye" aria-hidden="true"></i>
+                View preview
+            </a>
             <button type="button" wire:click="saveCheckpoint" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Save</button>
             <div class="flex rounded-md shadow-sm">
                 <button type="button" wire:click="publish" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-l-md transition-colors border-r border-teal-600">Publish</button>
@@ -210,28 +214,12 @@
                         </div>
                     @else
                         @foreach($blocks as $index => $block)
-                            @php $isSelected = $selectedBlockId === $block['id']; @endphp
-                            <div
-                                wire:key="block-{{ $block['id'] }}"
-                                class="group relative mb-10 rounded-lg transition-all duration-200 {{ $isSelected ? 'editor-highlight' : 'hover-highlight' }}"
-                                @if($isSelected) data-label="{{ $blockTypes[$block['type']]->name ?? $block['type'] }}" @endif
-                            >
-                                <button wire:click="addBlockAbove({{ $block['id'] }})" class="absolute -top-3 left-1/2 -translate-x-1/2 p-1.5 rounded-md bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 {{ $isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100' }} transition-opacity z-10 text-xs" title="Add block above"><i class="ph ph-plus text-sm"></i> Above</button>
-                                <button wire:click="addBlockBelow({{ $block['id'] }})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 p-1.5 rounded-md bg-white border border-slate-200 shadow-sm text-slate-500 hover:text-slate-700 hover:bg-slate-50 {{ $isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100' }} transition-opacity z-10 text-xs" title="Add block below"><i class="ph ph-plus text-sm"></i> Below</button>
-                                <div
-                                    wire:click="$set('selectedBlockId', {{ $block['id'] }})"
-                                    class="relative cursor-pointer py-2 px-1 -mx-1 rounded-md z-10 {{ $isSelected ? 'hover:bg-teal-50/30' : 'hover:bg-slate-50/80' }} transition-colors"
-                                >
-                                    @php
-                                        $blockView = 'blocks.' . $block['type'];
-                                    @endphp
-                                    @if(view()->exists($blockView))
-                                        @include($blockView, ['block' => $block, 'data' => $block['data']])
-                                    @else
-                                        @include('blocks._fallback', ['block' => $block, 'data' => $block['data']])
-                                    @endif
-                                </div>
-                            </div>
+                            @include('livewire.admin.content.partials.canvas-block', [
+                                'block' => $block,
+                                'blockTypes' => $blockTypes,
+                                'selectedBlockId' => $selectedBlockId,
+                                'depth' => 0,
+                            ])
                         @endforeach
                         <div class="flex justify-center py-4">
                             <button type="button" wire:click="$set('blockLibraryOpen', true)" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-slate-300 text-slate-500 hover:border-teal-500 hover:text-teal-600 transition-colors text-sm">
@@ -260,7 +248,7 @@
     @php
         $editPanelTabs = ['content' => 'Content', 'design' => 'Design', 'seo' => 'Advanced'];
         $hasSelectedBlock = $selectedBlockId !== null;
-        $sel = $hasSelectedBlock ? collect($blocks)->firstWhere('id', $selectedBlockId) : null;
+        $sel = $hasSelectedBlock ? $this->selectedBlock : null;
         $bt = $sel ? ($blockTypes[$sel['type']] ?? null) : null;
     @endphp
     <aside class="fixed top-16 bottom-0 right-0 bg-white border-l border-slate-200 flex flex-col shadow-xl z-40" aria-label="Edit panel" style="width: var(--admin-rail-width);">
@@ -476,7 +464,12 @@
         <div class="relative h-full w-full overflow-y-auto p-4 sm:p-6 md:p-20">
             <div x-on:click.stop class="mx-auto max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5">
                 <div class="p-6">
-                    <h2 class="mb-4 text-lg font-bold text-slate-800">Add Block</h2>
+                    <h2 class="mb-1 text-lg font-bold text-slate-800">Add Block</h2>
+                    @if($addBlockPosition === 'inside' && $addBlockParentId)
+                        <p class="mb-4 text-sm text-slate-500">Choose a block to nest inside the selected container.</p>
+                    @else
+                        <p class="mb-4 text-sm text-slate-500">Choose a block to add to this page.</p>
+                    @endif
                     @if($blockTypes->isEmpty())
                     <p class="text-sm text-slate-500">You don't have any block types yet. Create one to start building pages.</p>
                     <div class="mt-4">

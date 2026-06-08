@@ -2,12 +2,18 @@
     @php
         $backgroundFocalX = $data['background_image_focal_x'] ?? 50;
         $backgroundFocalY = $data['background_image_focal_y'] ?? 50;
+        $backgroundImage = $data['background_image'] ?? null;
+        $backgroundImage = is_array($backgroundImage) ? ($backgroundImage['en'] ?? reset($backgroundImage) ?: null) : $backgroundImage;
+        $title = $data['title'] ?? 'Hero Title';
+        $title = is_array($title) ? ($title['en'] ?? reset($title) ?: 'Hero Title') : $title;
+        $subtitle = $data['subtitle'] ?? 'Hero subtitle';
+        $subtitle = is_array($subtitle) ? ($subtitle['en'] ?? reset($subtitle) ?: 'Hero subtitle') : $subtitle;
     @endphp
-    @if($data['background_image'] ?? null)
-        <div class="absolute inset-0 bg-cover opacity-20 rounded-lg" style="background-image: url('{{ $data['background_image'] }}'); background-position: {{ $backgroundFocalX }}% {{ $backgroundFocalY }}%;"></div>
+    @if($backgroundImage)
+        <div class="absolute inset-0 bg-cover opacity-20 rounded-lg" style="background-image: url('{{ $backgroundImage }}'); background-position: {{ $backgroundFocalX }}% {{ $backgroundFocalY }}%;"></div>
     @endif
     <div class="relative space-y-4">
-        <h2 class="text-4xl md:text-5xl font-bold">{{ $data['title']['en'] ?? $data['title'] ?? 'Hero Title' }}</h2>
-        <p class="text-xl text-white/90">{{ $data['subtitle']['en'] ?? $data['subtitle'] ?? 'Hero subtitle' }}</p>
+        <h2 class="text-4xl md:text-5xl font-bold">{{ $title }}</h2>
+        <p class="text-xl text-white/90">{{ $subtitle }}</p>
     </div>
 </div>

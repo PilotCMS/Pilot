@@ -96,3 +96,141 @@ it('stores focal point metadata when selecting an asset for a block field', func
     expect($block->data['image_focal_x'])->toBe(37.5);
     expect($block->data['image_focal_y'])->toBe(62.5);
 });
+
+it('can add a nested block inside a container block', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $columnsType = BlockType::create([
+        'key' => 'columns',
+        'name' => 'Columns',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'number',
+                    'key' => 'columns',
+                    'label' => 'Columns',
+                    'default' => 2,
+                ],
+            ],
+            'can_contain_blocks' => true,
+        ],
+        'is_global' => false,
+    ]);
+
+    $heroType = BlockType::create([
+        'key' => 'hero',
+        'name' => 'Hero',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'text',
+                    'key' => 'title',
+                    'label' => 'Title',
+                    'default' => 'Nested hero',
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    $parent = Block::create([
+        'content_id' => $content->id,
+        'type' => $columnsType->key,
+        'position' => 0,
+        'data' => ['columns' => 2],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('addNestedBlock', $parent->id, 1)
+        ->assertSet('blockLibraryOpen', true)
+        ->assertSet('addBlockParentId', $parent->id)
+        ->assertSet('addBlockColumnIndex', 1)
+        ->call('addBlock', $heroType->key)
+        ->assertSet('blockLibraryOpen', false);
+
+    $child = Block::query()->where('parent_block_id', $parent->id)->firstOrFail();
+
+    expect($child->type)->toBe('hero')
+        ->and($child->position)->toBe(0)
+        ->and($child->data['title'])->toBe('Nested hero')
+        ->and($child->data['_column'])->toBe(1);
+});
+
+it('restores nested blocks from a content revision', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $columns = Block::create([
+        'content_id' => $content->id,
+        'type' => 'columns',
+        'position' => 0,
+        'data' => ['columns' => 2],
+    ]);
+
+    Block::create([
+        'content_id' => $content->id,
+        'parent_block_id' => $columns->id,
+        'type' => 'cta',
+        'position' => 0,
+        'data' => [
+            'title' => 'Nested CTA',
+            '_column' => 1,
+        ],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('saveCheckpoint');
+
+    $revision = $content->revisions()->firstOrFail();
+
+    Block::where('content_id', $content->id)->delete();
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('restoreRevision', $revision->id);
+
+    $restoredParent = Block::query()
+        ->where('content_id', $content->id)
+        ->whereNull('parent_block_id')
+        ->firstOrFail();
+
+    $restoredChild = Block::query()
+        ->where('content_id', $content->id)
+        ->where('parent_block_id', $restoredParent->id)
+        ->firstOrFail();
+
+    expect($restoredParent->type)->toBe('columns')
+        ->and($restoredChild->type)->toBe('cta')
+        ->and($restoredChild->data['title'])->toBe('Nested CTA')
+        ->and($restoredChild->data['_column'])->toBe(1);
+});

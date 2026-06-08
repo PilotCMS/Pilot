@@ -2,6 +2,10 @@
 
 This project now includes a sample public-facing theme that renders published CMS pages directly from Pilot content, plus documented API options for headless usage.
 
+For the complete current delivery, templating, REST, and live-preview contract, see:
+
+- `/Users/kylemcgowan/Herd/Pilot/docs/cms-delivery-live-preview.md`
+
 ## How public page rendering works
 
 ### Route flow
@@ -43,10 +47,12 @@ The sample theme is `default` and lives at:
 
 Each block is transformed to this shape before rendering:
 
-- `id` (block id)
+- `_uid` (block id or headless draft uid)
+- `id` (block id or headless draft uid)
 - `component` (block type key)
 - `data` (locale-flattened field values)
 - `children` (nested blocks)
+- `editor` (preview-only editor metadata)
 
 `page.blade.php` renders each block through:
 
@@ -64,8 +70,17 @@ This gives a safe fallback for newly created block types without breaking page r
 - `hero.blade.php`
 - `richtext.blade.php`
 - `image.blade.php`
+- `cta.blade.php`
+- `columns.blade.php` (renders nested children into explicit column slots)
+- `grid.blade.php` (uses the same nested rendering behavior as columns)
 - `section.blade.php` (renders nested children)
 - `fallback.blade.php`
+
+## Nested column blocks
+
+Container blocks can render child blocks through the `children` payload key. The `columns` and `grid` components use `data['_column']` on each child block to decide which column should render that child.
+
+When a child does not have `_column`, the renderer falls back to distributing children by position. This keeps older content renderable while new editor-created blocks are assigned to a specific column.
 
 ## Headless (API) content pull options
 
@@ -92,6 +107,9 @@ Add to `.env` as needed:
 - `CMS_THEME=default`
 - `CMS_DEFAULT_SPACE=your-space-slug`
 - `CMS_HOME_SLUG=home`
+- `CMS_DELIVERY_SOURCE=mysql`
+- `CMS_EDITOR_BRIDGE_ENABLED=true`
+- `CMS_LIVE_PREVIEW_ENABLED=true`
 
 ## How to create a new theme
 

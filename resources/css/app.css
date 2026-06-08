@@ -76,6 +76,28 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
+/* Keep icons and labels inline inside buttons. */
+[data-flux-button] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    vertical-align: middle;
+}
+
+[data-flux-button] > svg,
+[data-flux-button] [data-flux-icon],
+.admin-app button > i[class^="ph"],
+.admin-app button > i[class*=" ph-"],
+.admin-app a[role="button"] > i[class^="ph"],
+.admin-app a[role="button"] > i[class*=" ph-"] {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-self: center;
+    line-height: 1;
+    vertical-align: middle;
+}
+
 /* Smooth transitions for interactive elements (links and nav) */
 a:not([class*="flux"]) {
     @apply transition-colors duration-150;

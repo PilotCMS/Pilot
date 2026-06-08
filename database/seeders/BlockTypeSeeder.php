@@ -165,6 +165,25 @@ class BlockTypeSeeder extends Seeder
                 ],
             ],
             [
+                'key' => 'columns',
+                'name' => 'Columns',
+                'icon' => 'columns',
+                'is_global' => false,
+                'schema' => [
+                    'fields' => [
+                        [
+                            'type' => 'number',
+                            'key' => 'columns',
+                            'label' => 'Columns',
+                            'default' => 2,
+                            'min' => 1,
+                            'max' => 4,
+                        ],
+                    ],
+                    'can_contain_blocks' => true,
+                ],
+            ],
+            [
                 'key' => 'grid',
                 'name' => 'Grid',
                 'icon' => 'squares-plus',
