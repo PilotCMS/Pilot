@@ -58,9 +58,19 @@ it('renders preview with fallback component card when a blade view is missing', 
         ->assertSee('Fallback preview')
         ->assertSee('missing_component')
         ->assertSee('Fallback text')
+        ->assertSee('meta name="pilot-content-id" content="'.$content->id.'"', false)
+        ->assertSee('data-pilot-content-id="'.$content->id.'"', false)
         ->assertSee('data-pilot-editable="block"', false)
         ->assertSee('data-pilot-block-id=', false)
-        ->assertSee(route('cms.frontend-editor.script'), false);
+        ->assertSee('disablePreviewLinkNavigation', false)
+        ->assertSee('pilot-preview-select-block', false)
+        ->assertDontSee('pilot-preview-navigated', false)
+        ->assertDontSee('preserveEditorPreviewMode', false)
+        ->assertDontSee("url.searchParams.set('pilot_editor', '1')", false)
+        ->assertDontSee("url.searchParams.set('pilot_in_context', '0')", false)
+        ->assertSee('window.parent.postMessage', false)
+        ->assertSee('window.__pilotInContextLoaded', false)
+        ->assertSee('pilot-in-context-panel-root', false);
 });
 
 it('shows a preview link in the content editor toolbar', function () {
@@ -85,6 +95,9 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertOk()
         ->assertSee('View preview')
         ->assertSee('href="'.route('admin.content.preview', $content).'"', false)
+        ->assertSee('pilot_in_context=0', false)
+        ->assertDontSee('pilot-preview-navigated', false)
+        ->assertDontSee('openContentFromPreview', false)
         ->assertSee('target="_blank"', false);
 });
 
@@ -190,7 +203,7 @@ it('renders nested columns content in the admin preview canvas', function () {
         ],
     ]);
 
-    Block::create([
+    $nestedCta = Block::create([
         'content_id' => $content->id,
         'parent_block_id' => $columns->id,
         'type' => 'cta',
@@ -204,7 +217,7 @@ it('renders nested columns content in the admin preview canvas', function () {
         ],
     ]);
 
-    Block::create([
+    $nestedRichText = Block::create([
         'content_id' => $content->id,
         'parent_block_id' => $columns->id,
         'type' => 'richtext',
@@ -221,5 +234,8 @@ it('renders nested columns content in the admin preview canvas', function () {
         ->assertSee('Preview nested CTA')
         ->assertSee('Nested action')
         ->assertSee('Preview nested rich text', false)
-        ->assertSee('href="/nested-preview"', false);
+        ->assertSee('href="/nested-preview"', false)
+        ->assertSee('data-pilot-block-id="'.$columns->id.'"', false)
+        ->assertSee('data-pilot-block-id="'.$nestedCta->id.'"', false)
+        ->assertSee('data-pilot-block-id="'.$nestedRichText->id.'"', false);
 });

@@ -25,6 +25,11 @@ class Space extends Model
         return $this->hasMany(Content::class);
     }
 
+    public function previewTargets(): HasMany
+    {
+        return $this->hasMany(SpacePreviewTarget::class)->orderBy('sort_order')->orderBy('name');
+    }
+
     public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);

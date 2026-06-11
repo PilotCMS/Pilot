@@ -1,57 +1,35 @@
 #!/bin/bash
-# Fix 413 "Request Entity Too Large" for file uploads in Laravel Herd
+# Help fix 413 "Request Entity Too Large" for file uploads in Laravel Herd.
 # Run from project root: chmod +x fix-upload-limit.sh && ./fix-upload-limit.sh
 
 set -e
 
-HERD_CONFIG="$HOME/Library/Application Support/Herd/config/valet/Nginx"
-HERD_NGINX="$HOME/Library/Application Support/Herd/config/nginx"
 SITE_NAME="pilot.test"
 
-echo "Fixing 413 upload limit for $SITE_NAME..."
-echo ""
+cat <<EOF
+Fixing 413 upload limits for ${SITE_NAME} requires this Nginx directive:
 
-# Option 1: Try site-specific config (exists when site is isolated or secured)
-if [ -f "$HERD_CONFIG/$SITE_NAME" ]; then
-    echo "Found site config at: $HERD_CONFIG/$SITE_NAME"
-    if grep -q "client_max_body_size" "$HERD_CONFIG/$SITE_NAME"; then
-        echo "Upload limit already configured."
-    else
-        echo "Adding client_max_body_size 64M..."
-        # Insert after "server {" - macOS compatible
-        awk '/server \{/ && !done {print; print "    client_max_body_size 64M;"; done=1; next} 1' \
-            "$HERD_CONFIG/$SITE_NAME" > "$HERD_CONFIG/$SITE_NAME.tmp" && mv "$HERD_CONFIG/$SITE_NAME.tmp" "$HERD_CONFIG/$SITE_NAME"
-        echo "Restarting Herd..."
-        herd restart
-        echo "Done! Try uploading again."
-    fi
-    exit 0
-fi
+    client_max_body_size 64M;
 
-# Option 2: Site config doesn't exist - create it via herd isolate
-echo "No site-specific config found. Creating one..."
-echo "Running: herd isolate (this pins PHP version for this site)"
-herd isolate
+This script avoids editing local machine paths directly. It will run Herd's
+site isolation command so a site-specific Nginx config is available, then you
+can add the directive through Herd's site config workflow.
 
-if [ -f "$HERD_CONFIG/$SITE_NAME" ]; then
-    echo "Adding client_max_body_size 64M..."
-    awk '/server \{/ && !done {print; print "    client_max_body_size 64M;"; done=1; next} 1' \
-        "$HERD_CONFIG/$SITE_NAME" > "$HERD_CONFIG/$SITE_NAME.tmp" && mv "$HERD_CONFIG/$SITE_NAME.tmp" "$HERD_CONFIG/$SITE_NAME"
-    echo "Restarting Herd..."
-    herd restart
-    echo "Done! Try uploading again."
+EOF
+
+if command -v herd >/dev/null 2>&1; then
+    echo "Running: herd isolate"
+    herd isolate
+    echo ""
+    echo "Next steps:"
+    echo "1. Open the Herd site Nginx config for ${SITE_NAME}."
+    echo "2. Add 'client_max_body_size 64M;' inside the server block."
+    echo "3. Run: herd restart"
 else
+    echo "The 'herd' command is not available in this shell."
     echo ""
-    echo "Manual fix required. Run these commands:"
-    echo ""
-    echo "  cd $(pwd)"
-    echo "  herd isolate"
-    echo ""
-    echo "Then edit: $HERD_CONFIG/$SITE_NAME"
-    echo "Add this line right after 'server {' (inside the block):"
-    echo ""
-    echo "  client_max_body_size 64M;"
-    echo ""
-    echo "Then run: herd restart"
-    exit 1
+    echo "Next steps:"
+    echo "1. Open Herd and create or open the site-specific Nginx config for ${SITE_NAME}."
+    echo "2. Add 'client_max_body_size 64M;' inside the server block."
+    echo "3. Restart Herd."
 fi

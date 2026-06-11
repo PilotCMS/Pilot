@@ -1,7 +1,8 @@
 @php
     $isSelected = $selectedBlockId === $block['id'];
     $blockType = $blockTypes[$block['type']] ?? null;
-    $blockView = 'blocks.' . $block['type'];
+    $componentName = (string) str($block['type'])->replace(['.', '/', '\\'], '-')->kebab();
+    $componentView = 'components.' . $componentName;
     $canContainBlocks = (bool) ($blockType?->schema['can_contain_blocks'] ?? false);
     $children = collect($block['children'] ?? [])->values();
     $columnCount = (int) ($block['data']['columns'] ?? 2);
@@ -31,10 +32,10 @@
     @if($isSelected) data-label="{{ $blockType->name ?? $block['type'] }}" @endif
 >
     <div class="absolute right-2 top-2 z-20 flex overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm transition-opacity {{ $isSelected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100' }}">
-        <button type="button" wire:click="addBlockAbove({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Insert block before" aria-label="Insert block before">
+        <button type="button" wire:click.stop="moveBlockUp({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Move block up" aria-label="Move block up">
             <i class="ph ph-arrow-up text-sm"></i>
         </button>
-        <button type="button" wire:click="addBlockBelow({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Insert block after" aria-label="Insert block after">
+        <button type="button" wire:click.stop="moveBlockDown({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Move block down" aria-label="Move block down">
             <i class="ph ph-arrow-down text-sm"></i>
         </button>
     </div>
@@ -52,10 +53,10 @@
             </div>
         @endif
 
-        @if(view()->exists($blockView))
-            @include($blockView, ['block' => $block, 'data' => $block['data'], 'children' => $block['children'] ?? [], 'renderChildren' => false])
+        @if(view()->exists($componentView))
+            <x-dynamic-component :component="$componentName" :block="$block" :data="$block['data']" :children="$block['children'] ?? []" :render-children="false" />
         @else
-            @include('blocks._fallback', ['block' => $block, 'data' => $block['data']])
+            <x-fallback :block="$block" :data="$block['data']" :children="$block['children'] ?? []" />
         @endif
     </div>
 

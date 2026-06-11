@@ -20,11 +20,6 @@
             <div class="w-full space-y-8 p-6 md:p-8">
                 <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Public theme</p>
-                        <p class="mt-2 text-xl font-bold text-slate-900">{{ $theme }}</p>
-                    </div>
-
-                    <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                         <p class="text-xs font-medium uppercase tracking-wide text-slate-500">Default space</p>
                         <p class="mt-2 text-xl font-bold text-slate-900">{{ $defaultSpace ?: 'First space' }}</p>
                     </div>
@@ -39,20 +34,10 @@
                     <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 px-5 py-4">
                             <flux:heading size="md">Public website</flux:heading>
-                            <flux:text class="mt-1 text-sm text-slate-500">Control which content space and theme power the public routes.</flux:text>
+                            <flux:text class="mt-1 text-sm text-slate-500">Control which content space and entry point power the public routes.</flux:text>
                         </div>
 
                         <div class="grid grid-cols-1 gap-5 p-5 lg:grid-cols-2">
-                            <flux:field>
-                                <flux:label>Theme</flux:label>
-                                <flux:select wire:model="theme">
-                                    @foreach($themes as $availableTheme)
-                                        <option value="{{ $availableTheme }}">{{ ucfirst($availableTheme) }}</option>
-                                    @endforeach
-                                </flux:select>
-                                <flux:error name="theme" />
-                            </flux:field>
-
                             <flux:field>
                                 <flux:label>Default Space</flux:label>
                                 <flux:select wire:model="defaultSpace">
@@ -128,8 +113,8 @@
                             <dd class="font-mono text-slate-900">/{{ $homeSlug }}</dd>
                         </div>
                         <div class="flex items-start justify-between gap-4">
-                            <dt class="text-slate-500">Theme view</dt>
-                            <dd class="font-mono text-slate-900">themes/{{ $theme }}</dd>
+                            <dt class="text-slate-500">Page view</dt>
+                            <dd class="font-mono text-slate-900">{{ config('pilot.views.page', 'page') }}</dd>
                         </div>
                         <div class="flex items-start justify-between gap-4">
                             <dt class="text-slate-500">Locale fallback</dt>

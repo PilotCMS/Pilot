@@ -4,7 +4,7 @@ This project now includes a sample public-facing theme that renders published CM
 
 For the complete current delivery, templating, REST, and live-preview contract, see:
 
-- `/Users/kylemcgowan/Herd/Pilot/docs/cms-delivery-live-preview.md`
+- `docs/cms-delivery-live-preview.md`
 
 ## How public page rendering works
 
@@ -13,7 +13,7 @@ For the complete current delivery, templating, REST, and live-preview contract, 
 - `/` -> `App\Http\Controllers\Site\PageController@home`
 - `/{slug}` -> `App\Http\Controllers\Site\PageController@show`
 
-These routes are in `/Users/kylemcgowan/Herd/Pilot/routes/web.php`.
+These routes are in `routes/web.php`.
 
 ### Content selection rules
 
@@ -33,15 +33,15 @@ Public rendering resolves a Space in this order:
 1. `CMS_DEFAULT_SPACE` (by slug), if set
 2. First Space in DB as fallback
 
-Configured in `/Users/kylemcgowan/Herd/Pilot/config/cms.php`.
+Configured in `config/cms.php`.
 
 ## Sample theme structure
 
 The sample theme is `default` and lives at:
 
-- `/Users/kylemcgowan/Herd/Pilot/resources/views/themes/default/layout.blade.php`
-- `/Users/kylemcgowan/Herd/Pilot/resources/views/themes/default/page.blade.php`
-- `/Users/kylemcgowan/Herd/Pilot/resources/views/themes/default/components/*`
+- `resources/views/themes/default/layout.blade.php`
+- `resources/views/themes/default/page.blade.php`
+- `resources/views/themes/default/components/*`
 
 ### Component rendering contract
 
@@ -97,8 +97,8 @@ Draft access:
 
 Controller reference:
 
-- `/Users/kylemcgowan/Herd/Pilot/app/Http/Controllers/Api/ContentController.php`
-- `/Users/kylemcgowan/Herd/Pilot/app/Http/Controllers/Api/PreviewController.php`
+- `app/Http/Controllers/Api/ContentController.php`
+- `app/Http/Controllers/Api/PreviewController.php`
 
 ## Environment variables
 
@@ -108,8 +108,8 @@ Add to `.env` as needed:
 - `CMS_DEFAULT_SPACE=your-space-slug`
 - `CMS_HOME_SLUG=home`
 - `CMS_DELIVERY_SOURCE=mysql`
-- `CMS_EDITOR_BRIDGE_ENABLED=true`
-- `CMS_LIVE_PREVIEW_ENABLED=true`
+- `PILOT_EDITOR_BRIDGE_ENABLED=true`
+- `PILOT_LIVE_PREVIEW_ENABLED=true`
 
 ## How to create a new theme
 

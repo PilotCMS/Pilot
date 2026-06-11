@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Content;
 
 use App\Models\Content;
+use App\Models\ContentType;
 use App\Models\Space;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -14,6 +15,8 @@ class Create extends Component
     public $parentId = null;
 
     public $type = 'page';
+
+    public $contentTypeId = null;
 
     public $name = '';
 
@@ -40,6 +43,7 @@ class Create extends Component
         'spaceId' => 'required|exists:spaces,id',
         'parentId' => 'nullable|exists:contents,id',
         'type' => 'required|in:page,folder',
+        'contentTypeId' => 'nullable|exists:content_types,id',
         'name' => 'required|string|max:255',
         'slug' => 'required|string|max:255',
         'status' => 'required|in:draft,published',
@@ -60,10 +64,12 @@ class Create extends Component
         $content = Content::create([
             'space_id' => $this->spaceId,
             'parent_id' => $this->parentId ?: null,
+            'content_type_id' => $this->type === 'page' ? $this->contentTypeId : null,
             'type' => $this->type,
             'name' => $this->name,
             'slug' => $this->slug,
             'status' => $this->status,
+            'workflow_status' => $this->status === 'published' ? 'published' : 'draft',
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
             'published_at' => $this->status === 'published' ? now() : null,
@@ -81,6 +87,7 @@ class Create extends Component
     {
         return view('livewire.admin.content.create', [
             'spaces' => Space::all(),
+            'contentTypes' => ContentType::query()->where('is_active', true)->orderBy('name')->get(),
             'parent' => $this->parentId ? Content::find($this->parentId) : null,
         ])->layout('layouts.admin');
     }

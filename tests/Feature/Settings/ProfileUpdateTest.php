@@ -9,6 +9,17 @@ test('profile page is displayed', function () {
     $this->get(route('profile.edit'))->assertOk();
 });
 
+test('profile page uses pilot cms layout and browser title', function () {
+    $this->actingAs(User::factory()->create());
+
+    $this->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('<title>Profile Settings · Pilot CMS</title>', false)
+        ->assertSee('Pilot CMS')
+        ->assertSee('Manage your Pilot CMS account settings')
+        ->assertDontSee('Laravel Starter Kit');
+});
+
 test('profile information can be updated', function () {
     $user = User::factory()->create();
 

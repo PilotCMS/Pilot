@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Cms\ContentResource;
 use App\Models\CmsSetting;
-use App\Models\Content;
-use App\Models\Space;
-use App\Support\Cms\ContentRenderer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Pilot\Laravel\Models\Content;
+use Pilot\Laravel\Models\Space;
+use Pilot\Laravel\Support\ContentRenderer;
 
 class ContentController extends Controller
 {

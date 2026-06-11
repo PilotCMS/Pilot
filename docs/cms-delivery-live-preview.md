@@ -34,14 +34,12 @@ Configuration lives in `config/cms.php`.
 
 ```php
 return [
-    'theme' => env('CMS_THEME', 'default'),
-    'default_space' => env('CMS_DEFAULT_SPACE'),
-    'home_slug' => env('CMS_HOME_SLUG', 'home'),
-    'delivery_source' => env('CMS_DELIVERY_SOURCE', 'mysql'),
+    'default_space' => env('PILOT_DEFAULT_SPACE'),
+    'home_slug' => env('PILOT_HOME_SLUG', 'home'),
     'editor_bridge' => [
-        'enabled' => env('CMS_EDITOR_BRIDGE_ENABLED', true),
-        'live_preview' => env('CMS_LIVE_PREVIEW_ENABLED', true),
-        'live_root' => env('CMS_LIVE_PREVIEW_ROOT', '[data-pilot-live-root]'),
+        'enabled' => env('PILOT_EDITOR_BRIDGE_ENABLED', true),
+        'live_preview' => env('PILOT_LIVE_PREVIEW_ENABLED', true),
+        'live_root' => env('PILOT_LIVE_PREVIEW_ROOT', '[data-pilot-live-root]'),
     ],
 ];
 ```
@@ -49,13 +47,11 @@ return [
 Useful `.env` values:
 
 ```dotenv
-CMS_THEME=default
-CMS_DEFAULT_SPACE=website
-CMS_HOME_SLUG=home
-CMS_DELIVERY_SOURCE=mysql
-CMS_EDITOR_BRIDGE_ENABLED=true
-CMS_LIVE_PREVIEW_ENABLED=true
-CMS_LIVE_PREVIEW_ROOT="[data-pilot-live-root]"
+PILOT_DEFAULT_SPACE=website
+PILOT_HOME_SLUG=home
+PILOT_EDITOR_BRIDGE_ENABLED=true
+PILOT_LIVE_PREVIEW_ENABLED=true
+PILOT_LIVE_PREVIEW_ROOT="[data-pilot-live-root]"
 ```
 
 ## Public page rendering
@@ -168,7 +164,7 @@ The block payload also exposes an editor comment:
 
 ## Editor bridge
 
-The shared bridge lives at `resources/views/cms/editor-bridge.blade.php` and is included by the theme layouts.
+The shared bridge lives in `packages/pilot-laravel/resources/views/editor-bridge.blade.php` and is included by Pilot package layouts.
 
 It exposes:
 
@@ -176,7 +172,7 @@ It exposes:
 window.PilotCms.livePreview.render(payload, options)
 ```
 
-The helper posts to `api.preview.render`, replaces the element matching `CMS_LIVE_PREVIEW_ROOT`, and returns the API response.
+The helper posts to `api.preview.render`, replaces the element matching `PILOT_LIVE_PREVIEW_ROOT`, and returns the API response.
 
 It also listens for clicks on `[data-pilot-editable="block"]` inside an iframe and sends this message to the parent editor:
 
@@ -344,7 +340,7 @@ Missing component views are safe: the theme fallback component renders instead o
 Focused coverage for this layer:
 
 ```bash
-"/Users/kylemcgowan/Library/Application Support/Herd/bin/php85" artisan test --compact \
+<path-to-php> artisan test --compact \
   tests/Feature/CmsDeliveryApiTest.php \
   tests/Feature/CmsLivePreviewTest.php
 ```
@@ -352,7 +348,7 @@ Focused coverage for this layer:
 Related public/admin preview coverage:
 
 ```bash
-"/Users/kylemcgowan/Library/Application Support/Herd/bin/php85" artisan test --compact \
+<path-to-php> artisan test --compact \
   tests/Feature/PublicThemeTest.php \
   tests/Feature/Admin/ContentPreviewTest.php \
   tests/Feature/Admin/CmsSettingsTest.php
@@ -361,5 +357,5 @@ Related public/admin preview coverage:
 Run Pint after PHP changes:
 
 ```bash
-"/Users/kylemcgowan/Library/Application Support/Herd/bin/php85" vendor/bin/pint --dirty --format agent
+<path-to-php> vendor/bin/pint --dirty --format agent
 ```

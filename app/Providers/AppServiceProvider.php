@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\CmsSetting;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configurePilotPreviewSecret();
     }
 
     protected function configureDefaults(): void
@@ -43,5 +47,23 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null
         );
+    }
+
+    protected function configurePilotPreviewSecret(): void
+    {
+        if (config('pilot.preview.secret')) {
+            return;
+        }
+
+        try {
+            if (Schema::hasTable('cms_settings')) {
+                $secret = CmsSetting::get('preview_secret');
+
+                if (is_string($secret) && $secret !== '') {
+                    config(['pilot.preview.secret' => $secret]);
+                }
+            }
+        } catch (QueryException) {
+        }
     }
 }

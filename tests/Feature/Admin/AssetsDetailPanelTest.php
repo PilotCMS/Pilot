@@ -66,6 +66,35 @@ it('uses relative asset urls in picker thumbnails', function () {
         ->assertSee($asset->relativeUrl());
 });
 
+it('renders external stock assets without requiring a configured filesystem disk', function () {
+    $user = User::factory()->create();
+
+    $space = Space::create([
+        'name' => 'Website',
+        'slug' => 'website',
+    ]);
+
+    $asset = Asset::create([
+        'space_id' => $space->id,
+        'folder_id' => null,
+        'disk' => 'stock',
+        'path' => 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2400&q=85',
+        'filename' => 'glacier-lake.jpg',
+        'display_name' => 'Glacier Lake',
+        'mime' => 'image/jpeg',
+        'size' => 1024,
+        'width' => null,
+        'height' => null,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)
+        ->assertSee($asset->url())
+        ->call('openAssetDetail', $asset->id)
+        ->assertSee($asset->url());
+});
+
 it('persists focal point coordinates when saving asset details', function () {
     $user = User::factory()->create();
 

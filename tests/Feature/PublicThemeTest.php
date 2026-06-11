@@ -4,9 +4,8 @@ use App\Models\Block;
 use App\Models\Content;
 use App\Models\Space;
 use App\Models\User;
-use Illuminate\Support\Facades\Config;
 
-it('renders published home content with the sample theme', function () {
+it('renders published home content with Laravel block views', function () {
     $user = User::factory()->create();
     $space = Space::create([
         'name' => 'Website',
@@ -30,14 +29,17 @@ it('renders published home content with the sample theme', function () {
         'position' => 0,
         'data' => [
             'title' => 'Welcome to Pilot',
-            'subtitle' => 'This is the public theme',
+            'subtitle' => 'This is the public Laravel view',
         ],
     ]);
 
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('Welcome to Pilot')
-        ->assertSee('This is the public theme');
+        ->assertSee('This is the public Laravel view')
+        ->assertSee('meta name="pilot-content-id" content="'.$home->id.'"', false)
+        ->assertSee('data-pilot-content-id="'.$home->id.'"', false)
+        ->assertDontSee('pilot-preview-navigated', false);
 });
 
 it('does not render draft pages on the public route', function () {
@@ -61,7 +63,7 @@ it('does not render draft pages on the public route', function () {
     $this->get('/pricing')->assertNotFound();
 });
 
-it('renders fallback component when a theme block template is missing', function () {
+it('renders fallback component when a Laravel block view is missing', function () {
     $user = User::factory()->create();
     $space = Space::create([
         'name' => 'Website',
@@ -90,47 +92,12 @@ it('renders fallback component when a theme block template is missing', function
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('Missing theme component')
+        ->assertSee('Fallback preview')
         ->assertSee('feature_grid')
         ->assertSee('Fallback field value');
 });
 
-it('renders using the marketing public theme when configured', function () {
-    Config::set('cms.theme', 'marketing');
-
-    $user = User::factory()->create();
-    $space = Space::create([
-        'name' => 'Website',
-        'slug' => 'website',
-    ]);
-
-    $home = Content::create([
-        'space_id' => $space->id,
-        'type' => 'page',
-        'slug' => 'home',
-        'name' => 'Home',
-        'status' => 'published',
-        'published_at' => now(),
-        'created_by' => $user->id,
-        'updated_by' => $user->id,
-    ]);
-
-    Block::create([
-        'content_id' => $home->id,
-        'type' => 'hero',
-        'position' => 0,
-        'data' => [
-            'title' => 'Marketing Theme Home',
-        ],
-    ]);
-
-    $this->get(route('home'))
-        ->assertOk()
-        ->assertSee('Public Theme')
-        ->assertSee('Marketing Theme Home');
-});
-
-it('renders a cta block with the default public theme', function () {
+it('renders a cta block with a root Laravel component', function () {
     $user = User::factory()->create();
     $space = Space::create([
         'name' => 'Website',
@@ -165,47 +132,7 @@ it('renders a cta block with the default public theme', function () {
         ->assertSee('Start building with Pilot')
         ->assertSee('Open editor')
         ->assertSee('href="/admin/content"', false)
-        ->assertDontSee('Missing theme component');
-});
-
-it('renders a cta block with the marketing public theme', function () {
-    Config::set('cms.theme', 'marketing');
-
-    $user = User::factory()->create();
-    $space = Space::create([
-        'name' => 'Website',
-        'slug' => 'website',
-    ]);
-
-    $home = Content::create([
-        'space_id' => $space->id,
-        'type' => 'page',
-        'slug' => 'home',
-        'name' => 'Home',
-        'status' => 'published',
-        'published_at' => now(),
-        'created_by' => $user->id,
-        'updated_by' => $user->id,
-    ]);
-
-    Block::create([
-        'content_id' => $home->id,
-        'type' => 'cta',
-        'position' => 0,
-        'data' => [
-            'title' => 'Launch the next campaign',
-            'button_text' => 'Get started',
-            'button_url' => '/contact',
-            'style' => 'outline',
-        ],
-    ]);
-
-    $this->get(route('home'))
-        ->assertOk()
-        ->assertSee('Launch the next campaign')
-        ->assertSee('Get started')
-        ->assertSee('href="/contact"', false)
-        ->assertDontSee('Missing theme component');
+        ->assertDontSee('Fallback preview');
 });
 
 it('renders nested blocks inside a columns block', function () {
@@ -266,4 +193,82 @@ it('renders nested blocks inside a columns block', function () {
         ->assertSee('Read more')
         ->assertSee('Nested rich text', false)
         ->assertSee('href="/nested"', false);
+});
+
+it('prefixes relative asset paths with the configured Pilot asset URL', function () {
+    config(['pilot.assets.base_url' => 'https://cms.test']);
+
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Website',
+        'slug' => 'website',
+    ]);
+
+    $home = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'published',
+        'published_at' => now(),
+        'meta' => [
+            'og_image' => '/storage/assets/social-card.jpg',
+        ],
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Block::create([
+        'content_id' => $home->id,
+        'type' => 'image',
+        'position' => 0,
+        'data' => [
+            'image' => '/storage/assets/hero.jpg',
+            'image_focal_x' => 24,
+            'image_focal_y' => 76,
+            'alt' => 'Hero image',
+        ],
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('content="https://cms.test/storage/assets/social-card.jpg"', false)
+        ->assertSee('src="https://cms.test/storage/assets/hero.jpg"', false)
+        ->assertSee('object-position: 24% 76%;', false);
+});
+
+it('does not prefix absolute asset urls', function () {
+    config(['pilot.assets.base_url' => 'https://cms.test']);
+
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Website',
+        'slug' => 'website',
+    ]);
+
+    $home = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'published',
+        'published_at' => now(),
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Block::create([
+        'content_id' => $home->id,
+        'type' => 'image',
+        'position' => 0,
+        'data' => [
+            'image' => 'https://cdn.test/hero.jpg',
+            'alt' => 'Hero image',
+        ],
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('src="https://cdn.test/hero.jpg"', false)
+        ->assertDontSee('https://cms.test/https://cdn.test/hero.jpg', false);
 });

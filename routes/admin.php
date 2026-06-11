@@ -16,6 +16,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     Route::get('/content/{content}/edit', \App\Livewire\Admin\Content\Editor::class)->name('content.edit');
     Route::get('/content/{content}/editor', \App\Livewire\Admin\Content\Editor::class)->name('content.editor');
     Route::get('/content/{content}/preview', \App\Http\Controllers\Admin\ContentPreviewController::class)->name('content.preview');
+    Route::get('/content-types', \App\Livewire\Admin\ContentTypes\Index::class)->name('content-types.index')->middleware('role:Admin');
 
     // Block Types
     Route::get('/blocks', \App\Livewire\Admin\Blocks\Index::class)->name('blocks.index')->middleware('role:Admin');

@@ -1,8 +1,12 @@
 <div class="space-y-7">
     @foreach($blockType->schema['fields'] ?? [] as $field)
         @php
-            $fieldValue = $data[$field['key']] ?? '';
-            $fieldValue = is_array($fieldValue) ? ($fieldValue['en'] ?? reset($fieldValue) ?: '') : $fieldValue;
+            $rawFieldValue = $data[$field['key']] ?? '';
+            $isObjectList = is_array($rawFieldValue) && array_is_list($rawFieldValue) && ! empty($rawFieldValue) && collect($rawFieldValue)->every(fn ($item) => is_array($item));
+            $objectKeys = $isObjectList
+                ? collect($rawFieldValue)->flatMap(fn ($item) => array_keys($item))->unique()->values()
+                : collect();
+            $fieldValue = is_array($rawFieldValue) ? ($rawFieldValue['en'] ?? reset($rawFieldValue) ?: '') : $rawFieldValue;
             $typeLabel = $field['type'] ?? 'text';
         @endphp
         <div class="group">
@@ -11,7 +15,26 @@
                 <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">{{ $typeLabel }}</span>
             </div>
 
-            @if($field['type'] === 'text')
+            @if($isObjectList)
+                <div class="space-y-3">
+                    @foreach($rawFieldValue as $idx => $item)
+                        <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                            <div class="mb-3 text-[10px] font-bold uppercase tracking-wide text-slate-400">Item {{ $idx + 1 }}</div>
+                            <div class="space-y-3">
+                                @foreach($objectKeys as $objectKey)
+                                    <div>
+                                        <label class="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{{ $objectKey }}</label>
+                                        <textarea rows="{{ $objectKey === 'body' ? 3 : 1 }}"
+                                            wire:change="updateJsonObjectField(@js($field['key']), {{ $idx }}, @js($objectKey), $event.target.value)"
+                                            class="w-full min-h-9 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none transition-all focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                        >{{ $item[$objectKey] ?? '' }}</textarea>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @elseif($field['type'] === 'text')
                 <input type="text"
                     value="{{ $fieldValue }}"
                     placeholder="{{ $field['placeholder'] ?? '' }}"
@@ -123,6 +146,20 @@
                     @endif
                 </select>
                 <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                </div>
+            @elseif($field['type'] === 'reference')
+                <div class="relative">
+                    <select wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer"
+                    >
+                        <option value="">Select content...</option>
+                        @foreach($contentChoices as $contentChoice)
+                            <option value="{{ $contentChoice->id }}" {{ (string) $fieldValue === (string) $contentChoice->id ? 'selected' : '' }}>
+                                {{ $contentChoice->name }} /{{ $contentChoice->slug }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
                 </div>
             @else
                 <input type="text"

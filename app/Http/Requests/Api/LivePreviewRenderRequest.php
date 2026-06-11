@@ -11,7 +11,7 @@ class LivePreviewRenderRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return config('cms.editor_bridge.live_preview', true);
+        return config('pilot.editor_bridge.live_preview', true);
     }
 
     /**
@@ -23,7 +23,6 @@ class LivePreviewRenderRequest extends FormRequest
     {
         return [
             'source' => ['nullable', 'string', 'in:mysql,headless'],
-            'theme' => ['nullable', 'string', 'max:64'],
             'locale' => ['nullable', 'string', 'max:12'],
             'content_id' => ['nullable', 'integer', 'exists:contents,id'],
             'slug' => ['nullable', 'string', 'max:255'],

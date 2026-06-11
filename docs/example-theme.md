@@ -6,7 +6,7 @@ Pilot currently includes two public-facing example themes.
 
 Path:
 
-- `/Users/kylemcgowan/Herd/Pilot/resources/views/themes/default`
+- `resources/views/themes/default`
 
 Characteristics:
 
@@ -18,7 +18,7 @@ Characteristics:
 
 Path:
 
-- `/Users/kylemcgowan/Herd/Pilot/resources/views/themes/marketing`
+- `resources/views/themes/marketing`
 
 Characteristics:
 

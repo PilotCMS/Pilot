@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Admin\Content\BlockEditor;
+use App\Livewire\Admin\Content\ContentSyncPoller;
 use App\Livewire\Admin\Content\Editor;
 use App\Models\Block;
 use App\Models\BlockType;
@@ -95,6 +97,265 @@ it('stores focal point metadata when selecting an asset for a block field', func
     expect($block->data['image'])->toBe('/storage/assets/example.png');
     expect($block->data['image_focal_x'])->toBe(37.5);
     expect($block->data['image_focal_y'])->toBe(62.5);
+});
+
+it('updates a nested json object field in the cms block editor', function () {
+    $blockType = BlockType::create([
+        'key' => 'itinerary',
+        'name' => 'Itinerary',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'repeater',
+                    'key' => 'days',
+                    'label' => 'Days',
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    $block = [
+        'id' => 123,
+        'type' => 'itinerary',
+        'data' => [
+            'days' => [
+                [
+                    'day' => '1',
+                    'body' => 'Start at the north gate.',
+                    'meta' => '90 mi',
+                    'title' => 'Gardiner',
+                ],
+            ],
+        ],
+    ];
+
+    Livewire::test(BlockEditor::class, [
+        'block' => $block,
+        'blockType' => $blockType,
+    ])
+        ->call('updateJsonObjectField', 'days', 0, 'title', 'Gardiner and Paradise Valley')
+        ->assertSet('data.days.0.title', 'Gardiner and Paradise Valley')
+        ->assertDispatched('block-updated');
+});
+
+it('moves top level blocks with the compose editor arrow controls', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $first = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => [],
+    ]);
+
+    $second = Block::create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'position' => 1,
+        'data' => [],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('moveBlockUp', $second->id)
+        ->assertSet('blockLibraryOpen', false)
+        ->assertSet('selectedBlockId', $second->id);
+
+    expect($second->fresh()->position)->toBe(0)
+        ->and($first->fresh()->position)->toBe(1);
+});
+
+it('moves nested blocks only within their current column', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $columns = Block::create([
+        'content_id' => $content->id,
+        'type' => 'columns',
+        'position' => 0,
+        'data' => ['columns' => 2],
+    ]);
+
+    $firstColumnFirst = Block::create([
+        'content_id' => $content->id,
+        'parent_block_id' => $columns->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => ['_column' => 0],
+    ]);
+
+    $firstColumnSecond = Block::create([
+        'content_id' => $content->id,
+        'parent_block_id' => $columns->id,
+        'type' => 'cta',
+        'position' => 1,
+        'data' => ['_column' => 0],
+    ]);
+
+    $secondColumnBlock = Block::create([
+        'content_id' => $content->id,
+        'parent_block_id' => $columns->id,
+        'type' => 'richtext',
+        'position' => 0,
+        'data' => ['_column' => 1],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('moveBlockUp', $firstColumnSecond->id)
+        ->assertSet('blockLibraryOpen', false)
+        ->assertSet('selectedBlockId', $firstColumnSecond->id);
+
+    expect($firstColumnSecond->fresh()->position)->toBe(0)
+        ->and($firstColumnFirst->fresh()->position)->toBe(1)
+        ->and($secondColumnBlock->fresh()->position)->toBe(0);
+});
+
+it('opens the content fields panel when selecting a block from preview', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => [],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('drawerOpen', false)
+        ->set('rightPanelTab', 'design')
+        ->call('setSelectedBlockFromPreview', $block->id)
+        ->assertSet('selectedBlockId', $block->id)
+        ->assertSet('drawerOpen', true)
+        ->assertSet('rightPanelTab', 'content');
+});
+
+it('refreshes selected block fields when content changes outside the editor', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => ['title' => 'Before'],
+    ]);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->assertSet('blocks.0.data.title', 'Before')
+        ->assertSet('previewVersion', 1)
+        ->assertSet('editorSyncVersion', 1);
+
+    $block->update(['data' => ['title' => 'After']]);
+    $content->forceFill(['updated_at' => now()->addSeconds(5)])->save();
+
+    $component
+        ->call('syncExternalChanges')
+        ->assertSet('blocks.0.data.title', 'After')
+        ->assertSet('selectedBlockId', $block->id)
+        ->assertSet('previewVersion', 2)
+        ->assertSet('editorSyncVersion', 2);
+});
+
+it('polls for content changes without refreshing the full editor when nothing changed', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => ['title' => 'Before'],
+    ]);
+
+    $component = Livewire::test(ContentSyncPoller::class, [
+        'contentId' => $content->id,
+    ]);
+
+    $component
+        ->call('poll')
+        ->assertNotDispatched('content-external-change-detected');
+
+    $block->update(['data' => ['title' => 'After']]);
+
+    $component
+        ->call('poll')
+        ->assertDispatched('content-external-change-detected');
 });
 
 it('can add a nested block inside a container block', function () {

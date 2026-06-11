@@ -59,12 +59,25 @@ class Asset extends Model
 
     public function url(): string
     {
+        if (! $this->hasConfiguredDisk()) {
+            return $this->path;
+        }
+
         return Storage::disk($this->disk)->url($this->path);
     }
 
     public function relativeUrl(): string
     {
+        if (! $this->hasConfiguredDisk()) {
+            return $this->url();
+        }
+
         return static::toRelativeUrl($this->url());
+    }
+
+    public function hasConfiguredDisk(): bool
+    {
+        return array_key_exists($this->disk, config('filesystems.disks', []));
     }
 
     public function focalX(): float
@@ -123,7 +136,7 @@ class Asset extends Model
 
     public function fullUrl(): string
     {
-        $url = Storage::disk($this->disk)->url($this->path);
+        $url = $this->url();
 
         return str_starts_with($url, 'http') ? $url : url($url);
     }

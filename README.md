@@ -197,12 +197,12 @@ chmod +x fix-upload-limit.sh
 ./fix-upload-limit.sh
 ```
 
-This creates a site-specific Nginx config (if needed) and adds `client_max_body_size 64M`, then restarts Herd.
+This prepares a site-specific Nginx config if needed and prints the `client_max_body_size 64M` directive to add through Herd.
 
 **Manual fix (if script doesn't work):**
 
 1. Run `herd isolate` in the project directory
-2. Edit `~/Library/Application Support/Herd/config/valet/Nginx/pilot.test`
+2. Edit the Herd site Nginx config for `pilot.test`
 3. Add `client_max_body_size 64M;` inside the `server { }` block
 4. Run `herd restart`
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Content;
 
 use App\Models\BlockType;
+use App\Models\Content;
 use Livewire\Component;
 
 class BlockEditor extends Component
@@ -65,8 +66,27 @@ class BlockEditor extends Component
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
     }
 
+    public function updateJsonObjectField(string $key, int $index, string $objectKey, $value): void
+    {
+        $items = $this->data[$key] ?? [];
+        $items = is_array($items) ? $items : [];
+
+        if (! isset($items[$index]) || ! is_array($items[$index])) {
+            $items[$index] = [];
+        }
+
+        $items[$index][$objectKey] = $value;
+        $this->data[$key] = $items;
+        $this->dispatch('block-updated', $this->block['id'], $key, $items);
+    }
+
     public function render()
     {
-        return view('livewire.admin.content.block-editor');
+        return view('livewire.admin.content.block-editor', [
+            'contentChoices' => Content::query()
+                ->where('type', 'page')
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
+        ]);
     }
 }

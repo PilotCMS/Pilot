@@ -161,7 +161,11 @@ class Index extends Component
     public function deleteAsset($id)
     {
         $asset = Asset::findOrFail($id);
-        Storage::disk($asset->disk)->delete($asset->path);
+
+        if ($asset->hasConfiguredDisk()) {
+            Storage::disk($asset->disk)->delete($asset->path);
+        }
+
         $asset->delete();
         $this->closeAssetDetail();
     }

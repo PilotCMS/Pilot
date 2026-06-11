@@ -4,7 +4,7 @@ This guide explains how developers should pull CMS content into websites and map
 
 For the complete current delivery, templating, REST, and live-preview contract, see:
 
-- `/Users/kylemcgowan/Herd/Pilot/docs/cms-delivery-live-preview.md`
+- `docs/cms-delivery-live-preview.md`
 
 ## 1) Public website rendering in this repo
 
@@ -13,7 +13,7 @@ Public rendering is server-side and route-driven:
 - `/` -> `PageController@home`
 - `/{slug}` -> `PageController@show`
 
-Controller: `/Users/kylemcgowan/Herd/Pilot/app/Http/Controllers/Site/PageController.php`
+Controller: `app/Http/Controllers/Site/PageController.php`
 
 ### Rendering rules
 
@@ -64,7 +64,7 @@ From `.env`:
 - `CMS_DEFAULT_SPACE=website` (space slug)
 - `CMS_HOME_SLUG=home`
 
-Config file: `/Users/kylemcgowan/Herd/Pilot/config/cms.php`
+Config file: `config/cms.php`
 
 ## 5) Headless content pull (external frontend)
 

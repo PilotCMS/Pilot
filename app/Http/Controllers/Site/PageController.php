@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\CmsSetting;
-use App\Models\Content;
-use App\Models\Space;
-use App\Support\Cms\ContentRenderer;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
+use Pilot\Laravel\Facades\Pilot;
+use Pilot\Laravel\Models\Content;
+use Pilot\Laravel\Models\Redirect;
+use Pilot\Laravel\Models\Space;
+use Pilot\Laravel\Support\ContentRenderer;
 
 class PageController extends Controller
 {
@@ -16,17 +19,17 @@ class PageController extends Controller
         protected ContentRenderer $renderer,
     ) {}
 
-    public function home(): View
+    public function home(): View|RedirectResponse
     {
-        return $this->renderPage(CmsSetting::get('home_slug', config('cms.home_slug', 'home')));
+        return $this->renderPage(CmsSetting::get('home_slug', config('pilot.home_slug', 'home')));
     }
 
-    public function show(string $slug): View
+    public function show(string $slug): View|RedirectResponse
     {
         return $this->renderPage($slug);
     }
 
-    protected function renderPage(string $slug): View
+    protected function renderPage(string $slug): View|RedirectResponse
     {
         $space = $this->resolveSpace();
 
@@ -34,38 +37,48 @@ class PageController extends Controller
             throw new ModelNotFoundException('No space configured for public site rendering.');
         }
 
-        $content = Content::query()
-            ->where('space_id', $space->id)
-            ->where('type', 'page')
-            ->where('slug', $slug)
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->with([
-                'blocks' => fn ($query) => $query->whereNull('parent_block_id')->orderBy('position'),
-                'blocks.children',
-            ])
-            ->firstOrFail();
+        $content = Pilot::content()
+            ->space($space)
+            ->slug($slug)
+            ->published()
+            ->withBlocks()
+            ->first();
+
+        if (! $content) {
+            $redirect = $this->resolveRedirect($space, $slug);
+
+            if ($redirect) {
+                $redirect->increment('hit_count');
+                $redirect->update(['last_hit_at' => now()]);
+
+                return redirect($redirect->destination, $redirect->status_code);
+            }
+
+            throw (new ModelNotFoundException)->setModel(Content::class);
+        }
 
         $payload = $this->renderer->fromModel($content, CmsSetting::get('default_locale', app()->getLocale()));
 
-        $theme = CmsSetting::get('theme', config('cms.theme', 'default'));
-
-        return view("themes.{$theme}.page", [
-            'content' => $payload,
-            'space' => $space,
-            'blocks' => collect($payload->toArray()['body']),
-            'theme' => $theme,
-        ]);
+        return $this->renderer->pageView($payload, space: $space);
     }
 
     protected function resolveSpace(): ?Space
     {
-        $spaceSlug = CmsSetting::get('default_space', config('cms.default_space'));
+        $spaceSlug = CmsSetting::get('default_space', config('pilot.default_space'));
 
         if ($spaceSlug) {
             return Space::query()->where('slug', $spaceSlug)->first();
         }
 
         return Space::query()->orderBy('id')->first();
+    }
+
+    protected function resolveRedirect(Space $space, string $slug): ?Redirect
+    {
+        return Redirect::query()
+            ->where('space_id', $space->id)
+            ->where('source', '/'.trim($slug, '/'))
+            ->where('is_active', true)
+            ->first();
     }
 }

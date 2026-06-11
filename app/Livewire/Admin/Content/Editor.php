@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Http\Controllers\Api\PreviewController;
 use App\Models\Activity;
 use App\Models\Asset;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Content;
 use App\Models\ContentRevision;
+use App\Models\ContentType;
 use App\Models\EditorPreference;
+use App\Support\Cms\ContentLifecycle;
+use App\Support\Cms\ContentSyncFingerprint;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -41,24 +43,43 @@ class Editor extends Component
 
     public $savedJustNow = false;
 
+    public $scheduledFor = '';
+
+    public $selectedPreviewTargetId = '';
+
     public int $previewVersion = 1;
+
+    public int $editorSyncVersion = 1;
+
+    public ?string $lastKnownContentUpdatedAt = null;
+
+    public ?string $lastKnownContentSyncKey = null;
 
     protected $listeners = [
         'block-updated' => 'handleBlockUpdated',
         'asset-selected' => 'handleAssetSelected',
         'open-asset-picker' => 'handleOpenAssetPicker',
+        'content-external-change-detected' => 'syncExternalChanges',
     ];
 
     public function mount(Content $content)
     {
         $this->content = $content;
+        $this->lastKnownContentUpdatedAt = $content->updated_at?->toJSON();
         $this->loadBlocks();
-        $this->blockTypes = BlockType::all()->keyBy('key');
+        $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($content);
+        $this->blockTypes = $this->availableBlockTypes()->keyBy('key');
+        $this->scheduledFor = $content->scheduled_for?->format('Y-m-d\TH:i') ?? '';
+        $this->selectedPreviewTargetId = $content->space?->previewTargets()
+            ->where('is_default', true)
+            ->value('id') ?? $content->space?->previewTargets()->value('id') ?? '';
 
         // Load editor preferences
         $prefs = EditorPreference::get(auth()->id(), 'editor', []);
         $this->leftSidebarCollapsed = $prefs['leftSidebarCollapsed'] ?? false;
         $this->drawerOpen = $prefs['drawerOpen'] ?? true;
+        $previewTargetPreferences = $prefs['previewTargets'] ?? [];
+        $this->selectedPreviewTargetId = $previewTargetPreferences[$content->space_id] ?? $this->selectedPreviewTargetId;
     }
 
     public function loadBlocks()
@@ -82,6 +103,13 @@ class Editor extends Component
         $this->saveEditorPreference('drawerOpen', $this->drawerOpen);
     }
 
+    public function updatedSelectedPreviewTargetId($value): void
+    {
+        $prefs = EditorPreference::get(auth()->id(), 'editor', []);
+        $prefs['previewTargets'][$this->content->space_id] = $value;
+        EditorPreference::set(auth()->id(), 'editor', $prefs);
+    }
+
     protected function saveEditorPreference(string $key, mixed $value): void
     {
         $prefs = EditorPreference::get(auth()->id(), 'editor', []);
@@ -91,6 +119,10 @@ class Editor extends Component
 
     public function addBlock($blockTypeKey, $position = null)
     {
+        if (! $this->availableBlockTypes()->pluck('key')->contains($blockTypeKey)) {
+            return;
+        }
+
         $blockType = BlockType::where('key', $blockTypeKey)->firstOrFail();
         $parentId = $this->addBlockParentId ? (int) $this->addBlockParentId : null;
 
@@ -205,29 +237,28 @@ class Editor extends Component
 
     public function updateContent($field, $value)
     {
+        $lifecycle = app(ContentLifecycle::class);
+
         // Auto-generate slug when name changes and slug hasn't been manually edited
         if ($field === 'name' && $this->content->slug === Str::slug($this->content->name)) {
-            $this->content->update([
+            $lifecycle->updateContent($this->content, [
                 'name' => $value,
                 'slug' => Str::slug($value),
-                'updated_by' => auth()->id(),
-            ]);
+            ], auth()->id());
         } elseif ($field === 'parent_id') {
-            $this->content->update([
+            $lifecycle->updateContent($this->content, [
                 'parent_id' => $value ?: null,
-                'updated_by' => auth()->id(),
-            ]);
+            ], auth()->id());
         } elseif ($field === 'status') {
-            $this->content->update([
-                'status' => $value,
-                'published_at' => $value === 'published' && ! $this->content->published_at ? now() : $this->content->published_at,
-                'updated_by' => auth()->id(),
-            ]);
+            if ($value === 'published') {
+                $lifecycle->publish($this->content, auth()->id());
+            } else {
+                $lifecycle->unpublish($this->content, auth()->id());
+            }
         } else {
-            $this->content->update([
+            $lifecycle->updateContent($this->content, [
                 $field => $value,
-                'updated_by' => auth()->id(),
-            ]);
+            ], auth()->id());
         }
         $this->content->refresh();
         $this->markSaved();
@@ -238,6 +269,53 @@ class Editor extends Component
         return Content::where('space_id', $this->content->space_id)
             ->where('type', 'folder')
             ->where('id', '!=', $this->content->id)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getPreviewTargetsProperty()
+    {
+        return $this->content->space?->previewTargets()->get() ?? collect();
+    }
+
+    public function getPreviewTargetOriginsProperty(): array
+    {
+        return $this->previewTargets
+            ->map(function ($target): ?string {
+                $parts = parse_url((string) $target->url);
+
+                if (! isset($parts['scheme'], $parts['host'])) {
+                    return null;
+                }
+
+                $origin = $parts['scheme'].'://'.$parts['host'];
+
+                if (isset($parts['port'])) {
+                    $origin .= ':'.$parts['port'];
+                }
+
+                return $origin;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function getContentTypesProperty()
+    {
+        return ContentType::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    protected function availableBlockTypes()
+    {
+        $allowedBlocks = $this->content->contentType?->allowed_blocks ?? [];
+
+        return BlockType::query()
+            ->when(! empty($allowedBlocks), fn ($query) => $query->whereIn('key', $allowedBlocks))
             ->orderBy('name')
             ->get();
     }
@@ -278,6 +356,7 @@ class Editor extends Component
 
         $this->content->touch();
         $this->content->update(['updated_by' => auth()->id()]);
+        app(ContentLifecycle::class)->syncReferences($this->content);
 
         $this->loadBlocks();
         $this->selectedBlockId = $blockId;
@@ -322,15 +401,72 @@ class Editor extends Component
         $this->markSaved();
     }
 
+    public function moveBlockUp($blockId): void
+    {
+        $this->moveBlock($blockId, -1);
+    }
+
+    public function moveBlockDown($blockId): void
+    {
+        $this->moveBlock($blockId, 1);
+    }
+
+    protected function moveBlock($blockId, int $direction): void
+    {
+        $block = Block::where('content_id', $this->content->id)->findOrFail($blockId);
+        $siblings = $this->movableSiblingsFor($block);
+        $currentIndex = $siblings->search(fn (Block $sibling): bool => $sibling->id === $block->id);
+
+        if ($currentIndex === false) {
+            return;
+        }
+
+        $targetIndex = $currentIndex + $direction;
+
+        if ($targetIndex < 0 || $targetIndex >= $siblings->count()) {
+            return;
+        }
+
+        $ordered = $siblings->values()->all();
+        [$ordered[$currentIndex], $ordered[$targetIndex]] = [$ordered[$targetIndex], $ordered[$currentIndex]];
+
+        foreach ($ordered as $position => $sibling) {
+            $sibling->update(['position' => $position]);
+        }
+
+        $this->content->touch();
+        $this->content->update(['updated_by' => auth()->id()]);
+        $this->loadBlocks();
+        $this->selectedBlockId = $block->id;
+        $this->markSaved();
+    }
+
+    protected function movableSiblingsFor(Block $block)
+    {
+        $column = $block->data['_column'] ?? null;
+
+        return Block::query()
+            ->where('content_id', $block->content_id)
+            ->when(
+                $block->parent_block_id,
+                fn ($query) => $query->where('parent_block_id', $block->parent_block_id),
+                fn ($query) => $query->whereNull('parent_block_id')
+            )
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get()
+            ->filter(function (Block $sibling) use ($column): bool {
+                $siblingColumn = $sibling->data['_column'] ?? null;
+
+                return $siblingColumn === $column;
+            })
+            ->values();
+    }
+
     public function publish()
     {
-        $this->content->update([
-            'status' => 'published',
-            'published_at' => now(),
-            'updated_by' => auth()->id(),
-        ]);
-
-        $this->createRevision('Published');
+        app(ContentLifecycle::class)->publish($this->content, auth()->id());
+        $this->content->refresh();
 
         Activity::create([
             'space_id' => $this->content->space_id,
@@ -345,108 +481,78 @@ class Editor extends Component
 
     public function unpublish()
     {
-        $this->content->update([
-            'status' => 'draft',
-            'published_at' => null,
-            'updated_by' => auth()->id(),
-        ]);
+        app(ContentLifecycle::class)->unpublish($this->content, auth()->id());
         $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function requestReview(): void
+    {
+        app(ContentLifecycle::class)->requestReview($this->content, auth()->id());
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function schedulePublishing(): void
+    {
+        $this->validate([
+            'scheduledFor' => 'required|date|after:now',
+        ]);
+
+        app(ContentLifecycle::class)->schedule($this->content, $this->scheduledFor, auth()->id());
+        $this->content->refresh();
+        $this->markSaved();
     }
 
     public function createRevision(?string $label = null): void
     {
-        ContentRevision::create([
-            'content_id' => $this->content->id,
-            'user_id' => auth()->id(),
-            'snapshot' => $this->getContentSnapshot(),
-            'label' => $label,
-        ]);
+        app(ContentLifecycle::class)->createRevision($this->content, $label, auth()->id());
     }
 
     public function restoreRevision($revisionId): void
     {
         $revision = ContentRevision::where('content_id', $this->content->id)->findOrFail($revisionId);
-        $snapshot = $revision->snapshot;
-
-        // Restore content fields
-        if (isset($snapshot['content'])) {
-            $this->content->update(array_merge($snapshot['content'], ['updated_by' => auth()->id()]));
-        }
-
-        // Restore blocks
-        if (isset($snapshot['blocks'])) {
-            Block::where('content_id', $this->content->id)->delete();
-            foreach ($snapshot['blocks'] as $index => $blockSnapshot) {
-                $this->restoreSnapshotBlock($blockSnapshot, null, $index);
-            }
-        }
+        app(ContentLifecycle::class)->restoreRevision($this->content, $revision, auth()->id());
 
         $this->loadBlocks();
         $this->content->refresh();
         $this->markSaved();
     }
 
-    protected function getContentSnapshot(): array
-    {
-        $blocks = $this->content->blocks()
-            ->with('children')
-            ->orderBy('position')
-            ->get();
-
-        return [
-            'content' => [
-                'name' => $this->content->name,
-                'slug' => $this->content->slug,
-                'status' => $this->content->status,
-                'meta' => $this->content->meta,
-            ],
-            'blocks' => $blocks->map(fn (Block $block): array => $this->snapshotBlock($block))->toArray(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function snapshotBlock(Block $block): array
-    {
-        return [
-            'type' => $block->type,
-            'position' => $block->position,
-            'data' => $block->data ?? [],
-            'children' => $block->children
-                ->sortBy('position')
-                ->map(fn (Block $child): array => $this->snapshotBlock($child))
-                ->values()
-                ->toArray(),
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $blockSnapshot
-     */
-    protected function restoreSnapshotBlock(array $blockSnapshot, ?int $parentBlockId, int $fallbackPosition): Block
-    {
-        $block = Block::create([
-            'content_id' => $this->content->id,
-            'type' => $blockSnapshot['type'],
-            'position' => $blockSnapshot['position'] ?? $fallbackPosition,
-            'data' => $blockSnapshot['data'] ?? [],
-            'parent_block_id' => $parentBlockId,
-        ]);
-
-        foreach ($blockSnapshot['children'] ?? [] as $index => $childSnapshot) {
-            $this->restoreSnapshotBlock($childSnapshot, $block->id, $index);
-        }
-
-        return $block;
-    }
-
     protected function markSaved(): void
     {
+        $this->content->refresh();
+        $this->lastKnownContentUpdatedAt = $this->content->updated_at?->toJSON();
+        $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($this->content);
         $this->lastSavedAt = now();
         $this->savedJustNow = true;
         $this->previewVersion++;
+        $this->editorSyncVersion++;
         $this->dispatch('saved');
+    }
+
+    public function syncExternalChanges(): void
+    {
+        $freshContent = Content::query()->find($this->content->id);
+
+        if (! $freshContent) {
+            return;
+        }
+
+        $updatedAt = $freshContent->updated_at?->toJSON();
+        $syncKey = ContentSyncFingerprint::make($freshContent);
+
+        if ($updatedAt === null || $syncKey === $this->lastKnownContentSyncKey) {
+            return;
+        }
+
+        $this->content = $freshContent;
+        $this->lastKnownContentUpdatedAt = $updatedAt;
+        $this->lastKnownContentSyncKey = $syncKey;
+        $this->loadBlocks();
+        $this->previewVersion++;
+        $this->editorSyncVersion++;
+        $this->lastSavedAt = $freshContent->updated_at;
     }
 
     public function setSelectedBlockFromPreview(int $blockId): void
@@ -457,6 +563,7 @@ class Editor extends Component
 
         $this->selectedBlockId = $blockId;
         $this->drawerOpen = true;
+        $this->rightPanelTab = 'content';
     }
 
     public function saveCheckpoint(): void
@@ -538,12 +645,41 @@ class Editor extends Component
 
     public function getPreviewUrlProperty(): string
     {
-        return PreviewController::signedUrl($this->content);
+        $target = $this->selectedPreviewTarget();
+
+        return $target ? $target->previewUrlFor($this->content) : route('admin.content.preview', $this->content);
     }
 
     public function getPreviewFrameUrlProperty(): string
     {
-        return route('admin.content.preview', ['content' => $this->content]).'?v='.$this->previewVersion;
+        $target = $this->selectedPreviewTarget();
+
+        if ($target) {
+            return $this->appendPreviewFrameParameters($target->previewUrlFor($this->content));
+        }
+
+        return $this->appendPreviewFrameParameters(route('admin.content.preview', ['content' => $this->content]));
+    }
+
+    protected function selectedPreviewTarget()
+    {
+        if (! $this->selectedPreviewTargetId) {
+            return null;
+        }
+
+        return $this->content->space?->previewTargets()
+            ->whereKey($this->selectedPreviewTargetId)
+            ->first();
+    }
+
+    protected function appendPreviewFrameParameters(string $url): string
+    {
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.http_build_query([
+            'v' => $this->previewVersion,
+            'pilot_in_context' => 0,
+        ]);
     }
 
     protected function getDefaultDataForBlockType($blockType, ?int $columnIndex = null): array

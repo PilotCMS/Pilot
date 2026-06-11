@@ -132,6 +132,7 @@ class Edit extends Component
             'max' => null,
             'rows' => $type === 'textarea' ? 4 : 3,
             'options' => $type === 'select' ? [['value' => '', 'label' => '']] : [],
+            'reference_type' => $type === 'reference' ? 'content' : null,
         ];
     }
 

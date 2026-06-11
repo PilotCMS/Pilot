@@ -4,6 +4,15 @@
         savedJustNow: @entangle('savedJustNow'),
         blockLibraryOpen: @entangle('blockLibraryOpen'),
         canvasMode: 'compose',
+        previewDevice: 'desktop',
+        previewTargetOrigins: @js($this->previewTargetOrigins),
+        previewWidth() {
+            return {
+                desktop: 'min(100%, 1280px)',
+                tablet: '768px',
+                mobile: '390px'
+            }[this.previewDevice];
+        },
         init() {
             $wire.on('saved', () => {
                 this.savedJustNow = true;
@@ -11,12 +20,23 @@
             });
 
             window.addEventListener('message', (event) => {
-                if (event.origin !== window.location.origin) {
+                const allowedOrigins = [window.location.origin, ...this.previewTargetOrigins];
+
+                if (! allowedOrigins.includes(event.origin)) {
                     return;
                 }
 
                 if (event.data?.type === 'pilot-preview-select-block' && event.data?.blockId) {
                     $wire.call('setSelectedBlockFromPreview', Number(event.data.blockId));
+                }
+
+                if (event.data?.type === 'pilot-in-context-field-updated' && event.data?.blockId && event.data?.fieldKey) {
+                    $wire.call(
+                        'updateBlock',
+                        Number(event.data.blockId),
+                        event.data.fieldKey,
+                        event.data.value ?? ''
+                    );
                 }
             });
 
@@ -30,6 +50,11 @@
     }"
     class="h-screen w-full relative bg-gray-50 text-slate-800 overflow-hidden selection:bg-teal-100 selection:text-teal-900"
 >
+    <livewire:admin.content.content-sync-poller
+        :content-id="$content->id"
+        :key="'content-sync-poller-' . $content->id"
+    />
+
     {{-- Fixed header: top 0, left 70px (after nav), right 500px (before aside when open) --}}
     <header class="fixed top-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm transition-[right]" aria-label="Editor toolbar" style="left: var(--admin-nav-width); right: 0;">
         <div class="flex items-center gap-3">
@@ -57,9 +82,9 @@
         </div>
 
         <div class="absolute left-1/2 -translate-x-1/2 flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner">
-            <button type="button" class="w-9 h-8 flex items-center justify-center bg-white text-teal-600 shadow-sm rounded border border-slate-200 transition-all transform hover:scale-105" title="Desktop"><i class="ph ph-desktop text-lg"></i></button>
-            <button type="button" class="w-9 h-8 flex items-center justify-center text-slate-400 hover:text-teal-600 hover:bg-white/50 rounded transition-colors" title="Tablet"><i class="ph ph-device-tablet text-lg"></i></button>
-            <button type="button" class="w-9 h-8 flex items-center justify-center text-slate-400 hover:text-teal-600 hover:bg-white/50 rounded transition-colors" title="Mobile"><i class="ph ph-device-mobile text-lg"></i></button>
+            <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:class="previewDevice === 'desktop' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-all transform hover:scale-105" title="Desktop"><i class="ph ph-desktop text-lg"></i></button>
+            <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:class="previewDevice === 'tablet' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-colors" title="Tablet"><i class="ph ph-device-tablet text-lg"></i></button>
+            <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:class="previewDevice === 'mobile' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-colors" title="Mobile"><i class="ph ph-device-mobile text-lg"></i></button>
         </div>
 
         <div class="flex items-center gap-3">
@@ -67,7 +92,16 @@
                 <i class="ph ph-clock-counter-clockwise"></i>
                 <span x-text="savedJustNow ? 'Saved just now' : 'Last saved 2m ago'">Last saved 2m ago</span>
             </div>
-            <a href="{{ route('admin.content.preview', $content) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
+            <div class="relative">
+                <select wire:model.live="selectedPreviewTargetId" class="h-9 min-w-32 appearance-none rounded-md border border-slate-300 bg-white pl-3 pr-8 text-sm font-medium text-slate-600 shadow-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                    <option value="">Internal</option>
+                    @foreach($this->previewTargets as $previewTarget)
+                        <option value="{{ $previewTarget->id }}">{{ $previewTarget->name }}</option>
+                    @endforeach
+                </select>
+                <i class="ph ph-caret-down pointer-events-none absolute right-2.5 top-2.5 text-slate-400"></i>
+            </div>
+            <a href="{{ $this->previewUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
                 <i class="ph ph-eye" aria-hidden="true"></i>
                 View preview
             </a>
@@ -182,7 +216,8 @@
             <iframe
                 wire:key="preview-frame-{{ $previewVersion }}"
                 src="{{ $this->previewFrameUrl }}"
-                class="h-full w-full rounded-xl border border-slate-200 bg-white shadow-sm"
+                x-bind:style="`width: ${previewWidth()}`"
+                class="mx-auto h-full max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-[width]"
                 title="Live preview"
             ></iframe>
         </div>
@@ -190,14 +225,14 @@
         <div x-show="canvasMode === 'compose'" class="flex-1 min-h-0">
         <div class="flex-1 overflow-hidden relative bg-slate-100 flex flex-col items-center" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');">
             <div class="w-full flex justify-between items-center px-4 py-2 text-xs text-slate-400 font-mono select-none shrink-0">
-                <span>1280 &times; 850px (100%)</span>
+                <span x-text="previewDevice === 'desktop' ? '1280px canvas' : previewDevice === 'tablet' ? '768px canvas' : '390px canvas'">1280px canvas</span>
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-green-400"></div>
                     <span>Connected</span>
                 </div>
             </div>
 
-            <div class="w-full h-full max-w-[1280px] bg-white shadow-2xl overflow-y-auto pb-20 ring-1 ring-slate-900/5">
+            <div x-bind:style="`width: ${previewWidth()}`" class="h-full max-w-full bg-white shadow-2xl overflow-y-auto pb-20 ring-1 ring-slate-900/5 transition-[width]">
                 <div class="min-h-[500px] p-10 lg:p-14">
                     <h1 class="text-3xl lg:text-4xl font-bold mb-8 text-slate-900">{{ $content->name }}</h1>
 
@@ -291,7 +326,7 @@
 
                 @if($hasSelectedBlock && $bt)
                     {{-- When a block is selected: show ONLY the block fields --}}
-                    <livewire:admin.content.block-editor :block="$sel" :block-type="$bt" :key="'block-editor-' . $selectedBlockId" />
+                    <livewire:admin.content.block-editor :block="$sel" :block-type="$bt" :key="'block-editor-' . $selectedBlockId . '-' . $editorSyncVersion" />
                 @else
                     {{-- No block selected: show full page edit form --}}
                     <div class="space-y-7">
@@ -316,6 +351,22 @@
 
                     {{-- Parent Folder (pages only) --}}
                     @if($content->isPage())
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Content Type</label>
+                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">schema</span>
+                        </div>
+                        <div class="relative">
+                            <select wire:change="updateContent('content_type_id', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer">
+                                <option value="">Generic Page</option>
+                                @foreach($this->contentTypes as $contentType)
+                                    <option value="{{ $contentType->id }}" {{ $content->content_type_id === $contentType->id ? 'selected' : '' }}>{{ $contentType->name }}</option>
+                                @endforeach
+                            </select>
+                            <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Parent Folder</label>
@@ -393,13 +444,40 @@
                         <label class="text-xs text-slate-600 block mb-1.5">Meta description</label>
                         <textarea rows="3" wire:change="updateContentMeta('meta_description', $event.target.value)" placeholder="Brief description" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none">{{ $content->meta['meta_description'] ?? '' }}</textarea>
                     </div>
+                    <div class="group mt-4">
+                        <label class="text-xs text-slate-600 block mb-1.5">Canonical URL</label>
+                        <input type="text" value="{{ $content->meta['canonical_url'] ?? '' }}" wire:change="updateContentMeta('canonical_url', $event.target.value)" placeholder="https://example.com/page" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                    </div>
+                    <div class="group mt-4">
+                        <label class="text-xs text-slate-600 block mb-1.5">Open Graph image</label>
+                        <input type="text" value="{{ $content->meta['og_image'] ?? '' }}" wire:change="updateContentMeta('og_image', $event.target.value)" placeholder="/storage/social-card.jpg" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                    </div>
+                    <label class="mt-4 flex items-center gap-2 text-sm text-slate-600">
+                        <input type="checkbox" wire:change="updateContentMeta('noindex', $event.target.checked)" {{ ! empty($content->meta['noindex']) ? 'checked' : '' }} class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" />
+                        Hide from search engines
+                    </label>
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Status</span>
-                    <select wire:change="updateContent('status', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm">
-                        <option value="draft" {{ $content->status === 'draft' ? 'selected' : '' }}>Draft</option>
-                        <option value="published" {{ $content->status === 'published' ? 'selected' : '' }}>Published</option>
-                    </select>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Workflow</span>
+                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-medium text-slate-700">State</span>
+                            <span class="rounded bg-white px-2 py-0.5 text-xs text-slate-600">{{ str($content->workflow_status)->replace('_', ' ')->title() }}</span>
+                        </div>
+                        @if($content->scheduled_for)
+                            <div class="mt-2 text-xs text-slate-500">Scheduled for {{ $content->scheduled_for->format('M j, Y g:i A') }}</div>
+                        @endif
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            <button type="button" wire:click="requestReview" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Request Review</button>
+                            <button type="button" wire:click="unpublish" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Unpublish</button>
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        <label class="text-xs text-slate-600 block">Schedule publish</label>
+                        <input type="datetime-local" wire:model="scheduledFor" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                        <button type="button" wire:click="schedulePublishing" class="w-full rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Schedule</button>
+                        @error('scheduledFor') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
                 </div>
                 <div>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Revision history</span>

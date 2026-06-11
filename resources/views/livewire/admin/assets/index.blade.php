@@ -77,7 +77,7 @@
                             {{-- Preview: Image --}}
                             @if($asset->isImage())
                                 <img
-                                    src="{{ Storage::disk($asset->disk)->url($asset->path) }}"
+                                    src="{{ $asset->url() }}"
                                     alt="{{ $asset->displayName() }}"
                                     class="w-full aspect-square object-cover"
                                     loading="lazy"
@@ -86,7 +86,7 @@
                             @elseif($asset->isVideo())
                                 <div class="w-full aspect-square bg-zinc-900 relative overflow-hidden flex items-center justify-center">
                                     <video
-                                        src="{{ Storage::disk($asset->disk)->url($asset->path) }}"
+                                        src="{{ $asset->url() }}"
                                         class="max-w-full max-h-full object-contain"
                                         muted
                                         preload="metadata"
@@ -190,7 +190,7 @@
                         "
                     >
                         <img
-                            src="{{ Storage::disk($selectedAsset->disk)->url($selectedAsset->path) }}"
+                            src="{{ $selectedAsset->url() }}"
                             alt="{{ $selectedAsset->displayName() }}"
                             class="w-full h-full object-cover"
                             style="object-position: {{ $editFocalX }}% {{ $editFocalY }}%;"
@@ -200,7 +200,7 @@
                         </div>
                     </div>
                 @elseif($selectedAsset->isVideo())
-                    <video src="{{ Storage::disk($selectedAsset->disk)->url($selectedAsset->path) }}" controls class="w-full h-full object-contain"></video>
+                    <video src="{{ $selectedAsset->url() }}" controls class="w-full h-full object-contain"></video>
                 @else
                     <div class="w-full h-full flex items-center justify-center">
                         <flux:icon.document class="size-24 text-muted-foreground" />

@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Cms\ContentResource;
 use App\Models\CmsSetting;
 use App\Models\Content;
-use App\Support\Cms\ContentRenderer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Pilot\Laravel\Support\ContentRenderer;
 
 class PreviewController extends Controller
 {

@@ -31,12 +31,25 @@
 
                         <flux:field>
                             <flux:label>Type</flux:label>
-                            <flux:radio.group wire:model="type">
+                            <flux:radio.group wire:model.live="type">
                                 <flux:radio value="page">Page</flux:radio>
                                 <flux:radio value="folder">Folder</flux:radio>
                             </flux:radio.group>
                             <flux:error name="type" />
                         </flux:field>
+
+                        @if($type === 'page')
+                            <flux:field>
+                                <flux:label>Content Type</flux:label>
+                                <flux:select wire:model="contentTypeId">
+                                    <option value="">Generic Page</option>
+                                    @foreach($contentTypes as $contentType)
+                                        <option value="{{ $contentType->id }}">{{ $contentType->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:error name="contentTypeId" />
+                            </flux:field>
+                        @endif
 
                         <flux:field>
                             <flux:label>Space</flux:label>

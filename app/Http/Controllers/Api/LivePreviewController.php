@@ -7,22 +7,21 @@ use App\Http\Requests\Api\LivePreviewRenderRequest;
 use App\Models\CmsSetting;
 use App\Models\Content;
 use App\Models\Space;
-use App\Support\Cms\ContentRenderer;
 use Illuminate\Http\JsonResponse;
+use Pilot\Laravel\Support\ContentRenderer;
 
 class LivePreviewController extends Controller
 {
     public function __invoke(LivePreviewRenderRequest $request, ContentRenderer $renderer): JsonResponse
     {
         $locale = $request->string('locale', CmsSetting::get('default_locale', app()->getLocale()))->toString();
-        $theme = $request->string('theme', CmsSetting::get('theme', config('cms.theme', 'default')))->toString();
 
         $content = $request->source() === 'headless'
             ? $renderer->fromHeadless($this->headlessPayload($request->validated()), $locale)
             : $renderer->fromModel($this->resolveContent($request), $locale);
 
         return response()->json([
-            'html' => $renderer->renderBlocks($content, $theme)->toHtml(),
+            'html' => $renderer->renderBlocks($content)->toHtml(),
             'content' => $content->toArray(),
             'source' => $content->source,
         ]);
@@ -34,8 +33,8 @@ class LivePreviewController extends Controller
             return $this->authorizePreviewContent($request, Content::query()->findOrFail($request->integer('content_id')));
         }
 
-        $spaceSlug = $request->string('space', CmsSetting::get('default_space', config('cms.default_space')))->toString();
-        $slug = $request->string('slug', CmsSetting::get('home_slug', config('cms.home_slug', 'home')))->toString();
+        $spaceSlug = $request->string('space', CmsSetting::get('default_space', config('pilot.default_space')))->toString();
+        $slug = $request->string('slug', CmsSetting::get('home_slug', config('pilot.home_slug', 'home')))->toString();
 
         $space = $spaceSlug
             ? Space::query()->where('slug', $spaceSlug)->firstOrFail()

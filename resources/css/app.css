@@ -47,6 +47,10 @@
 
 /* No dark theme overrides */
 
+[x-cloak] {
+    display: none !important;
+}
+
 @layer base {
     html {
         -webkit-font-smoothing: antialiased;

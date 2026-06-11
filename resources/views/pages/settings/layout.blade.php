@@ -1,22 +1,34 @@
-<div class="flex items-start max-md:flex-col gap-6">
-    <div class="w-full pb-4 md:w-[220px] md:me-10 shrink-0">
-        <flux:navlist aria-label="{{ __('Settings') }}">
-            <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profile') }}</flux:navlist.item>
-            <flux:navlist.item :href="route('user-password.edit')" wire:navigate>{{ __('Password') }}</flux:navlist.item>
+<div class="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <aside class="min-w-0">
+        <div class="space-y-1">
+            <a href="{{ route('profile.edit') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('profile.edit') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
+                <i class="ph ph-user-circle text-base"></i>
+                <span>{{ __('Profile') }}</span>
+            </a>
+            <a href="{{ route('user-password.edit') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('user-password.edit') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
+                <i class="ph ph-lock-key text-base"></i>
+                <span>{{ __('Password') }}</span>
+            </a>
             @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
-                <flux:navlist.item :href="route('two-factor.show')" wire:navigate>{{ __('Two-Factor Auth') }}</flux:navlist.item>
+                <a href="{{ route('two-factor.show') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('two-factor.show') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
+                    <i class="ph ph-shield-check text-base"></i>
+                    <span>{{ __('Two-Factor Auth') }}</span>
+                </a>
             @endif
-            <flux:navlist.item :href="route('appearance.edit')" wire:navigate>{{ __('Appearance') }}</flux:navlist.item>
-        </flux:navlist>
-    </div>
-
-    <flux:separator class="md:hidden" />
+            <a href="{{ route('appearance.edit') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('appearance.edit') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
+                <i class="ph ph-palette text-base"></i>
+                <span>{{ __('Appearance') }}</span>
+            </a>
+        </div>
+    </aside>
 
     <div class="flex-1 self-stretch min-w-0">
-        <flux:heading>{{ $heading ?? '' }}</flux:heading>
-        <flux:subheading class="mt-1">{{ $subheading ?? '' }}</flux:subheading>
+        <div>
+            <h2 class="text-base font-semibold text-slate-900">{{ $heading ?? '' }}</h2>
+            <p class="mt-1 text-sm text-slate-500">{{ $subheading ?? '' }}</p>
+        </div>
 
-        <div class="mt-6 w-full max-w-lg">
+        <div class="mt-6 w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             {{ $slot }}
         </div>
     </div>

@@ -33,6 +33,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Pilot\\Laravel\\": "packages/pilot-laravel/src/",
             "Tweaker\\": "packages/tweaker/src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

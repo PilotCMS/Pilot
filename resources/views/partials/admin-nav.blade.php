@@ -12,7 +12,7 @@
     </div>
 
     <div class="px-3 py-3 border-b border-slate-200">
-        <button type="button" class="w-full h-9 rounded-md bg-white border border-slate-200 text-slate-500 text-xs px-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+        <button type="button" x-data x-on:click="$dispatch('open-command-palette')" class="w-full h-9 rounded-md bg-white border border-slate-200 text-slate-500 text-xs px-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
             <span class="flex items-center gap-2">
                 <i class="ph ph-magnifying-glass text-sm"></i>
                 Search
@@ -36,6 +36,10 @@
                 <a href="{{ route('admin.blocks.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.blocks.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
                     <i class="ph ph-cube text-base"></i>
                     <span>Blocks</span>
+                </a>
+                <a href="{{ route('admin.content-types.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.content-types.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
+                    <i class="ph ph-blueprint text-base"></i>
+                    <span>Types</span>
                 </a>
                 <a href="{{ route('admin.assets.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.assets.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
                     <i class="ph ph-image text-base"></i>

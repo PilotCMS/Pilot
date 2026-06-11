@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\URL;
 it('renders posted headless content for live preview', function () {
     $this->postJson(route('api.preview.render'), [
         'source' => 'headless',
-        'theme' => 'default',
         'content' => [
             'slug' => 'preview-home',
             'name' => 'Preview Home',
@@ -62,7 +61,6 @@ it('renders mysql content for live preview when no headless payload is posted', 
 
     $this->postJson($previewUrl, [
         'source' => 'mysql',
-        'theme' => 'default',
     ])
         ->assertOk()
         ->assertJsonPath('source', 'mysql')

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Content;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,7 +18,11 @@ class BlockFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'content_id' => Content::factory(),
+            'parent_block_id' => null,
+            'type' => 'hero',
+            'position' => 0,
+            'data' => [],
         ];
     }
 }

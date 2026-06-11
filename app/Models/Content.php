@@ -15,11 +15,17 @@ class Content extends Model
     protected $fillable = [
         'space_id',
         'parent_id',
+        'content_type_id',
         'type',
         'slug',
         'name',
         'status',
+        'workflow_status',
         'published_at',
+        'scheduled_for',
+        'review_requested_at',
+        'review_requested_by',
+        'published_revision_id',
         'meta',
         'created_by',
         'updated_by',
@@ -29,6 +35,8 @@ class Content extends Model
     {
         return [
             'published_at' => 'datetime',
+            'scheduled_for' => 'datetime',
+            'review_requested_at' => 'datetime',
             'meta' => 'array',
         ];
     }
@@ -36,6 +44,26 @@ class Content extends Model
     public function revisions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ContentRevision::class)->orderByDesc('created_at');
+    }
+
+    public function contentType(): BelongsTo
+    {
+        return $this->belongsTo(ContentType::class);
+    }
+
+    public function publishedRevision(): BelongsTo
+    {
+        return $this->belongsTo(ContentRevision::class, 'published_revision_id');
+    }
+
+    public function references(): HasMany
+    {
+        return $this->hasMany(ContentReference::class);
+    }
+
+    public function incomingReferences(): HasMany
+    {
+        return $this->hasMany(ContentReference::class, 'target_content_id');
     }
 
     public function space(): BelongsTo
@@ -86,5 +114,10 @@ class Content extends Model
     public function isPage(): bool
     {
         return $this->type === 'page';
+    }
+
+    public function isScheduled(): bool
+    {
+        return $this->workflow_status === 'scheduled' && $this->scheduled_for !== null;
     }
 }

@@ -78,5 +78,11 @@ it('keeps editor attributes out of normal public rendering', function () {
 
     $this->get(route('home', ['pilot_editor' => 1]))
         ->assertOk()
-        ->assertSee('data-pilot-editable="block"', false);
+        ->assertSee('data-pilot-editable="block"', false)
+        ->assertSee('disablePreviewLinkNavigation', false)
+        ->assertSee('event.preventDefault();', false)
+        ->assertSee('pilot-preview-select-block', false)
+        ->assertDontSee('pilot-preview-navigated', false)
+        ->assertDontSee("url.searchParams.set('pilot_editor', '1')", false)
+        ->assertDontSee("url.searchParams.set('pilot_in_context', '0')", false);
 });

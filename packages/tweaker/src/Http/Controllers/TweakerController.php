@@ -18,7 +18,7 @@ class TweakerController extends Controller
     {
         $this->abortIfDisabled();
 
-        $path = __DIR__.'/../../../../resources/tweaker.js';
+        $path = __DIR__.'/../../../resources/tweaker.js';
 
         if (! File::exists($path)) {
             abort(404, 'Tweaker script not found.');

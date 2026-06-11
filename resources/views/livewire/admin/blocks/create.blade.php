@@ -28,6 +28,7 @@
                     ['type' => 'number', 'label' => 'Number', 'desc' => 'Numeric value'],
                     ['type' => 'boolean', 'label' => 'Boolean', 'desc' => 'True or false'],
                     ['type' => 'image', 'label' => 'Image', 'desc' => 'Asset reference'],
+                    ['type' => 'reference', 'label' => 'Reference', 'desc' => 'Content relationship'],
                     ['type' => 'select', 'label' => 'Select', 'desc' => 'Choose from options'],
                     ['type' => 'repeater', 'label' => 'Repeater', 'desc' => 'Repeatable group'],
                 ];
@@ -169,6 +170,7 @@
                             <option value="number">Number</option>
                             <option value="boolean">Boolean</option>
                             <option value="image">Image</option>
+                            <option value="reference">Reference</option>
                             <option value="select">Select</option>
                             <option value="repeater">Repeater</option>
                         </flux:select>

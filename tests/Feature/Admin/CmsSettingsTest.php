@@ -48,7 +48,6 @@ it('saves cms settings from the admin screen', function () {
     $this->actingAs($admin);
 
     Livewire::test(Index::class)
-        ->set('theme', 'marketing')
         ->set('defaultSpace', 'website')
         ->set('homeSlug', 'homepage')
         ->set('defaultLocale', 'es')
@@ -58,7 +57,6 @@ it('saves cms settings from the admin screen', function () {
         ->call('save')
         ->assertHasNoErrors();
 
-    expect(CmsSetting::get('theme'))->toBe('marketing');
     expect(CmsSetting::get('default_space'))->toBe('website');
     expect(CmsSetting::get('home_slug'))->toBe('homepage');
     expect(CmsSetting::get('default_locale'))->toBe('es');
@@ -110,14 +108,12 @@ it('uses saved public rendering settings for the home route', function () {
     ]);
 
     CmsSetting::setMany([
-        'theme' => 'marketing',
         'default_space' => 'website',
         'home_slug' => 'homepage',
     ]);
 
     $this->get(route('home'))
         ->assertOk()
-        ->assertSee('Public Theme')
         ->assertSee('Configured Home')
         ->assertDontSee('Unused Home');
 });
@@ -178,7 +174,6 @@ it('resets cms settings back to environment defaults', function () {
     $admin->assignRole('Admin');
 
     CmsSetting::setMany([
-        'theme' => 'marketing',
         'default_space' => 'website',
         'home_slug' => 'homepage',
         'default_locale' => 'es',
@@ -191,7 +186,6 @@ it('resets cms settings back to environment defaults', function () {
 
     Livewire::test(Index::class)
         ->call('resetToEnvironmentDefaults')
-        ->assertSet('theme', config('cms.theme', 'default'))
         ->assertSet('homeSlug', config('cms.home_slug', 'home'))
         ->assertSet('defaultLocale', 'en')
         ->assertSet('draftApiEnabled', true)
