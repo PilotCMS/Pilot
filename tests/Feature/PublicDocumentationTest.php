@@ -18,5 +18,8 @@ it('publishes public installation documentation for Pilot, Incontext, and the La
         ->toContain('Install Incontext')
         ->toContain('PILOT_IN_CONTEXT_ENABLED=true')
         ->toContain('GET   /_pilot/preview/{content}')
+        ->toContain('Preview iframe headers')
+        ->toContain('X-Frame-Options: SAMEORIGIN')
+        ->toContain('frame-ancestors')
         ->toContain('PATCH /_pilot/in-context/blocks/{block}');
 });

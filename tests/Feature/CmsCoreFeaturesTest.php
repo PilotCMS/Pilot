@@ -2,6 +2,7 @@
 
 use App\Livewire\Admin\Content\BlockEditor;
 use App\Livewire\Admin\Content\Editor;
+use App\Livewire\Admin\Spaces\Index as SpacesIndex;
 use App\Models\Block;
 use App\Models\BlockType;
 use App\Models\Content;
@@ -11,6 +12,7 @@ use App\Models\Redirect;
 use App\Models\Space;
 use App\Models\User;
 use App\Support\Cms\ContentLifecycle;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
@@ -148,6 +150,30 @@ it('indexes reference fields from block schemas', function () {
         ->where('target_content_id', $target->id)
         ->where('field_key', 'related_entry')
         ->exists())->toBeTrue();
+});
+
+it('does not delete content when its space is deleted', function () {
+    $space = Space::factory()->create();
+    $content = Content::factory()->create([
+        'space_id' => $space->id,
+    ]);
+
+    expect(fn () => $space->delete())->toThrow(QueryException::class)
+        ->and(Content::whereKey($content->id)->exists())->toBeTrue();
+});
+
+it('prevents deleting a space that still has content', function () {
+    $space = Space::factory()->create();
+    Content::factory()->create([
+        'space_id' => $space->id,
+    ]);
+
+    Livewire::test(SpacesIndex::class)
+        ->call('deleteSpace', $space->id)
+        ->assertHasErrors(['space'])
+        ->assertDispatched('error');
+
+    expect(Space::whereKey($space->id)->exists())->toBeTrue();
 });
 
 it('renders canonical robots and open graph seo metadata', function () {

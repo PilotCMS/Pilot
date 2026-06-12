@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cca2d6c2cf395b951c678c2851de1b1b",
+    "content-hash": "f88197bbd7ba4c429decea93294c7038",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3272,6 +3272,58 @@
                 }
             ],
             "time": "2025-12-27T19:41:33+00:00"
+        },
+        {
+            "name": "pilot/laravel",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PilotCMS/pilot-laravel.git",
+                "reference": "568301b311fabb8fb4dae6cd13c06026cc656c28"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/568301b311fabb8fb4dae6cd13c06026cc656c28",
+                "reference": "568301b311fabb8fb4dae6cd13c06026cc656c28",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^11.0|^12.0",
+                "illuminate/database": "^11.0|^12.0",
+                "illuminate/routing": "^11.0|^12.0",
+                "illuminate/support": "^11.0|^12.0",
+                "illuminate/view": "^11.0|^12.0",
+                "php": "^8.2"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Pilot\\Laravel\\PilotServiceProvider"
+                    ],
+                    "aliases": {
+                        "Pilot": "Pilot\\Laravel\\Facades\\Pilot"
+                    }
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Pilot\\Laravel\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Laravel frontend adapter for reading and rendering Pilot CMS content.",
+            "support": {
+                "source": "https://github.com/PilotCMS/pilot-laravel/tree/main",
+                "issues": "https://github.com/PilotCMS/pilot-laravel/issues"
+            },
+            "time": "2026-06-11T22:05:06+00:00"
         },
         {
             "name": "pragmarx/google2fa",
@@ -10607,7 +10659,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "pilot/laravel": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

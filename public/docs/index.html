@@ -1120,6 +1120,24 @@ class PageController
 PILOT_PREVIEW_PATH=_pilot/preview
 PILOT_PREVIEW_SECRET=base64-or-random-shared-secret
 PILOT_PREVIEW_EXPIRES_MINUTES=60</code></pre>
+
+                    <h3>Preview iframe headers</h3>
+                    <p>
+                        Client-facing preview targets must allow the CMS editor origin to embed preview pages in an
+                        iframe. If the frontend returns <code>X-Frame-Options: SAMEORIGIN</code>, browsers will block
+                        cross-origin editor previews before Pilot or Livewire can load the frame.
+                    </p>
+                    <p>
+                        Remove <code>X-Frame-Options</code> from previewable responses, especially
+                        <code>/_pilot/preview/*</code>, and prefer a
+                        <code>Content-Security-Policy</code> <code>frame-ancestors</code> allow-list:
+                    </p>
+                    <pre><code class="language-nginx">add_header Content-Security-Policy "frame-ancestors 'self' https://cms.example.com" always;</code></pre>
+                    <p>
+                        Use the exact CMS editor origin, including scheme and port when needed. Do not use a wildcard.
+                        After changing Forge or nginx headers, reload nginx and confirm the preview response no longer
+                        includes <code>X-Frame-Options: SAMEORIGIN</code>.
+                    </p>
                 </section>
 
                 <section id="incontext-installation">
@@ -1459,6 +1477,14 @@ PILOT_IN_CONTEXT_PATH=_pilot/in-context</code></pre>
                     <p>
                         Check that the preview link has not expired, the content id matches the signed content id, and
                         <code>PILOT_PREVIEW_SECRET</code> matches between the signer and the frontend.
+                    </p>
+
+                    <h3>Preview iframe is refused</h3>
+                    <p>
+                        If the browser reports that the preview site refused to display in a frame because it set
+                        <code>X-Frame-Options</code> to <code>sameorigin</code>, remove that header from previewable
+                        frontend responses and allow the CMS editor origin with
+                        <code>Content-Security-Policy: frame-ancestors</code>.
                     </p>
 
                     <h3>Incontext attributes are missing</h3>

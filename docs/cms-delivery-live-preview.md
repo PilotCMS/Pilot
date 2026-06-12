@@ -250,6 +250,22 @@ GET /api/v1/preview/{content}?signature=...&expires=...
 
 Use `App\Http\Controllers\Api\PreviewController::signedUrl($content)` to generate a temporary signed URL.
 
+## Preview iframe headers
+
+Client-facing preview targets must allow the CMS editor origin to embed preview pages in an iframe. If the frontend returns `X-Frame-Options: SAMEORIGIN`, browsers will block cross-origin editor previews before Pilot or Livewire can load the frame.
+
+Remove `X-Frame-Options` from previewable responses, especially `/_pilot/preview/*`, and prefer a `Content-Security-Policy` `frame-ancestors` allow-list:
+
+```nginx
+add_header Content-Security-Policy "frame-ancestors 'self' https://cms.example.com" always;
+```
+
+Use the exact CMS editor origin, including scheme and port when needed. Do not use a wildcard. After changing Forge or nginx headers, reload nginx and confirm the preview response no longer includes `X-Frame-Options: SAMEORIGIN`:
+
+```bash
+curl -I 'https://frontend.example.com/_pilot/preview/1?...'
+```
+
 ## Live preview render API
 
 Live preview rendering is handled by:

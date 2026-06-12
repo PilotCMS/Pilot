@@ -1,6 +1,9 @@
 <?php
 
 use App\Livewire\Admin\Users\Index;
+use App\Models\Activity;
+use App\Models\Content;
+use App\Models\EditorPreference;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
@@ -113,6 +116,67 @@ it('deletes another user', function () {
         ->assertSet('selectedUserId', null);
 
     expect(User::whereKey($user->id)->exists())->toBeFalse();
+});
+
+it('keeps content when its creator is deleted', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $user = User::factory()->create();
+    $user->assignRole('Viewer');
+
+    $content = Content::factory()->create([
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($admin);
+
+    Livewire::test(Index::class)
+        ->call('deleteUser', $user->id)
+        ->assertSet('selectedUserId', null);
+
+    expect(Content::whereKey($content->id)->exists())->toBeTrue()
+        ->and($content->refresh()->created_by)->toBeNull()
+        ->and($content->updated_by)->toBeNull();
+});
+
+it('keeps user-attributed records when a user is deleted', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $user = User::factory()->create();
+    $user->assignRole('Viewer');
+
+    $content = Content::factory()->create([
+        'created_by' => $user->id,
+    ]);
+
+    $activity = Activity::factory()->create([
+        'user_id' => $user->id,
+        'space_id' => $content->space_id,
+        'action' => 'updated',
+        'subject_type' => Content::class,
+        'subject_id' => $content->id,
+    ]);
+
+    $editorPreference = EditorPreference::create([
+        'user_id' => $user->id,
+        'key' => 'editor',
+        'value' => ['drawerOpen' => true],
+    ]);
+
+    $this->actingAs($admin);
+
+    Livewire::test(Index::class)
+        ->call('deleteUser', $user->id)
+        ->assertSet('selectedUserId', null);
+
+    expect(User::whereKey($user->id)->exists())->toBeFalse()
+        ->and(Activity::whereKey($activity->id)->exists())->toBeTrue()
+        ->and($activity->refresh()->user_id)->toBeNull()
+        ->and(EditorPreference::whereKey($editorPreference->id)->exists())->toBeTrue()
+        ->and($editorPreference->refresh()->user_id)->toBeNull();
 });
 
 it('shows role permission summaries in the details rail', function () {
