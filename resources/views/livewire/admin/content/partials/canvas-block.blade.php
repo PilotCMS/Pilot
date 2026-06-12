@@ -1,8 +1,6 @@
 @php
     $isSelected = $selectedBlockId === $block['id'];
     $blockType = $blockTypes[$block['type']] ?? null;
-    $componentName = (string) str($block['type'])->replace(['.', '/', '\\'], '-')->kebab();
-    $componentView = 'components.' . $componentName;
     $canContainBlocks = (bool) ($blockType?->schema['can_contain_blocks'] ?? false);
     $children = collect($block['children'] ?? [])->values();
     $columnCount = (int) ($block['data']['columns'] ?? 2);
@@ -53,11 +51,7 @@
             </div>
         @endif
 
-        @if(view()->exists($componentView))
-            <x-dynamic-component :component="$componentName" :block="$block" :data="$block['data']" :children="$block['children'] ?? []" :render-children="false" />
-        @else
-            <x-fallback :block="$block" :data="$block['data']" :children="$block['children'] ?? []" />
-        @endif
+        <x-fallback :block="$block" :data="$block['data']" :children="$block['children'] ?? []" />
     </div>
 
     @if($canContainBlocks && $hasColumnSlots)

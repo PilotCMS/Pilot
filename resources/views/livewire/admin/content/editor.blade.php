@@ -3,7 +3,8 @@
         rightPanelTab: @entangle('rightPanelTab'),
         savedJustNow: @entangle('savedJustNow'),
         blockLibraryOpen: @entangle('blockLibraryOpen'),
-        canvasMode: 'compose',
+        selectedBlockId: @entangle('selectedBlockId'),
+        canvasMode: 'preview',
         previewDevice: 'desktop',
         previewTargetOrigins: @js($this->previewTargetOrigins),
         previewWidth() {
@@ -13,11 +14,36 @@
                 mobile: '390px'
             }[this.previewDevice];
         },
+        previewFrameOrigin() {
+            try {
+                return new URL(this.$refs.previewFrame?.src || window.location.href).origin;
+            } catch (error) {
+                return '*';
+            }
+        },
+        syncPreviewSelection() {
+            const frame = this.$refs.previewFrame;
+
+            if (! frame?.contentWindow) {
+                return;
+            }
+
+            frame.contentWindow.postMessage({
+                type: 'pilot-preview-sync-selected-block',
+                blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
+            }, this.previewFrameOrigin());
+        },
         init() {
             $wire.on('saved', () => {
                 this.savedJustNow = true;
                 setTimeout(() => { this.savedJustNow = false; }, 2000);
             });
+
+            this.$watch('selectedBlockId', () => {
+                this.$nextTick(() => this.syncPreviewSelection());
+            });
+
+            this.$nextTick(() => this.syncPreviewSelection());
 
             window.addEventListener('message', (event) => {
                 const allowedOrigins = [window.location.origin, ...this.previewTargetOrigins];
@@ -27,6 +53,8 @@
                 }
 
                 if (event.data?.type === 'pilot-preview-select-block' && event.data?.blockId) {
+                    this.selectedBlockId = Number(event.data.blockId);
+                    this.syncPreviewSelection();
                     $wire.call('setSelectedBlockFromPreview', Number(event.data.blockId));
                 }
 
@@ -214,6 +242,8 @@
 
         <div x-show="canvasMode === 'preview'" x-cloak class="flex-1 min-h-0 overflow-hidden bg-slate-100 p-4">
             <iframe
+                x-ref="previewFrame"
+                x-on:load="syncPreviewSelection()"
                 wire:key="preview-frame-{{ $previewVersion }}"
                 src="{{ $this->previewFrameUrl }}"
                 x-bind:style="`width: ${previewWidth()}`"
@@ -222,8 +252,8 @@
             ></iframe>
         </div>
 
-        <div x-show="canvasMode === 'compose'" class="flex-1 min-h-0">
-        <div class="flex-1 overflow-hidden relative bg-slate-100 flex flex-col items-center" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');">
+        <div x-show="canvasMode === 'compose'" class="flex min-h-0 flex-1 overflow-hidden">
+        <div class="relative flex min-h-0 flex-1 flex-col items-center overflow-hidden bg-slate-100" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');">
             <div class="w-full flex justify-between items-center px-4 py-2 text-xs text-slate-400 font-mono select-none shrink-0">
                 <span x-text="previewDevice === 'desktop' ? '1280px canvas' : previewDevice === 'tablet' ? '768px canvas' : '390px canvas'">1280px canvas</span>
                 <div class="flex items-center gap-2">
@@ -232,7 +262,7 @@
                 </div>
             </div>
 
-            <div x-bind:style="`width: ${previewWidth()}`" class="h-full max-w-full bg-white shadow-2xl overflow-y-auto pb-20 ring-1 ring-slate-900/5 transition-[width]">
+            <div x-bind:style="`width: ${previewWidth()}`" class="h-full min-h-0 max-w-full overflow-y-auto bg-white pb-20 shadow-2xl ring-1 ring-slate-900/5 transition-[width]">
                 <div class="min-h-[500px] p-10 lg:p-14">
                     <h1 class="text-3xl lg:text-4xl font-bold mb-8 text-slate-900">{{ $content->name }}</h1>
 

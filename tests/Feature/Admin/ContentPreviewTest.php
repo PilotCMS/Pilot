@@ -64,6 +64,8 @@ it('renders preview with fallback component card when a blade view is missing', 
         ->assertSee('data-pilot-block-id=', false)
         ->assertSee('disablePreviewLinkNavigation', false)
         ->assertSee('pilot-preview-select-block', false)
+        ->assertSee('pilot-preview-sync-selected-block', false)
+        ->assertSee('data-pilot-selected', false)
         ->assertDontSee('pilot-preview-navigated', false)
         ->assertDontSee('preserveEditorPreviewMode', false)
         ->assertDontSee("url.searchParams.set('pilot_editor', '1')", false)
@@ -94,11 +96,55 @@ it('shows a preview link in the content editor toolbar', function () {
         ->get(route('admin.content.editor', $content))
         ->assertOk()
         ->assertSee('View preview')
+        ->assertSee("canvasMode: 'preview'", false)
+        ->assertSee('x-show="canvasMode === \'compose\'" class="flex min-h-0 flex-1 overflow-hidden"', false)
+        ->assertSee('class="h-full min-h-0 max-w-full overflow-y-auto bg-white', false)
         ->assertSee('href="'.route('admin.content.preview', $content).'"', false)
         ->assertSee('pilot_in_context=0', false)
+        ->assertSee('x-ref="previewFrame"', false)
+        ->assertSee('syncPreviewSelection', false)
+        ->assertSee('pilot-preview-sync-selected-block', false)
         ->assertDontSee('pilot-preview-navigated', false)
         ->assertDontSee('openContentFromPreview', false)
         ->assertSee('target="_blank"', false);
+});
+
+it('renders compose blocks as fallback previews with formatted json', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Homepage',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Block::create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'position' => 0,
+        'data' => [
+            'title' => ['en' => 'Preview CTA'],
+            'button_text' => ['en' => 'Take action'],
+            'button_url' => ['en' => '/signup'],
+            'enabled' => true,
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.content.editor', $content))
+        ->assertOk()
+        ->assertSee('Fallback preview')
+        ->assertSee('"en": "Preview CTA"')
+        ->assertSee('"en": "/signup"')
+        ->assertSee('true');
 });
 
 it('renders the content editor when image preview fields are localized arrays', function () {
