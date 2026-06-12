@@ -19,6 +19,8 @@ class AssetPickerModal extends Component
 
     public $search = '';
 
+    public string $typeFilter = 'images';
+
     public $viewMode = 'grid'; // grid|list
 
     protected $listeners = ['open-asset-picker' => 'open'];
@@ -29,6 +31,7 @@ class AssetPickerModal extends Component
         $this->spaceId = Space::first()?->id;
         $this->folderId = null;
         $this->search = '';
+        $this->typeFilter = 'images';
         $this->show = true;
     }
 
@@ -84,7 +87,16 @@ class AssetPickerModal extends Component
                 ->when(! $this->folderId, fn ($q) => $q->whereNull('folder_id'))
                 ->when($this->search, fn ($q) => $q->where(function ($q) {
                     $q->where('filename', 'like', "%{$this->search}%")
-                        ->orWhere('display_name', 'like', "%{$this->search}%");
+                        ->orWhere('display_name', 'like', "%{$this->search}%")
+                        ->orWhere('description', 'like', "%{$this->search}%")
+                        ->orWhere('credit', 'like', "%{$this->search}%")
+                        ->orWhereHas('tags', fn ($tagQuery) => $tagQuery->where('name', 'like', "%{$this->search}%"));
+                }))
+                ->when($this->typeFilter === 'images', fn ($q) => $q->where('mime', 'like', 'image/%'))
+                ->when($this->typeFilter === 'videos', fn ($q) => $q->where('mime', 'like', 'video/%'))
+                ->when($this->typeFilter === 'documents', fn ($q) => $q->where(function ($query): void {
+                    $query->where('mime', 'like', 'application/%')
+                        ->orWhere('mime', 'like', 'text/%');
                 }))
                 ->orderByDesc('created_at')
                 ->limit(50);

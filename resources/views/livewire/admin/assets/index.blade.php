@@ -54,17 +54,30 @@
                 </flux:heading>
                 <flux:text class="text-muted-foreground text-sm mt-1">Images, videos, and documents for your content</flux:text>
             </div>
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="flex flex-col gap-4 mb-8 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+                        <flux:input wire:model.live.debounce.300ms="search" placeholder="Search assets, tags, credit..." icon="magnifying-glass" class="sm:max-w-xs" />
+                        <flux:select wire:model.live="typeFilter" class="sm:max-w-44">
+                            <option value="all">All types</option>
+                            <option value="images">Images</option>
+                            <option value="videos">Videos</option>
+                            <option value="documents">Documents</option>
+                            <option value="expired">Expired rights</option>
+                        </flux:select>
+                    </div>
+                    <flux:button wire:click="$set('showUploadModal', true)" variant="primary" size="sm">
+                        <flux:icon.arrow-up-tray class="size-4" />
+                        Upload
+                    </flux:button>
+                </div>
+
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>Sort:</span>
                     <button wire:click="setSort('created_at')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'created_at' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Date</button>
                     <button wire:click="setSort('filename')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'filename' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Name</button>
                     <button wire:click="setSort('size')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'size' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Size</button>
                 </div>
-                <flux:button wire:click="$set('showUploadModal', true)" variant="primary" size="sm">
-                    <flux:icon.arrow-up-tray class="size-4" />
-                    Upload
-                </flux:button>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5" wire:key="assets-grid-{{ $assets->count() }}-{{ $assets->max('id') ?? 0 }}">
@@ -107,6 +120,12 @@
                                 <flux:text class="text-xs text-muted-foreground">
                                     {{ $asset->size >= 1048576 ? number_format($asset->size / 1048576, 1) . ' MB' : number_format($asset->size / 1024, 1) . ' KB' }}
                                 </flux:text>
+                                @if($asset->dimensions())
+                                    <flux:text class="text-xs text-muted-foreground">{{ $asset->dimensions() }}</flux:text>
+                                @endif
+                                @if($asset->isExpired())
+                                    <span class="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Expired</span>
+                                @endif
                                 @if($asset->tags->isNotEmpty())
                                     <div class="flex flex-wrap gap-1 mt-1">
                                         @foreach($asset->tags->take(2) as $tag)
@@ -220,6 +239,59 @@
             <flux:field>
                 <flux:label>Display Name</flux:label>
                 <flux:input wire:model="editDisplayName" placeholder="Custom name for this asset" />
+                <flux:error name="editDisplayName" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Description</flux:label>
+                <flux:textarea wire:model="editDescription" rows="3" placeholder="Internal notes, campaign context, or usage guidance" />
+                <flux:error name="editDescription" />
+            </flux:field>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <flux:field>
+                    <flux:label>Alt Text</flux:label>
+                    <flux:input wire:model="editAlt" placeholder="Describe the asset" />
+                    <flux:error name="editAlt" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>Title</flux:label>
+                    <flux:input wire:model="editTitle" placeholder="Optional public title" />
+                    <flux:error name="editTitle" />
+                </flux:field>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <flux:field>
+                    <flux:label>Credit</flux:label>
+                    <flux:input wire:model="editCredit" placeholder="Photographer or source" />
+                    <flux:error name="editCredit" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>License</flux:label>
+                    <flux:input wire:model="editLicense" placeholder="Owned, stock, CC BY..." />
+                    <flux:error name="editLicense" />
+                </flux:field>
+            </div>
+
+            <flux:field>
+                <flux:label>Copyright</flux:label>
+                <flux:input wire:model="editCopyright" placeholder="Copyright owner or rights note" />
+                <flux:error name="editCopyright" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Source URL</flux:label>
+                <flux:input wire:model="editSourceUrl" placeholder="https://..." />
+                <flux:error name="editSourceUrl" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Rights Expiration</flux:label>
+                <flux:input type="date" wire:model="editExpiresAt" />
+                <flux:error name="editExpiresAt" />
             </flux:field>
 
             {{-- Tags --}}
@@ -263,15 +335,45 @@
             <div class="text-sm text-muted-foreground space-y-1">
                 <div>Filename: {{ $selectedAsset->filename }}</div>
                 <div>Size: {{ $selectedAsset->size >= 1048576 ? number_format($selectedAsset->size / 1048576, 1) . ' MB' : number_format($selectedAsset->size / 1024, 1) . ' KB' }}</div>
+                @if($selectedAsset->dimensions())
+                    <div>Dimensions: {{ $selectedAsset->dimensions() }}</div>
+                @endif
                 <div>Type: {{ $selectedAsset->mime }}</div>
+                @if($selectedAsset->checksum)
+                    <div class="break-all">Checksum: {{ $selectedAsset->checksum }}</div>
+                @endif
+                @if($selectedAsset->expires_at)
+                    <div>Rights expire: {{ $selectedAsset->expires_at->toFormattedDateString() }}</div>
+                @endif
+            </div>
+
+            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div class="border-b border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-800 dark:border-zinc-700 dark:text-zinc-100">
+                    Used in {{ $selectedAssetUsage->count() }} {{ \Illuminate\Support\Str::plural('place', $selectedAssetUsage->count()) }}
+                </div>
+                <div class="max-h-48 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
+                    @forelse($selectedAssetUsage as $usage)
+                        <a href="{{ route('admin.content.edit', $usage['content']) }}" wire:navigate class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                            <div class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $usage['content']->name }}</div>
+                            <div class="text-xs text-muted-foreground">
+                                {{ $usage['block'] ? 'Block: '.$usage['block']->type : 'Content meta' }} / {{ $usage['location'] }}
+                            </div>
+                        </a>
+                    @empty
+                        <div class="px-3 py-4 text-sm text-muted-foreground">No current content references found.</div>
+                    @endforelse
+                </div>
             </div>
         </div>
 
         <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
-            <flux:button wire:click="deleteAsset({{ $selectedAsset->id }})" wire:confirm="Delete this asset? The file will be permanently removed." variant="danger" size="sm">
-                <flux:icon.trash class="size-4" />
-                Delete
-            </flux:button>
+            <div>
+                <flux:button wire:click="deleteAsset({{ $selectedAsset->id }})" wire:confirm="Delete this asset? The file will be permanently removed." variant="danger" size="sm">
+                    <flux:icon.trash class="size-4" />
+                    Delete
+                </flux:button>
+                <flux:error name="deleteAsset" />
+            </div>
             <div class="flex gap-2">
                 <flux:button wire:click="closeAssetDetail" variant="ghost">Cancel</flux:button>
                 <flux:button wire:click="saveAssetDetails" variant="primary">Save</flux:button>

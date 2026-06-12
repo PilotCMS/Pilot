@@ -19,6 +19,7 @@ class Asset extends Model
         'path',
         'filename',
         'display_name',
+        'description',
         'mime',
         'size',
         'width',
@@ -27,6 +28,13 @@ class Asset extends Model
         'focal_y',
         'alt',
         'title',
+        'credit',
+        'copyright',
+        'license',
+        'source_url',
+        'checksum',
+        'expires_at',
+        'metadata',
     ];
 
     public function tags(): BelongsToMany
@@ -44,6 +52,8 @@ class Asset extends Model
             'focal_y' => 'float',
             'alt' => 'array',
             'title' => 'array',
+            'expires_at' => 'datetime',
+            'metadata' => 'array',
         ];
     }
 
@@ -134,6 +144,20 @@ class Asset extends Model
         return $this->display_name ?? $this->filename;
     }
 
+    public function dimensions(): ?string
+    {
+        if (! $this->width || ! $this->height) {
+            return null;
+        }
+
+        return $this->width.' x '.$this->height;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
     public function fullUrl(): string
     {
         $url = $this->url();
@@ -143,6 +167,10 @@ class Asset extends Model
 
     public function getAltAttribute($value): ?string
     {
+        if (is_string($value) && str_starts_with($value, '{')) {
+            $value = json_decode($value, true) ?: $value;
+        }
+
         if (is_array($value)) {
             return $value['en'] ?? array_values($value)[0] ?? null;
         }
@@ -152,6 +180,10 @@ class Asset extends Model
 
     public function getTitleAttribute($value): ?string
     {
+        if (is_string($value) && str_starts_with($value, '{')) {
+            $value = json_decode($value, true) ?: $value;
+        }
+
         if (is_array($value)) {
             return $value['en'] ?? array_values($value)[0] ?? null;
         }

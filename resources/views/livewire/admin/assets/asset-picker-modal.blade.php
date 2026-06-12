@@ -11,8 +11,14 @@
         </div>
     </div>
 
-    <div class="flex gap-4 mb-4">
+    <div class="flex gap-3 mb-4">
         <flux:input wire:model.live.debounce.300ms="search" placeholder="Search assets..." icon="magnifying-glass" class="flex-1" />
+        <flux:select wire:model.live="typeFilter" class="max-w-40">
+            <option value="images">Images</option>
+            <option value="videos">Videos</option>
+            <option value="documents">Documents</option>
+            <option value="all">All types</option>
+        </flux:select>
     </div>
 
     <div class="flex gap-4 min-h-[300px]">
