@@ -25,6 +25,9 @@ class Content extends Model
         'scheduled_for',
         'review_requested_at',
         'review_requested_by',
+        'reviewer_id',
+        'review_due_at',
+        'review_note',
         'published_revision_id',
         'meta',
         'categories',
@@ -39,6 +42,7 @@ class Content extends Model
             'published_at' => 'datetime',
             'scheduled_for' => 'datetime',
             'review_requested_at' => 'datetime',
+            'review_due_at' => 'datetime',
             'meta' => 'array',
             'categories' => 'array',
             'tags' => 'array',
@@ -58,6 +62,16 @@ class Content extends Model
     public function publishedRevision(): BelongsTo
     {
         return $this->belongsTo(ContentRevision::class, 'published_revision_id');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function reviewRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'review_requested_by');
     }
 
     public function references(): HasMany

@@ -2,13 +2,14 @@
 
 namespace Database\Factories;
 
+use App\Models\Content;
 use App\Models\Space;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Content>
+ * @extends Factory<Content>
  */
 class ContentFactory extends Factory
 {
@@ -32,6 +33,9 @@ class ContentFactory extends Factory
             'workflow_status' => 'draft',
             'published_at' => null,
             'scheduled_for' => null,
+            'reviewer_id' => null,
+            'review_due_at' => null,
+            'review_note' => null,
             'meta' => [],
             'created_by' => User::factory(),
             'updated_by' => null,

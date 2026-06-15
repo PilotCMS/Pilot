@@ -86,6 +86,8 @@ it('keeps editor attributes out of normal public rendering', function () {
         ->assertSee('disablePreviewLinkNavigation', false)
         ->assertSee('event.preventDefault();', false)
         ->assertSee('pilot-preview-select-block', false)
+        ->assertSee('pilot-preview-toolbar', false)
+        ->assertSee('pilot-preview-block-action', false)
         ->assertDontSee('pilot-preview-navigated', false)
         ->assertDontSee("url.searchParams.set('pilot_editor', '1')", false)
         ->assertDontSee("url.searchParams.set('pilot_in_context', '0')", false);

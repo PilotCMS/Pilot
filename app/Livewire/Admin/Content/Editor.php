@@ -6,13 +6,17 @@ use App\Livewire\Admin\Assets\AssetPickerModal;
 use App\Models\Activity;
 use App\Models\Asset;
 use App\Models\Block;
+use App\Models\BlockComment;
 use App\Models\BlockType;
 use App\Models\Content;
+use App\Models\ContentPresence;
 use App\Models\ContentRevision;
 use App\Models\ContentType;
 use App\Models\EditorPreference;
+use App\Models\User;
 use App\Support\Cms\ContentLifecycle;
 use App\Support\Cms\ContentSyncFingerprint;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -40,6 +44,10 @@ class Editor extends Component
 
     public $rightPanelTab = 'content';
 
+    public string $saveState = 'saved';
+
+    public ?string $conflictMessage = null;
+
     public $lastSavedAt = null;
 
     public $savedJustNow = false;
@@ -47,6 +55,16 @@ class Editor extends Component
     public $scheduledFor = '';
 
     public $selectedPreviewTargetId = '';
+
+    public string $newCommentBody = '';
+
+    public string $reviewerId = '';
+
+    public string $reviewDueAt = '';
+
+    public string $reviewNote = '';
+
+    public string $reusableBlockName = '';
 
     public int $previewVersion = 1;
 
@@ -71,6 +89,9 @@ class Editor extends Component
         $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($content);
         $this->blockTypes = $this->availableBlockTypes()->keyBy('key');
         $this->scheduledFor = $content->scheduled_for?->format('Y-m-d\TH:i') ?? '';
+        $this->reviewerId = (string) ($content->reviewer_id ?? '');
+        $this->reviewDueAt = $content->review_due_at?->format('Y-m-d\TH:i') ?? '';
+        $this->reviewNote = $content->review_note ?? '';
         $this->selectedPreviewTargetId = $content->space?->previewTargets()
             ->where('is_default', true)
             ->value('id') ?? $content->space?->previewTargets()->value('id') ?? '';
@@ -81,6 +102,7 @@ class Editor extends Component
         $this->drawerOpen = $prefs['drawerOpen'] ?? true;
         $previewTargetPreferences = $prefs['previewTargets'] ?? [];
         $this->selectedPreviewTargetId = $previewTargetPreferences[$content->space_id] ?? $this->selectedPreviewTargetId;
+        $this->touchPresence();
     }
 
     public function loadBlocks()
@@ -120,6 +142,8 @@ class Editor extends Component
 
     public function addBlock($blockTypeKey, $position = null)
     {
+        $this->markSaving();
+
         if (! $this->availableBlockTypes()->pluck('key')->contains($blockTypeKey)) {
             return;
         }
@@ -214,8 +238,9 @@ class Editor extends Component
 
     public function duplicateBlock($blockId)
     {
+        $this->markSaving();
+
         $original = Block::findOrFail($blockId);
-        $blockType = BlockType::where('key', $original->type)->firstOrFail();
 
         $newPosition = $original->position + 1;
         Block::where('content_id', $this->content->id)
@@ -226,7 +251,10 @@ class Editor extends Component
         $block = Block::create([
             'content_id' => $this->content->id,
             'parent_block_id' => $original->parent_block_id,
+            'reusable_source_block_id' => $original->reusable_source_block_id,
             'type' => $original->type,
+            'reusable_key' => $original->reusable_key,
+            'reusable_name' => $original->reusable_name,
             'position' => $newPosition,
             'data' => $original->data,
         ]);
@@ -238,6 +266,8 @@ class Editor extends Component
 
     public function updateContent($field, $value)
     {
+        $this->markSaving();
+
         $lifecycle = app(ContentLifecycle::class);
 
         // Auto-generate slug when name changes and slug hasn't been manually edited
@@ -323,6 +353,8 @@ class Editor extends Component
 
     public function updateContentMeta($key, $value)
     {
+        $this->markSaving();
+
         $meta = $this->content->meta ?? [];
         $meta[$key] = $value;
         $this->content->update([
@@ -335,6 +367,8 @@ class Editor extends Component
 
     public function updateTaxonomy(string $field, string $value): void
     {
+        $this->markSaving();
+
         if (! in_array($field, ['categories', 'tags'], true)) {
             return;
         }
@@ -364,10 +398,13 @@ class Editor extends Component
 
     public function updateBlock($blockId, $fieldKey, $value)
     {
+        $this->markSaving();
+
         $block = Block::findOrFail($blockId);
         $data = $block->data ?? [];
         $data[$fieldKey] = $value;
         $block->update(['data' => $data]);
+        $this->syncReusableBlockInstances($block);
 
         $this->content->touch();
         $this->content->update(['updated_by' => auth()->id()]);
@@ -380,6 +417,8 @@ class Editor extends Component
 
     public function deleteBlock($blockId)
     {
+        $this->markSaving();
+
         $block = Block::findOrFail($blockId);
         $position = $block->position;
         $block->delete();
@@ -396,6 +435,8 @@ class Editor extends Component
 
     public function sortItem($itemId, $position)
     {
+        $this->markSaving();
+
         $blockIds = array_column($this->blocks, 'id');
         $currentIndex = array_search((int) $itemId, $blockIds);
 
@@ -428,6 +469,8 @@ class Editor extends Component
 
     protected function moveBlock($blockId, int $direction): void
     {
+        $this->markSaving();
+
         $block = Block::where('content_id', $this->content->id)->findOrFail($blockId);
         $siblings = $this->movableSiblingsFor($block);
         $currentIndex = $siblings->search(fn (Block $sibling): bool => $sibling->id === $block->id);
@@ -480,6 +523,8 @@ class Editor extends Component
 
     public function publish()
     {
+        $this->markSaving();
+
         app(ContentLifecycle::class)->publish($this->content, auth()->id());
         $this->content->refresh();
 
@@ -492,10 +537,12 @@ class Editor extends Component
         ]);
 
         $this->dispatch('published');
+        $this->markSaved();
     }
 
     public function unpublish()
     {
+        $this->markSaving();
         app(ContentLifecycle::class)->unpublish($this->content, auth()->id());
         $this->content->refresh();
         $this->markSaved();
@@ -503,6 +550,7 @@ class Editor extends Component
 
     public function requestReview(): void
     {
+        $this->markSaving();
         app(ContentLifecycle::class)->requestReview($this->content, auth()->id());
         $this->content->refresh();
         $this->markSaved();
@@ -510,12 +558,166 @@ class Editor extends Component
 
     public function schedulePublishing(): void
     {
+        $this->markSaving();
+
         $this->validate([
             'scheduledFor' => 'required|date|after:now',
         ]);
 
         app(ContentLifecycle::class)->schedule($this->content, $this->scheduledFor, auth()->id());
         $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function assignReview(): void
+    {
+        $this->markSaving();
+
+        $this->validate([
+            'reviewerId' => 'nullable|exists:users,id',
+            'reviewDueAt' => 'nullable|date',
+            'reviewNote' => 'nullable|string|max:2000',
+        ]);
+
+        app(ContentLifecycle::class)->assignReview(
+            $this->content,
+            $this->reviewerId !== '' ? (int) $this->reviewerId : null,
+            $this->reviewDueAt !== '' ? $this->reviewDueAt : null,
+            $this->reviewNote !== '' ? $this->reviewNote : null,
+            auth()->id(),
+        );
+
+        Activity::create([
+            'space_id' => $this->content->space_id,
+            'user_id' => auth()->id(),
+            'action' => 'requested review',
+            'subject_type' => Content::class,
+            'subject_id' => $this->content->id,
+            'meta' => [
+                'reviewer_id' => $this->reviewerId,
+                'due_at' => $this->reviewDueAt,
+            ],
+        ]);
+
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function approveReview(): void
+    {
+        $this->markSaving();
+        app(ContentLifecycle::class)->approveReview($this->content, auth()->id());
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function requestChanges(): void
+    {
+        $this->markSaving();
+        app(ContentLifecycle::class)->requestChanges($this->content, $this->reviewNote, auth()->id());
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function addBlockComment(): void
+    {
+        $this->validate([
+            'newCommentBody' => 'required|string|max:2000',
+        ]);
+
+        BlockComment::create([
+            'content_id' => $this->content->id,
+            'block_id' => $this->selectedBlockId,
+            'user_id' => auth()->id(),
+            'body' => $this->newCommentBody,
+        ]);
+
+        $this->newCommentBody = '';
+    }
+
+    public function resolveBlockComment(int $commentId): void
+    {
+        BlockComment::query()
+            ->where('content_id', $this->content->id)
+            ->whereKey($commentId)
+            ->update(['resolved_at' => now()]);
+    }
+
+    public function touchPresence(): void
+    {
+        if (! auth()->check()) {
+            return;
+        }
+
+        ContentPresence::updateOrCreate(
+            [
+                'content_id' => $this->content->id,
+                'user_id' => auth()->id(),
+            ],
+            [
+                'selected_block_id' => $this->selectedBlockId,
+                'status' => $this->selectedBlockId ? 'editing' : 'viewing',
+                'last_seen_at' => now(),
+            ],
+        );
+    }
+
+    public function updatedSelectedBlockId(): void
+    {
+        $this->touchPresence();
+        $this->newCommentBody = '';
+        $this->reusableBlockName = '';
+    }
+
+    public function makeSelectedBlockReusable(): void
+    {
+        if (! $this->selectedBlockId) {
+            return;
+        }
+
+        $this->validate([
+            'reusableBlockName' => 'required|string|max:120',
+        ]);
+
+        $block = Block::query()
+            ->where('content_id', $this->content->id)
+            ->findOrFail($this->selectedBlockId);
+
+        $block->update([
+            'reusable_source_block_id' => null,
+            'reusable_key' => Str::slug($this->reusableBlockName).'-'.$block->id,
+            'reusable_name' => $this->reusableBlockName,
+        ]);
+
+        $this->reusableBlockName = '';
+        $this->loadBlocks();
+        $this->markSaved();
+    }
+
+    public function insertReusableBlock(int $sourceBlockId): void
+    {
+        $this->markSaving();
+
+        $source = Block::query()
+            ->whereNull('reusable_source_block_id')
+            ->whereNotNull('reusable_key')
+            ->findOrFail($sourceBlockId);
+
+        $position = $this->blocks ? max(array_column($this->blocks, 'position')) + 1 : 0;
+
+        $block = Block::create([
+            'content_id' => $this->content->id,
+            'parent_block_id' => null,
+            'reusable_source_block_id' => $source->id,
+            'type' => $source->type,
+            'reusable_key' => $source->reusable_key,
+            'reusable_name' => $source->reusable_name,
+            'position' => $position,
+            'data' => $source->data ?? [],
+        ]);
+
+        $this->loadBlocks();
+        $this->selectedBlockId = $block->id;
         $this->markSaved();
     }
 
@@ -540,10 +742,17 @@ class Editor extends Component
         $this->lastKnownContentUpdatedAt = $this->content->updated_at?->toJSON();
         $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($this->content);
         $this->lastSavedAt = now();
+        $this->saveState = 'saved';
+        $this->conflictMessage = null;
         $this->savedJustNow = true;
         $this->previewVersion++;
         $this->editorSyncVersion++;
         $this->dispatch('saved');
+    }
+
+    protected function markSaving(): void
+    {
+        $this->saveState = 'saving';
     }
 
     /**
@@ -580,6 +789,8 @@ class Editor extends Component
         $this->loadBlocks();
         $this->previewVersion++;
         $this->editorSyncVersion++;
+        $this->saveState = 'conflict';
+        $this->conflictMessage = 'This content changed in another session. The editor has refreshed to the latest version.';
         $this->lastSavedAt = $freshContent->updated_at;
     }
 
@@ -592,6 +803,7 @@ class Editor extends Component
         $this->selectedBlockId = $blockId;
         $this->drawerOpen = true;
         $this->rightPanelTab = 'content';
+        $this->touchPresence();
     }
 
     public function saveCheckpoint(): void
@@ -666,6 +878,108 @@ class Editor extends Component
         return $this->content->revisions()->with('user')->take(20)->get();
     }
 
+    public function getReviewersProperty(): Collection
+    {
+        return User::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+    }
+
+    public function getActivePresencesProperty(): Collection
+    {
+        return ContentPresence::query()
+            ->where('content_id', $this->content->id)
+            ->where('user_id', '!=', auth()->id())
+            ->where('last_seen_at', '>=', now()->subMinutes(2))
+            ->with(['user', 'selectedBlock'])
+            ->latest('last_seen_at')
+            ->get();
+    }
+
+    public function getSelectedBlockCommentsProperty(): Collection
+    {
+        return BlockComment::query()
+            ->where('content_id', $this->content->id)
+            ->where('block_id', $this->selectedBlockId)
+            ->whereNull('resolved_at')
+            ->with('user')
+            ->latest()
+            ->get();
+    }
+
+    public function getReusableBlocksProperty(): Collection
+    {
+        return Block::query()
+            ->whereNull('reusable_source_block_id')
+            ->whereNotNull('reusable_key')
+            ->with('content')
+            ->orderBy('reusable_name')
+            ->get();
+    }
+
+    public function getValidationIssuesProperty(): Collection
+    {
+        $issues = collect();
+
+        if (blank($this->content->name)) {
+            $issues->push([
+                'severity' => 'error',
+                'label' => 'Page title is required.',
+                'block_id' => null,
+            ]);
+        }
+
+        if (blank($this->content->slug)) {
+            $issues->push([
+                'severity' => 'error',
+                'label' => 'Slug is required.',
+                'block_id' => null,
+            ]);
+        }
+
+        collect($this->flattenBlocks())->each(function (array $block) use ($issues): void {
+            $blockType = $this->blockTypes[$block['type']] ?? null;
+
+            foreach ($blockType?->schema['fields'] ?? [] as $field) {
+                if (! ($field['required'] ?? false)) {
+                    continue;
+                }
+
+                $value = $block['data'][$field['key']] ?? null;
+
+                if (is_array($value)) {
+                    $value = $value['en'] ?? reset($value) ?: null;
+                }
+
+                if (blank($value)) {
+                    $issues->push([
+                        'severity' => 'error',
+                        'label' => ($blockType->name ?? $block['type']).' is missing '.$field['label'].'.',
+                        'block_id' => $block['id'],
+                    ]);
+                }
+            }
+        });
+
+        if (blank($this->content->meta['meta_title'] ?? null)) {
+            $issues->push([
+                'severity' => 'warning',
+                'label' => 'Meta title is empty.',
+                'block_id' => null,
+            ]);
+        }
+
+        if (blank($this->content->meta['meta_description'] ?? null)) {
+            $issues->push([
+                'severity' => 'warning',
+                'label' => 'Meta description is empty.',
+                'block_id' => null,
+            ]);
+        }
+
+        return $issues;
+    }
+
     public function getSelectedBlockProperty(): ?array
     {
         return $this->selectedBlockId ? $this->findBlockInTree((int) $this->selectedBlockId) : null;
@@ -706,7 +1020,7 @@ class Editor extends Component
 
         return $url.$separator.http_build_query([
             'v' => $this->previewVersion,
-            'pilot_in_context' => 0,
+            'pilot_in_context_panel' => 0,
         ]);
     }
 
@@ -745,6 +1059,37 @@ class Editor extends Component
         }
 
         return null;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    protected function flattenBlocks(?array $blocks = null): array
+    {
+        $flattened = [];
+
+        foreach ($blocks ?? $this->blocks as $block) {
+            $flattened[] = $block;
+            $flattened = array_merge($flattened, $this->flattenBlocks($block['children'] ?? []));
+        }
+
+        return $flattened;
+    }
+
+    protected function syncReusableBlockInstances(Block $block): void
+    {
+        if ($block->reusable_source_block_id !== null || $block->reusable_key === null) {
+            return;
+        }
+
+        Block::query()
+            ->where('reusable_source_block_id', $block->id)
+            ->update([
+                'type' => $block->type,
+                'reusable_key' => $block->reusable_key,
+                'reusable_name' => $block->reusable_name,
+                'data' => $block->data ?? [],
+            ]);
     }
 
     protected function blockCanContainBlocks(string $blockTypeKey): bool

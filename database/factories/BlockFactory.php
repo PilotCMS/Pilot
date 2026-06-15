@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Block;
 use App\Models\Content;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Block>
+ * @extends Factory<Block>
  */
 class BlockFactory extends Factory
 {
@@ -20,7 +21,10 @@ class BlockFactory extends Factory
         return [
             'content_id' => Content::factory(),
             'parent_block_id' => null,
+            'reusable_source_block_id' => null,
             'type' => 'hero',
+            'reusable_key' => null,
+            'reusable_name' => null,
             'position' => 0,
             'data' => [],
         ];

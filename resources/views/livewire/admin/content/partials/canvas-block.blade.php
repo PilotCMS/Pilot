@@ -26,6 +26,7 @@
 
 <div
     wire:key="block-{{ $block['id'] }}"
+    data-editor-block="{{ $block['id'] }}"
     class="group/block relative {{ $isNested ? 'mb-3 rounded-lg border bg-white p-2 shadow-sm transition-colors' : 'mb-8 rounded-lg transition-all duration-200' }} {{ $isSelected ? ($isNested ? 'border-teal-300 ring-2 ring-teal-100' : 'editor-highlight') : ($isNested ? 'border-slate-200 hover:border-teal-200' : 'hover-highlight') }}"
     @if($isSelected) data-label="{{ $blockType->name ?? $block['type'] }}" @endif
 >
@@ -33,8 +34,20 @@
         <button type="button" wire:click.stop="moveBlockUp({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Move block up" aria-label="Move block up">
             <i class="ph ph-arrow-up text-sm"></i>
         </button>
-        <button type="button" wire:click.stop="moveBlockDown({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Move block down" aria-label="Move block down">
+        <button type="button" wire:click.stop="moveBlockDown({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Move block down" aria-label="Move block down">
             <i class="ph ph-arrow-down text-sm"></i>
+        </button>
+        <button type="button" wire:click.stop="addBlockAbove({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Insert above" aria-label="Insert above">
+            <i class="ph ph-arrow-line-up text-sm"></i>
+        </button>
+        <button type="button" wire:click.stop="addBlockBelow({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Insert below" aria-label="Insert below">
+            <i class="ph ph-arrow-line-down text-sm"></i>
+        </button>
+        <button type="button" wire:click.stop="duplicateBlock({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-teal-600" title="Duplicate block" aria-label="Duplicate block">
+            <i class="ph ph-copy text-sm"></i>
+        </button>
+        <button type="button" wire:click.stop="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" class="flex h-7 w-7 items-center justify-center text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Delete block" aria-label="Delete block">
+            <i class="ph ph-trash text-sm"></i>
         </button>
     </div>
 

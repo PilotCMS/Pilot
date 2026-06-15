@@ -14,7 +14,10 @@ class Block extends Model
     protected $fillable = [
         'content_id',
         'parent_block_id',
+        'reusable_source_block_id',
         'type',
+        'reusable_key',
+        'reusable_name',
         'position',
         'data',
     ];
@@ -37,9 +40,19 @@ class Block extends Model
         return $this->belongsTo(Block::class, 'parent_block_id');
     }
 
+    public function reusableSourceBlock(): BelongsTo
+    {
+        return $this->belongsTo(Block::class, 'reusable_source_block_id');
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(Block::class, 'parent_block_id')->orderBy('position');
+    }
+
+    public function reusableInstances(): HasMany
+    {
+        return $this->hasMany(Block::class, 'reusable_source_block_id');
     }
 
     public function blockType(): BelongsTo

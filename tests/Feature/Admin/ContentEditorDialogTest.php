@@ -4,8 +4,10 @@ use App\Livewire\Admin\Content\BlockEditor;
 use App\Livewire\Admin\Content\ContentSyncPoller;
 use App\Livewire\Admin\Content\Editor;
 use App\Models\Block;
+use App\Models\BlockComment;
 use App\Models\BlockType;
 use App\Models\Content;
+use App\Models\ContentPresence;
 use App\Models\Space;
 use App\Models\User;
 use Livewire\Livewire;
@@ -574,4 +576,213 @@ it('restores nested blocks from a content revision', function () {
         ->and($restoredChild->type)->toBe('cta')
         ->and($restoredChild->data['title'])->toBe('Nested CTA')
         ->and($restoredChild->data['_column'])->toBe(1);
+});
+
+it('tracks editor presence and selected block context', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => [],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->call('touchPresence');
+
+    $presence = ContentPresence::query()->where('content_id', $content->id)->where('user_id', $user->id)->firstOrFail();
+
+    expect($presence->selected_block_id)->toBe($block->id)
+        ->and($presence->status)->toBe('editing');
+});
+
+it('adds and resolves comments for a selected block', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => [],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->set('newCommentBody', 'Tighten the hero copy.')
+        ->call('addBlockComment')
+        ->assertSet('newCommentBody', '');
+
+    $comment = BlockComment::query()->firstOrFail();
+
+    expect($comment->block_id)->toBe($block->id)
+        ->and($comment->body)->toBe('Tighten the hero copy.')
+        ->and($comment->resolved_at)->toBeNull();
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->call('resolveBlockComment', $comment->id);
+
+    expect($comment->fresh()->resolved_at)->not->toBeNull();
+});
+
+it('assigns and approves a content review', function () {
+    $author = User::factory()->create();
+    $reviewer = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $author->id,
+        'updated_by' => $author->id,
+    ]);
+
+    $this->actingAs($author);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('reviewerId', (string) $reviewer->id)
+        ->set('reviewDueAt', now()->addDay()->format('Y-m-d\TH:i'))
+        ->set('reviewNote', 'Please review the launch copy.')
+        ->call('assignReview');
+
+    $content->refresh();
+
+    expect($content->workflow_status)->toBe('in_review')
+        ->and($content->reviewer_id)->toBe($reviewer->id)
+        ->and($content->review_note)->toBe('Please review the launch copy.');
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('approveReview');
+
+    expect($content->fresh()->workflow_status)->toBe('approved');
+});
+
+it('reports validation issues for required block fields', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    BlockType::create([
+        'key' => 'hero',
+        'name' => 'Hero',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'text',
+                    'key' => 'headline',
+                    'label' => 'Headline',
+                    'required' => true,
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => [],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->assertSee('Hero is missing Headline.');
+});
+
+it('creates reusable blocks and syncs inserted instances when the source changes', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $source = Block::create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'position' => 0,
+        'data' => ['title' => 'Original CTA'],
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $source->id)
+        ->set('reusableBlockName', 'Campaign CTA')
+        ->call('makeSelectedBlockReusable')
+        ->call('insertReusableBlock', $source->id);
+
+    $source->refresh();
+    $instance = Block::query()->where('reusable_source_block_id', $source->id)->firstOrFail();
+
+    expect($source->reusable_name)->toBe('Campaign CTA')
+        ->and($instance->data['title'])->toBe('Original CTA');
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('updateBlock', $source->id, 'title', 'Updated CTA');
+
+    expect($instance->fresh()->data['title'])->toBe('Updated CTA');
 });

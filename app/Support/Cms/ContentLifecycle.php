@@ -41,6 +41,9 @@ class ContentLifecycle
             'scheduled_for' => null,
             'review_requested_at' => null,
             'review_requested_by' => null,
+            'reviewer_id' => null,
+            'review_due_at' => null,
+            'review_note' => null,
             'published_revision_id' => $revision->id,
             'updated_by' => $userId,
         ]);
@@ -54,6 +57,36 @@ class ContentLifecycle
             'workflow_status' => 'in_review',
             'review_requested_at' => now(),
             'review_requested_by' => $userId,
+            'updated_by' => $userId,
+        ]);
+    }
+
+    public function assignReview(Content $content, ?int $reviewerId, ?string $dueAt, ?string $note, ?int $userId = null): void
+    {
+        $content->update([
+            'workflow_status' => 'in_review',
+            'review_requested_at' => now(),
+            'review_requested_by' => $userId,
+            'reviewer_id' => $reviewerId,
+            'review_due_at' => $dueAt,
+            'review_note' => $note,
+            'updated_by' => $userId,
+        ]);
+    }
+
+    public function approveReview(Content $content, ?int $userId = null): void
+    {
+        $content->update([
+            'workflow_status' => 'approved',
+            'updated_by' => $userId,
+        ]);
+    }
+
+    public function requestChanges(Content $content, ?string $note = null, ?int $userId = null): void
+    {
+        $content->update([
+            'workflow_status' => 'changes_requested',
+            'review_note' => $note ?: $content->review_note,
             'updated_by' => $userId,
         ]);
     }

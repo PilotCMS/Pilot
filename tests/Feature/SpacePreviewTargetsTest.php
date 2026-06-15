@@ -77,7 +77,7 @@ it('shows preview targets in the content editor and generates external preview u
         ->assertSet('selectedPreviewTargetId', $target->id)
         ->assertSee('https://mysite.test/_pilot/preview/'.$content->id, false)
         ->assertSee('https://mysite.test', false)
-        ->assertSee('pilot_in_context=0', false)
+        ->assertSee('pilot_in_context_panel=0', false)
         ->assertSee('pilot-in-context-field-updated', false);
 });
 
@@ -268,11 +268,13 @@ it('renders draft content through a valid package preview url only', function ()
         ->assertSee('Draft preview from frontend package')
         ->assertSee('data-pilot-editable="block"', false)
         ->assertSee('data-pilot-editable="field"', false)
+        ->assertSee('pilot-preview-toolbar', false)
+        ->assertSee('pilot-preview-block-action', false)
         ->assertSee('window.__pilotInContextLoaded', false)
         ->assertSee('pilot-in-context-panel-root', false);
 });
 
-it('disables package in-context output when preview is embedded in the cms editor', function () {
+it('hides only the package in-context panel when preview is embedded in the cms editor', function () {
     $user = User::factory()->create();
     $space = Space::factory()->create();
     $content = Content::factory()->create([
@@ -294,15 +296,22 @@ it('disables package in-context output when preview is embedded in the cms edito
         'url' => url(''),
     ]);
 
-    $this->get($target->previewUrlFor($content).'&pilot_in_context=0')
+    $this->get($target->previewUrlFor($content).'&pilot_in_context_panel=0')
         ->assertOk()
         ->assertSee('Draft preview from frontend package')
         ->assertSee('data-pilot-editable="block"', false)
+        ->assertSee('data-pilot-editable="field"', false)
         ->assertSee('disablePreviewLinkNavigation', false)
         ->assertSee('pilot-preview-select-block', false)
+        ->assertSee('pilot-preview-toolbar', false)
+        ->assertSee('pilot-preview-block-action', false)
+        ->assertSee('.pilot-preview-toolbar [data-pilot-action]', false)
+        ->assertDontSee("scrollIntoView({ behavior: 'smooth', block: 'center' })", false)
         ->assertDontSee('pilot-preview-navigated', false)
         ->assertDontSee('preserveEditorPreviewMode', false)
-        ->assertDontSee('data-pilot-editable="field"', false)
-        ->assertDontSee('window.__pilotInContextLoaded', false)
-        ->assertDontSee('pilot-in-context-panel-root', false);
+        ->assertSee('window.__pilotInContextLoaded', false)
+        ->assertSee('PANEL_ENABLED = (() => {', false)
+        ->assertSee("get('pilot_in_context_panel')", false)
+        ->assertSee('if (PANEL_ENABLED) {', false)
+        ->assertSee('buildPanel();', false);
 });

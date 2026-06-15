@@ -7,6 +7,8 @@
         canvasMode: 'preview',
         previewDevice: 'desktop',
         previewTargetOrigins: @js($this->previewTargetOrigins),
+        saveState: @entangle('saveState'),
+        conflictMessage: @entangle('conflictMessage'),
         previewWidth() {
             return {
                 desktop: 'min(100%, 1280px)',
@@ -33,6 +35,17 @@
                 blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
             }, this.previewFrameOrigin());
         },
+        saveLabel() {
+            if (this.conflictMessage) {
+                return 'Changed elsewhere';
+            }
+
+            if (this.saveState === 'saving') {
+                return 'Saving...';
+            }
+
+            return this.savedJustNow ? 'Saved just now' : 'Saved';
+        },
         init() {
             $wire.on('saved', () => {
                 this.savedJustNow = true;
@@ -40,7 +53,9 @@
             });
 
             this.$watch('selectedBlockId', () => {
-                this.$nextTick(() => this.syncPreviewSelection());
+                this.$nextTick(() => {
+                    this.syncPreviewSelection();
+                });
             });
 
             this.$nextTick(() => this.syncPreviewSelection());
@@ -56,6 +71,26 @@
                     this.selectedBlockId = Number(event.data.blockId);
                     this.syncPreviewSelection();
                     $wire.call('setSelectedBlockFromPreview', Number(event.data.blockId));
+                }
+
+                if (event.data?.type === 'pilot-preview-block-action' && event.data?.blockId && event.data?.action) {
+                    this.selectedBlockId = Number(event.data.blockId);
+                    this.syncPreviewSelection();
+
+                    const actions = {
+                        'move-up': 'moveBlockUp',
+                        'move-down': 'moveBlockDown',
+                        duplicate: 'duplicateBlock',
+                        delete: 'deleteBlock',
+                    };
+
+                    if (actions[event.data.action]) {
+                        if (event.data.action === 'delete' && ! confirm('Delete this block?')) {
+                            return;
+                        }
+
+                        $wire.call(actions[event.data.action], Number(event.data.blockId));
+                    }
                 }
 
                 if (event.data?.type === 'pilot-in-context-field-updated' && event.data?.blockId && event.data?.fieldKey) {
@@ -116,9 +151,9 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <div class="text-xs text-slate-400 font-medium flex items-center gap-1.5 mr-2">
-                <i class="ph ph-clock-counter-clockwise"></i>
-                <span x-text="savedJustNow ? 'Saved just now' : 'Last saved 2m ago'">Last saved 2m ago</span>
+            <div class="text-xs font-medium flex items-center gap-1.5 mr-2" x-bind:class="conflictMessage ? 'text-amber-600' : saveState === 'saving' ? 'text-slate-500' : 'text-slate-400'">
+                <i class="ph" x-bind:class="conflictMessage ? 'ph-warning-circle' : saveState === 'saving' ? 'ph-spinner-gap animate-spin' : 'ph-check-circle'"></i>
+                <span x-text="saveLabel()">Saved</span>
             </div>
             <div class="relative">
                 <select wire:model.live="selectedPreviewTargetId" class="h-9 min-w-32 appearance-none rounded-md border border-slate-300 bg-white pl-3 pr-8 text-sm font-medium text-slate-600 shadow-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
@@ -298,7 +333,7 @@
     {{-- Right: Edit Panel — fixed top 0, bottom 0, right 0, 500px, 100% view height --}}
     @if($drawerOpen)
     @php
-        $editPanelTabs = ['content' => 'Content', 'design' => 'Design', 'seo' => 'Advanced'];
+        $editPanelTabs = ['content' => 'Content', 'comments' => 'Comments', 'validation' => 'Checks', 'seo' => 'Advanced'];
         $hasSelectedBlock = $selectedBlockId !== null;
         $sel = $hasSelectedBlock ? $this->selectedBlock : null;
         $bt = $sel ? ($blockTypes[$sel['type']] ?? null) : null;
@@ -444,7 +479,7 @@
                         </div>
                         <div wire:sort="sortItem" class="space-y-0.5">
                             @foreach($blocks as $block)
-                            <div wire:sort:item="{{ $block['id'] }}" wire:key="block-item-{{ $block['id'] }}" class="flex items-center gap-2 px-3 py-2.5 rounded-md {{ $selectedBlockId === $block['id'] ? 'bg-teal-50 border border-teal-100' : 'hover:bg-slate-50' }}">
+                            <div wire:sort:item="{{ $block['id'] }}" wire:key="block-item-{{ $block['id'] }}" data-block-tree-item="{{ $block['id'] }}" class="flex items-center gap-2 px-3 py-2.5 rounded-md {{ $selectedBlockId === $block['id'] ? 'bg-teal-50 border border-teal-100' : 'hover:bg-slate-50' }}">
                                 <span class="cursor-grab active:cursor-grabbing touch-none text-slate-400 hover:text-slate-600" wire:sort:handle aria-label="Drag to reorder"><i class="ph ph-dots-six-vertical"></i></span>
                                 <div class="flex-1 min-w-0 py-1 cursor-pointer" wire:click="$set('selectedBlockId', {{ $block['id'] }})">
                                     <span class="font-medium text-sm truncate block text-slate-700">{{ $blockTypes[$block['type']]->name ?? $block['type'] }}</span>
@@ -462,9 +497,100 @@
                 <div class="h-10"></div>
             </div>
 
-            {{-- DESIGN TAB --}}
-            <div class="{{ $rightPanelTab === 'design' ? '' : 'hidden' }}" role="tabpanel">
-                <p class="text-sm text-slate-500">Layout and styling options. Coming soon.</p>
+            {{-- COMMENTS TAB --}}
+            <div class="{{ $rightPanelTab === 'comments' ? '' : 'hidden' }} space-y-5" role="tabpanel">
+                <div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Presence</span>
+                    <div wire:poll.15000ms="touchPresence" class="space-y-2">
+                        @forelse($this->activePresences as $presence)
+                            <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
+                                    {{ $presence->user?->initials() ?? '?' }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="truncate text-sm font-semibold text-slate-700">{{ $presence->user?->name ?? 'Collaborator' }}</div>
+                                    <div class="truncate text-xs text-slate-400">
+                                        {{ $presence->status === 'editing' ? 'Editing' : 'Viewing' }}
+                                        @if($presence->selectedBlock)
+                                            {{ $presence->selectedBlock->reusable_name ?? $presence->selectedBlock->type }}
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No other editors are active.</p>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Block comments</span>
+                    @if($hasSelectedBlock)
+                        <div class="space-y-3">
+                            @forelse($this->selectedBlockComments as $comment)
+                                <div class="rounded-lg border border-slate-200 bg-white p-3">
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs font-semibold text-slate-600">{{ $comment->user?->name ?? 'System' }}</span>
+                                        <button type="button" wire:click="resolveBlockComment({{ $comment->id }})" class="text-xs font-semibold text-teal-600 hover:underline">Resolve</button>
+                                    </div>
+                                    <p class="text-sm text-slate-600">{{ $comment->body }}</p>
+                                </div>
+                            @empty
+                                <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No open comments on this block.</p>
+                            @endforelse
+                            <textarea rows="3" wire:model="newCommentBody" placeholder="Leave a comment for reviewers" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"></textarea>
+                            @error('newCommentBody') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                            <button type="button" wire:click="addBlockComment" class="w-full rounded-md bg-teal-500 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-600">Add comment</button>
+                        </div>
+                    @else
+                        <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">Select a block to view or add comments.</p>
+                    @endif
+                </div>
+            </div>
+
+            {{-- VALIDATION TAB --}}
+            <div class="{{ $rightPanelTab === 'validation' ? '' : 'hidden' }} space-y-5" role="tabpanel">
+                <div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Validation panel</span>
+                    <div class="space-y-2">
+                        @forelse($this->validationIssues as $issue)
+                            <button
+                                type="button"
+                                @if($issue['block_id']) wire:click="setSelectedBlockFromPreview({{ $issue['block_id'] }})" @endif
+                                class="flex w-full items-start gap-3 rounded-lg border {{ $issue['severity'] === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700' }} p-3 text-left"
+                            >
+                                <i class="ph {{ $issue['severity'] === 'error' ? 'ph-warning-octagon' : 'ph-warning-circle' }} mt-0.5"></i>
+                                <span class="text-sm font-medium">{{ $issue['label'] }}</span>
+                            </button>
+                        @empty
+                            <div class="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-medium text-teal-700">No validation issues found.</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Reusable blocks</span>
+                    @if($hasSelectedBlock)
+                        <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <input type="text" wire:model="reusableBlockName" placeholder="Reusable block name" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                            @error('reusableBlockName') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                            <button type="button" wire:click="makeSelectedBlockReusable" class="w-full rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Save selected as reusable</button>
+                        </div>
+                    @endif
+                    <div class="mt-3 space-y-2">
+                        @forelse($this->reusableBlocks as $reusableBlock)
+                            <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-semibold text-slate-700">{{ $reusableBlock->reusable_name }}</div>
+                                    <div class="truncate text-xs text-slate-400">{{ $reusableBlock->type }} · {{ $reusableBlock->content?->name }}</div>
+                                </div>
+                                <button type="button" wire:click="insertReusableBlock({{ $reusableBlock->id }})" class="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-teal-600 hover:bg-teal-50">Insert</button>
+                            </div>
+                        @empty
+                            <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No reusable blocks yet.</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
 
             {{-- ADVANCED TAB (SEO + Status + History) --}}
@@ -502,10 +628,32 @@
                         @if($content->scheduled_for)
                             <div class="mt-2 text-xs text-slate-500">Scheduled for {{ $content->scheduled_for->format('M j, Y g:i A') }}</div>
                         @endif
+                        @if($content->reviewer)
+                            <div class="mt-2 text-xs text-slate-500">Reviewer: {{ $content->reviewer->name }}</div>
+                        @endif
+                        @if($content->review_due_at)
+                            <div class="mt-1 text-xs text-slate-500">Due {{ $content->review_due_at->format('M j, Y g:i A') }}</div>
+                        @endif
                         <div class="mt-3 grid grid-cols-2 gap-2">
                             <button type="button" wire:click="requestReview" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Request Review</button>
                             <button type="button" wire:click="unpublish" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Unpublish</button>
+                            <button type="button" wire:click="approveReview" class="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Approve</button>
+                            <button type="button" wire:click="requestChanges" class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100">Request changes</button>
                         </div>
+                    </div>
+                    <div class="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
+                        <label class="text-xs text-slate-600 block">Assign reviewer</label>
+                        <select wire:model="reviewerId" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <option value="">Unassigned</option>
+                            @foreach($this->reviewers as $reviewer)
+                                <option value="{{ $reviewer->id }}">{{ $reviewer->name }}</option>
+                            @endforeach
+                        </select>
+                        <label class="text-xs text-slate-600 block">Review due date</label>
+                        <input type="datetime-local" wire:model="reviewDueAt" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                        <label class="text-xs text-slate-600 block">Review note</label>
+                        <textarea rows="3" wire:model="reviewNote" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"></textarea>
+                        <button type="button" wire:click="assignReview" class="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Assign review</button>
                     </div>
                     <div class="mt-3 space-y-2">
                         <label class="text-xs text-slate-600 block">Schedule publish</label>
