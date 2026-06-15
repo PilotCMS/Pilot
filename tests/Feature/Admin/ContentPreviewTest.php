@@ -109,6 +109,7 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('wire:ignore', false)
         ->assertSee('name="pilot-cms-preview"', false)
         ->assertSee('preview-frame-refresh', false)
+        ->assertSee('preview-selection-sync', false)
         ->assertSee('pilot-preview-editor-mode', false)
         ->assertSee('pilot-preview-ready', false)
         ->assertSee('inContextPanel: false', false)

@@ -669,6 +669,7 @@ class Editor extends Component
         $this->touchPresence();
         $this->newCommentBody = '';
         $this->reusableBlockName = '';
+        $this->dispatch('preview-selection-sync', blockId: $this->selectedBlockId ? (int) $this->selectedBlockId : null);
     }
 
     public function makeSelectedBlockReusable(): void

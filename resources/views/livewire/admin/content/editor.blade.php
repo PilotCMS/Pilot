@@ -86,6 +86,13 @@
                 this.refreshPreviewFrame(payload?.url);
             });
 
+            $wire.on('preview-selection-sync', (event) => {
+                const payload = Array.isArray(event) ? event[0] : event;
+
+                this.selectedBlockId = payload?.blockId ? Number(payload.blockId) : null;
+                this.syncPreviewSelection();
+            });
+
             this.$watch('selectedBlockId', () => {
                 this.$nextTick(() => {
                     this.syncPreviewSelection();
