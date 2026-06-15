@@ -33,6 +33,33 @@
 
             frame.contentWindow.postMessage(message, this.previewFrameOrigin());
         },
+        applyPreviewSelectionDirectly() {
+            const frame = this.$refs.previewFrame;
+
+            try {
+                const doc = frame?.contentDocument;
+
+                if (! doc) {
+                    return;
+                }
+
+                doc.querySelectorAll('[data-pilot-selected="true"]').forEach((element) => {
+                    element.removeAttribute('data-pilot-selected');
+                });
+
+                if (! this.selectedBlockId) {
+                    return;
+                }
+
+                const selected = doc.querySelector(`[data-pilot-editable="block"][data-pilot-block-id="${Number(this.selectedBlockId)}"]`);
+
+                if (selected) {
+                    selected.setAttribute('data-pilot-selected', 'true');
+                }
+            } catch (error) {
+                // Cross-origin preview targets are handled by the postMessage bridge.
+            }
+        },
         syncPreviewEditorMode() {
             this.postToPreview({
                 type: 'pilot-preview-editor-mode',
@@ -49,6 +76,7 @@
                 type: 'pilot-preview-sync-selected-block',
                 blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
             });
+            this.applyPreviewSelectionDirectly();
         },
         syncPreviewSelection() {
             this.syncPreviewWorkspace();

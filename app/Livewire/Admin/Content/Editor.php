@@ -1032,6 +1032,7 @@ class Editor extends Component
             'v' => $this->previewVersion,
             'pilot_in_context' => 0,
             'pilot_in_context_panel' => 0,
+            'pilot_selected_block' => $this->selectedBlockId ? (int) $this->selectedBlockId : '',
         ]);
     }
 
