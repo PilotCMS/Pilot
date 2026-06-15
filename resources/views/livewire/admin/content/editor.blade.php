@@ -366,6 +366,24 @@
                         <input type="text" value="{{ $content->slug }}" wire:change="updateContent('slug', $event.target.value)" placeholder="page-slug" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
                     </div>
 
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Categories</label>
+                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">list</span>
+                        </div>
+                        <input type="text" value="{{ implode(', ', $content->categories ?? []) }}" wire:change="updateTaxonomy('categories', $event.target.value)" placeholder="News, Destinations" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <p class="mt-1 text-xs text-slate-400">Comma-separated categories for grouping content.</p>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tags</label>
+                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">list</span>
+                        </div>
+                        <input type="text" value="{{ implode(', ', $content->tags ?? []) }}" wire:change="updateTaxonomy('tags', $event.target.value)" placeholder="family travel, hiking, summer" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <p class="mt-1 text-xs text-slate-400">Comma-separated tags for filtering and discovery.</p>
+                    </div>
+
                     {{-- Parent Folder (pages only) --}}
                     @if($content->isPage())
                     <div>

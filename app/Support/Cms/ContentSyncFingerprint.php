@@ -30,6 +30,8 @@ class ContentSyncFingerprint
                 'status' => $content->status,
                 'workflow_status' => $content->workflow_status,
                 'meta' => $content->meta ?? [],
+                'categories' => $content->categories ?? [],
+                'tags' => $content->tags ?? [],
                 'updated_at' => $content->updated_at?->toJSON(),
             ],
             'blocks' => $blocks,

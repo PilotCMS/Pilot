@@ -153,6 +153,8 @@ class ContentLifecycle
                 'content_type_id' => $content->content_type_id,
                 'scheduled_for' => $content->scheduled_for?->toDateTimeString(),
                 'meta' => $content->meta,
+                'categories' => $content->categories,
+                'tags' => $content->tags,
             ],
             'blocks' => $blocks->map(fn (Block $block): array => $this->snapshotBlock($block))->toArray(),
         ];

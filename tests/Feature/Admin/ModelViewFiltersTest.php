@@ -41,6 +41,8 @@ it('filters the rendered content rows by search type folder and sort', function 
         'name' => 'Nested Landing Page',
         'slug' => 'nested-landing-page',
         'type' => 'page',
+        'categories' => ['Destinations'],
+        'tags' => ['summer'],
     ]);
     $otherPage = Content::factory()->create([
         'space_id' => $space->id,
@@ -65,7 +67,10 @@ it('filters the rendered content rows by search type folder and sort', function 
         ->set('sortBy', 'name')
         ->set('sortDir', 'desc')
         ->set('search', 'landing')
-        ->assertSeeInOrder([$nestedPage->name, $folder->name]);
+        ->assertSeeInOrder([$nestedPage->name, $folder->name])
+        ->set('search', 'summer')
+        ->assertSee('Nested Landing Page')
+        ->assertDontSee('Landing Folder');
 
     expect($otherPage->exists)->toBeTrue();
 });

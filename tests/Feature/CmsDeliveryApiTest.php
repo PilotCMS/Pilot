@@ -20,6 +20,8 @@ it('returns storyblok style content with editor links and localized block data',
         'status' => 'published',
         'published_at' => now(),
         'meta' => ['meta_title' => 'Pilot Home'],
+        'categories' => ['Destinations', 'Guides'],
+        'tags' => ['summer', 'hiking'],
         'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);
@@ -43,6 +45,8 @@ it('returns storyblok style content with editor links and localized block data',
         ->assertJsonPath('story.content.body.0._uid', $block->id)
         ->assertJsonPath('story.content.body.0.component', 'hero')
         ->assertJsonPath('story.content.body.0.data.title', 'Bienvenue')
+        ->assertJsonPath('story.categories.0', 'Destinations')
+        ->assertJsonPath('story.tags.1', 'hiking')
         ->assertJsonPath('story.links.editor', url('/admin/content/'.$content->id.'/edit'));
 });
 

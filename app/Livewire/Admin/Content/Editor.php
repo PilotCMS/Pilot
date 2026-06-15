@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Content;
 
+use App\Livewire\Admin\Assets\AssetPickerModal;
 use App\Models\Activity;
 use App\Models\Asset;
 use App\Models\Block;
@@ -332,6 +333,20 @@ class Editor extends Component
         $this->markSaved();
     }
 
+    public function updateTaxonomy(string $field, string $value): void
+    {
+        if (! in_array($field, ['categories', 'tags'], true)) {
+            return;
+        }
+
+        app(ContentLifecycle::class)->updateContent($this->content, [
+            $field => $this->taxonomyValuesFromString($value),
+        ], auth()->id());
+
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
     public function handleBlockUpdated($blockId = null, $fieldKey = null, $value = null)
     {
         if ($blockId === null) {
@@ -531,6 +546,19 @@ class Editor extends Component
         $this->dispatch('saved');
     }
 
+    /**
+     * @return array<int, string>
+     */
+    protected function taxonomyValuesFromString(string $value): array
+    {
+        return collect(explode(',', $value))
+            ->map(fn (string $item): string => trim($item))
+            ->filter()
+            ->unique(fn (string $item): string => mb_strtolower($item))
+            ->values()
+            ->all();
+    }
+
     public function syncExternalChanges(): void
     {
         $freshContent = Content::query()->find($this->content->id);
@@ -578,7 +606,7 @@ class Editor extends Component
             return;
         }
         $fieldKey = is_array($payload) ? ($payload['fieldKey'] ?? $payload[0] ?? '') : $payload;
-        $this->dispatch('open-asset-picker', fieldKey: $fieldKey)->to(\App\Livewire\Admin\Assets\AssetPickerModal::class);
+        $this->dispatch('open-asset-picker', fieldKey: $fieldKey)->to(AssetPickerModal::class);
     }
 
     public function handleAssetSelected($payload = null)

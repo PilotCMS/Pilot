@@ -227,7 +227,9 @@ class Index extends Component
         if ($search !== '') {
             $query->where(function (Builder $query) use ($search): void {
                 $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhere('categories', 'like', "%{$search}%")
+                    ->orWhere('tags', 'like', "%{$search}%");
             });
         }
 

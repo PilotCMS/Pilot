@@ -27,6 +27,8 @@ class Content extends Model
         'review_requested_by',
         'published_revision_id',
         'meta',
+        'categories',
+        'tags',
         'created_by',
         'updated_by',
     ];
@@ -38,10 +40,12 @@ class Content extends Model
             'scheduled_for' => 'datetime',
             'review_requested_at' => 'datetime',
             'meta' => 'array',
+            'categories' => 'array',
+            'tags' => 'array',
         ];
     }
 
-    public function revisions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function revisions(): HasMany
     {
         return $this->hasMany(ContentRevision::class)->orderByDesc('created_at');
     }

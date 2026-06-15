@@ -27,10 +27,14 @@ class PreviewController extends Controller
         }
 
         $locale = $request->get('locale', CmsSetting::get('default_locale', 'en'));
+        $renderedContent = array_merge($renderer->fromModel($content, $locale)->toArray(), [
+            'categories' => $this->taxonomyValues($content, 'categories'),
+            'tags' => $this->taxonomyValues($content, 'tags'),
+        ]);
 
         return response()->json([
-            'story' => new ContentResource($renderer->fromModel($content, $locale)),
-            'content' => new ContentResource($renderer->fromModel($content, $locale)),
+            'story' => new ContentResource($renderedContent),
+            'content' => new ContentResource($renderedContent),
         ]);
     }
 
@@ -43,5 +47,19 @@ class PreviewController extends Controller
             now()->addMinutes($expiresMinutes),
             ['content' => $content->id]
         );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function taxonomyValues(Content $content, string $field): array
+    {
+        $value = $content->getAttribute($field);
+
+        if (is_string($value)) {
+            $value = json_decode($value, true);
+        }
+
+        return is_array($value) ? array_values($value) : [];
     }
 }

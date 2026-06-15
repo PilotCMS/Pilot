@@ -104,6 +104,37 @@ it('uses a conservative content sync polling interval', function () {
         ->assertDontSee('wire:poll.1000ms="poll"', false);
 });
 
+it('stores normalized categories and tags for content', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->call('updateTaxonomy', 'categories', 'Travel, Destinations, travel')
+        ->call('updateTaxonomy', 'tags', 'Hiking, summer, hiking')
+        ->assertSee('Travel, Destinations')
+        ->assertSee('Hiking, summer');
+
+    $content->refresh();
+
+    expect($content->categories)->toBe(['Travel', 'Destinations'])
+        ->and($content->tags)->toBe(['Hiking', 'summer']);
+});
+
 it('stores focal point metadata when selecting an asset for a block field', function () {
     $user = User::factory()->create();
     $space = Space::create([

@@ -16,13 +16,22 @@ class LivePreviewController extends Controller
     {
         $locale = $request->string('locale', CmsSetting::get('default_locale', app()->getLocale()))->toString();
 
-        $content = $request->source() === 'headless'
-            ? $renderer->fromHeadless($this->headlessPayload($request->validated()), $locale)
-            : $renderer->fromModel($this->resolveContent($request), $locale);
+        $contentModel = $request->source() === 'headless' ? null : $this->resolveContent($request);
+
+        $content = $contentModel
+            ? $renderer->fromModel($contentModel, $locale)
+            : $renderer->fromHeadless($this->headlessPayload($request->validated()), $locale);
+
+        $contentPayload = $content->toArray();
+
+        if ($contentModel) {
+            $contentPayload['categories'] = $this->taxonomyValues($contentModel, 'categories');
+            $contentPayload['tags'] = $this->taxonomyValues($contentModel, 'tags');
+        }
 
         return response()->json([
             'html' => $renderer->renderBlocks($content)->toHtml(),
-            'content' => $content->toArray(),
+            'content' => $contentPayload,
             'source' => $content->source,
         ]);
     }
@@ -54,6 +63,20 @@ class LivePreviewController extends Controller
         }
 
         abort(403, 'Draft preview content requires an authenticated or signed request.');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function taxonomyValues(Content $content, string $field): array
+    {
+        $value = $content->getAttribute($field);
+
+        if (is_string($value)) {
+            $value = json_decode($value, true);
+        }
+
+        return is_array($value) ? array_values($value) : [];
     }
 
     /**

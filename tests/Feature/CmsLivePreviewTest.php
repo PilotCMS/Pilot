@@ -44,6 +44,8 @@ it('renders mysql content for live preview when no headless payload is posted', 
         'slug' => 'home',
         'name' => 'Home',
         'status' => 'draft',
+        'categories' => ['Destinations'],
+        'tags' => ['preview'],
         'created_by' => $user->id,
         'updated_by' => $user->id,
     ]);
@@ -65,5 +67,7 @@ it('renders mysql content for live preview when no headless payload is posted', 
         ->assertOk()
         ->assertJsonPath('source', 'mysql')
         ->assertJsonPath('content.slug', 'home')
+        ->assertJsonPath('content.categories.0', 'Destinations')
+        ->assertJsonPath('content.tags.0', 'preview')
         ->assertSee('Draft database preview');
 });

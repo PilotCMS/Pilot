@@ -42,7 +42,7 @@ class ContentController extends Controller
 
         return response()->json([
             'contents' => ContentResource::collection(
-                $contents->map(fn (Content $content) => $renderer->fromModel($content, $locale))
+                $contents->map(fn (Content $content): array => $this->renderedContent($content, $renderer, $locale))
             ),
         ]);
     }
@@ -74,9 +74,36 @@ class ContentController extends Controller
             $q->whereNull('parent_block_id')->orderBy('position');
         }, 'blocks.children'])->firstOrFail();
 
+        $renderedContent = $this->renderedContent($content, $renderer, $locale);
+
         return response()->json([
-            'story' => new ContentResource($renderer->fromModel($content, $locale)),
-            'content' => new ContentResource($renderer->fromModel($content, $locale)),
+            'story' => new ContentResource($renderedContent),
+            'content' => new ContentResource($renderedContent),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function renderedContent(Content $content, ContentRenderer $renderer, string $locale): array
+    {
+        return array_merge($renderer->fromModel($content, $locale)->toArray(), [
+            'categories' => $this->taxonomyValues($content, 'categories'),
+            'tags' => $this->taxonomyValues($content, 'tags'),
+        ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function taxonomyValues(Content $content, string $field): array
+    {
+        $value = $content->getAttribute($field);
+
+        if (is_string($value)) {
+            $value = json_decode($value, true);
+        }
+
+        return is_array($value) ? array_values($value) : [];
     }
 }
