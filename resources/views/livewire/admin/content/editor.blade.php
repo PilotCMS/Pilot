@@ -43,7 +43,7 @@
                     return;
                 }
 
-                doc.querySelectorAll('[data-pilot-selected="true"]').forEach((element) => {
+                doc.querySelectorAll('[data-pilot-selected=true]').forEach((element) => {
                     element.removeAttribute('data-pilot-selected');
                 });
 
@@ -51,7 +51,7 @@
                     return;
                 }
 
-                const selected = doc.querySelector(`[data-pilot-editable="block"][data-pilot-block-id="${Number(this.selectedBlockId)}"]`);
+                const selected = doc.querySelector(`[data-pilot-editable=block][data-pilot-block-id='${Number(this.selectedBlockId)}']`);
 
                 if (selected) {
                     selected.setAttribute('data-pilot-selected', 'true');

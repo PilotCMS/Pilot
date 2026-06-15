@@ -113,6 +113,8 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('preview-selection-sync', false)
         ->assertSee('applyPreviewSelectionDirectly', false)
         ->assertSee('contentDocument', false)
+        ->assertSee('doc.querySelectorAll(\'[data-pilot-selected=true]\')', false)
+        ->assertDontSee('doc.querySelectorAll(\'[data-pilot-selected="true"]\')', false)
         ->assertSee('pilot-preview-editor-mode', false)
         ->assertSee('pilot-preview-ready', false)
         ->assertSee('inContextPanel: false', false)
