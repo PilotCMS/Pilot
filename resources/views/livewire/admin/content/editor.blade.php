@@ -44,12 +44,17 @@
             window.setTimeout(() => this.syncPreviewEditorMode(), 100);
             window.setTimeout(() => this.syncPreviewEditorMode(), 500);
         },
-        syncPreviewSelection() {
-            this.syncPreviewWorkspace();
+        postPreviewSelection() {
             this.postToPreview({
                 type: 'pilot-preview-sync-selected-block',
                 blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
             });
+        },
+        syncPreviewSelection() {
+            this.syncPreviewWorkspace();
+            this.postPreviewSelection();
+            window.setTimeout(() => this.postPreviewSelection(), 100);
+            window.setTimeout(() => this.postPreviewSelection(), 500);
         },
         refreshPreviewFrame(url) {
             if (! url || this.previewFrameSrc === url) {
@@ -94,6 +99,10 @@
 
                 if (! allowedOrigins.includes(event.origin)) {
                     return;
+                }
+
+                if (event.data?.type === 'pilot-preview-ready') {
+                    this.syncPreviewSelection();
                 }
 
                 if (event.data?.type === 'pilot-preview-select-block' && event.data?.blockId) {

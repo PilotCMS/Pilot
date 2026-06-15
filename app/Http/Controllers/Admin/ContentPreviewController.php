@@ -5,19 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Content;
 use Illuminate\Contracts\View\View;
+use Pilot\Laravel\Support\ContentRenderer;
 
 class ContentPreviewController extends Controller
 {
-    public function __invoke(Content $content): View
+    public function __invoke(Content $content, ContentRenderer $renderer): View
     {
-        $content->load([
-            'blocks' => fn ($query) => $query->whereNull('parent_block_id')->orderBy('position'),
-            'blocks.children',
-        ]);
+        $payload = $renderer->fromModel($content);
 
-        return view('admin.content.preview', [
-            'content' => $content,
-            'blocks' => $content->blocks,
-        ]);
+        return $renderer->pageView($payload, space: $content->space);
     }
 }
