@@ -105,6 +105,7 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('pilot_in_context_panel=0', false)
         ->assertSee('x-ref="previewFrame"', false)
         ->assertSee('wire:ignore', false)
+        ->assertSee('name="pilot-cms-preview"', false)
         ->assertSee('preview-frame-refresh', false)
         ->assertSee('pilot-preview-editor-mode', false)
         ->assertSee('inContextPanel: false', false)

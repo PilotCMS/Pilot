@@ -39,8 +39,13 @@
                 inContextPanel: false,
             });
         },
-        syncPreviewSelection() {
+        syncPreviewWorkspace() {
             this.syncPreviewEditorMode();
+            window.setTimeout(() => this.syncPreviewEditorMode(), 100);
+            window.setTimeout(() => this.syncPreviewEditorMode(), 500);
+        },
+        syncPreviewSelection() {
+            this.syncPreviewWorkspace();
             this.postToPreview({
                 type: 'pilot-preview-sync-selected-block',
                 blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
@@ -291,6 +296,7 @@
                 x-ref="previewFrame"
                 x-on:load="syncPreviewSelection()"
                 wire:ignore
+                name="pilot-cms-preview"
                 x-bind:src="previewFrameSrc"
                 x-bind:style="`width: ${previewWidth()}`"
                 class="mx-auto h-full max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-[width]"

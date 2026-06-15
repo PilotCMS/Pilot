@@ -310,6 +310,8 @@ it('hides only the package in-context panel when preview is embedded in the cms 
         ->assertDontSee('pilot-preview-navigated', false)
         ->assertDontSee('preserveEditorPreviewMode', false)
         ->assertSee('window.__pilotInContextLoaded', false)
+        ->assertSee("CMS_PREVIEW_FRAME_NAME = 'pilot-cms-preview'", false)
+        ->assertSee('window.name === CMS_PREVIEW_FRAME_NAME', false)
         ->assertSee('let panelEnabled = (() => {', false)
         ->assertSee("get('pilot_in_context_panel')", false)
         ->assertSee('disablePanel', false)
