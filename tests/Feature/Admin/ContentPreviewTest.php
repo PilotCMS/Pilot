@@ -102,6 +102,7 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('x-show="canvasMode === \'compose\'" class="flex min-h-0 flex-1 overflow-hidden"', false)
         ->assertSee('class="h-full min-h-0 max-w-full overflow-y-auto bg-white', false)
         ->assertSee('href="'.route('admin.content.preview', $content).'"', false)
+        ->assertSee('pilot_in_context=0', false)
         ->assertSee('pilot_in_context_panel=0', false)
         ->assertSee('x-ref="previewFrame"', false)
         ->assertSee('wire:ignore', false)

@@ -3633,12 +3633,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/pilot-laravel.git",
-                "reference": "aaee4f9b81cc104e479282852aa2b0a29d64987e"
+                "reference": "ac3250fcf721054087e9fbb8da85b92969640911"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/aaee4f9b81cc104e479282852aa2b0a29d64987e",
-                "reference": "aaee4f9b81cc104e479282852aa2b0a29d64987e",
+                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/ac3250fcf721054087e9fbb8da85b92969640911",
+                "reference": "ac3250fcf721054087e9fbb8da85b92969640911",
                 "shasum": ""
             },
             "require": {
@@ -3677,7 +3677,7 @@
                 "source": "https://github.com/PilotCMS/pilot-laravel/tree/main",
                 "issues": "https://github.com/PilotCMS/pilot-laravel/issues"
             },
-            "time": "2026-06-15T19:43:44+00:00"
+            "time": "2026-06-15T19:51:36+00:00"
         },
         {
             "name": "pragmarx/google2fa",

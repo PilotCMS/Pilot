@@ -1029,6 +1029,7 @@ class Editor extends Component
 
         return $url.$separator.http_build_query([
             'v' => $this->previewVersion,
+            'pilot_in_context' => 0,
             'pilot_in_context_panel' => 0,
         ]);
     }
