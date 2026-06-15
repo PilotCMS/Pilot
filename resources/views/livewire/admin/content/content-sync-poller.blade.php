@@ -1,1 +1,1 @@
-<div wire:poll.1000ms="poll" class="hidden" aria-hidden="true"></div>
+<div wire:poll.5000ms="poll" class="hidden" aria-hidden="true"></div>

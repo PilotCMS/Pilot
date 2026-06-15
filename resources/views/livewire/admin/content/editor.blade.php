@@ -197,19 +197,6 @@
                     </a>
                 @endif
             @endforeach
-            <div class="pt-4 mt-2 border-t border-slate-100 px-2">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">Settings</span>
-                <div class="mt-2 space-y-0.5">
-                    <div class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-md cursor-pointer">
-                        <i class="ph ph-gear-six"></i>
-                        <span class="text-sm">General</span>
-                    </div>
-                    <div class="flex items-center gap-2 px-3 py-2 text-slate-600 hover:bg-slate-50 rounded-md cursor-pointer">
-                        <i class="ph ph-globe-hemisphere-west"></i>
-                        <span class="text-sm">Languages</span>
-                    </div>
-                </div>
-            </div>
         </div>
         <div class="p-4 border-t border-slate-200 bg-slate-50 shrink-0">
             <div class="flex justify-between text-xs mb-1">

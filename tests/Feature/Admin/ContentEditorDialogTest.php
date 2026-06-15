@@ -55,6 +55,55 @@ it('keeps block library state open until a block is inserted', function () {
     expect($content->blocks()->count())->toBe(2);
 });
 
+it('does not render nonfunctional settings links in the content editor sidebar', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->assertDontSee('General')
+        ->assertDontSee('Languages');
+});
+
+it('uses a conservative content sync polling interval', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    $this->get(route('admin.content.editor', $content))
+        ->assertOk()
+        ->assertSee('wire:poll.5000ms="poll"', false)
+        ->assertDontSee('wire:poll.1000ms="poll"', false);
+});
+
 it('stores focal point metadata when selecting an asset for a block field', function () {
     $user = User::factory()->create();
     $space = Space::create([

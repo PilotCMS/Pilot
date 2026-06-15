@@ -20,11 +20,9 @@ class extends Component {
 
     <main class="flex-1 min-h-0 overflow-y-auto">
         <div class="w-full px-6 sm:px-8 py-8">
-            <x-pages::settings.layout :heading="__('Appearance')" :subheading="__('Update the appearance settings for your account')">
-                <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
-                    <flux:radio value="light" icon="sun">{{ __('Light') }}</flux:radio>
-                    <flux:radio value="dark" icon="moon">{{ __('Dark') }}</flux:radio>
-                    <flux:radio value="system" icon="computer-desktop">{{ __('System') }}</flux:radio>
+            <x-pages::settings.layout :heading="__('Appearance')" :subheading="__('Dark mode is disabled for this app')">
+                <flux:radio.group variant="segmented" name="appearance" value="light" disabled>
+                    <flux:radio value="light" icon="sun" checked>{{ __('Light') }}</flux:radio>
                 </flux:radio.group>
             </x-pages::settings.layout>
         </div>

@@ -5,6 +5,8 @@ namespace App\Livewire\Admin\Content;
 use App\Models\Activity;
 use App\Models\Content;
 use App\Models\Space;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -108,61 +110,45 @@ class Index extends Component
 
     public function getContentsProperty()
     {
-        $space = $this->space;
-
-        if (! $space) {
+        if (! $this->space) {
             return Content::query()->paginate(15);
         }
 
-        $query = Content::where('space_id', $space->id);
+        $query = $this->filteredContentQuery();
 
-        // Only filter by parent when not searching
-        if (! $this->search) {
+        if (! $this->hasFlatFilters()) {
             $query->where('parent_id', $this->selectedFolderId);
         }
-
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('slug', 'like', "%{$this->search}%");
-            });
-        }
-
-        if ($this->typeFilter !== 'all') {
-            if ($this->typeFilter === 'global') {
-                $query->where('type', 'global');
-            } else {
-                $query->where('type', $this->typeFilter);
-            }
-        }
-
-        $query->orderBy($this->sortBy, $this->sortDir);
 
         return $query->paginate(15);
     }
 
     /**
      * Tree of content for expandable folders: flat list of [content, depth] in tree order.
-     * When search or typeFilter is set, only root-level (selectedFolderId) is used for compatibility.
+     * When search or typeFilter is set, matching rows are shown flat so filters affect the rendered list.
      */
     public function getContentTreeProperty()
     {
-        $space = $this->space;
-
-        if (! $space) {
+        if (! $this->space) {
             return collect();
         }
 
-        $all = Content::where('space_id', $space->id)
-            ->orderBy('name')
-            ->get()
-            ->keyBy('id');
+        $contents = $this->filteredContentQuery()->get();
+
+        if ($this->hasFlatFilters()) {
+            return $contents->map(fn (Content $content): object => (object) [
+                'content' => $content,
+                'depth' => 0,
+            ]);
+        }
+
+        $all = $contents->keyBy('id');
 
         $byParent = $all->groupBy('parent_id');
 
         $list = [];
         $this->appendTreeRows(
-            $byParent->get(null, collect())->values(),
+            $byParent->get($this->selectedFolderId, collect())->values(),
             0,
             $byParent,
             $list
@@ -172,7 +158,7 @@ class Index extends Component
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Content>  $items
+     * @param  Collection<int, Content>  $items
      * @param  array<int, object{content: Content, depth: int}>  $list
      */
     protected function appendTreeRows($items, int $depth, $byParent, array &$list): void
@@ -229,6 +215,44 @@ class Index extends Component
 
         $content->delete();
         $this->dispatch('content-deleted');
+    }
+
+    protected function filteredContentQuery(): Builder
+    {
+        $query = Content::query()
+            ->where('space_id', $this->space->id);
+
+        $search = trim($this->search);
+
+        if ($search !== '') {
+            $query->where(function (Builder $query) use ($search): void {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%");
+            });
+        }
+
+        if ($this->typeFilter !== 'all') {
+            $query->where('type', $this->typeFilter);
+        }
+
+        return $query->orderBy($this->safeSortColumn(), $this->safeSortDirection());
+    }
+
+    protected function hasFlatFilters(): bool
+    {
+        return trim($this->search) !== '' || $this->typeFilter !== 'all';
+    }
+
+    protected function safeSortColumn(): string
+    {
+        return in_array($this->sortBy, ['updated_at', 'name', 'created_at', 'status'], true)
+            ? $this->sortBy
+            : 'updated_at';
+    }
+
+    protected function safeSortDirection(): string
+    {
+        return $this->sortDir === 'asc' ? 'asc' : 'desc';
     }
 
     public function render()

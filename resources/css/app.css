@@ -1,12 +1,14 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 
+@custom-variant dark (&:where([data-dark-mode="enabled"], [data-dark-mode="enabled"] *));
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
-/* Light mode only — no dark mode */
+/* Light mode only - keep dark variants inert app-wide. */
 
 @theme {
     /* CMS Visual Editor: Inter + JetBrains Mono */
@@ -52,6 +54,10 @@
 }
 
 @layer base {
+    :root {
+        color-scheme: light;
+    }
+
     html {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
