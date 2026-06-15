@@ -7,6 +7,7 @@
         canvasMode: 'preview',
         previewDevice: 'desktop',
         previewTargetOrigins: @js($this->previewTargetOrigins),
+        previewFrameSrc: @js($this->previewFrameUrl),
         saveState: @entangle('saveState'),
         conflictMessage: @entangle('conflictMessage'),
         previewWidth() {
@@ -23,17 +24,34 @@
                 return '*';
             }
         },
-        syncPreviewSelection() {
+        postToPreview(message) {
             const frame = this.$refs.previewFrame;
 
             if (! frame?.contentWindow) {
                 return;
             }
 
-            frame.contentWindow.postMessage({
+            frame.contentWindow.postMessage(message, this.previewFrameOrigin());
+        },
+        syncPreviewEditorMode() {
+            this.postToPreview({
+                type: 'pilot-preview-editor-mode',
+                inContextPanel: false,
+            });
+        },
+        syncPreviewSelection() {
+            this.syncPreviewEditorMode();
+            this.postToPreview({
                 type: 'pilot-preview-sync-selected-block',
                 blockId: this.selectedBlockId ? Number(this.selectedBlockId) : null,
-            }, this.previewFrameOrigin());
+            });
+        },
+        refreshPreviewFrame(url) {
+            if (! url || this.previewFrameSrc === url) {
+                return;
+            }
+
+            this.previewFrameSrc = url;
         },
         saveLabel() {
             if (this.conflictMessage) {
@@ -50,6 +68,12 @@
             $wire.on('saved', () => {
                 this.savedJustNow = true;
                 setTimeout(() => { this.savedJustNow = false; }, 2000);
+            });
+
+            $wire.on('preview-frame-refresh', (event) => {
+                const payload = Array.isArray(event) ? event[0] : event;
+
+                this.refreshPreviewFrame(payload?.url);
             });
 
             this.$watch('selectedBlockId', () => {
@@ -266,8 +290,8 @@
             <iframe
                 x-ref="previewFrame"
                 x-on:load="syncPreviewSelection()"
-                wire:key="preview-frame-{{ $previewVersion }}"
-                src="{{ $this->previewFrameUrl }}"
+                wire:ignore
+                x-bind:src="previewFrameSrc"
                 x-bind:style="`width: ${previewWidth()}`"
                 class="mx-auto h-full max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-[width]"
                 title="Live preview"

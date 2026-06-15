@@ -131,6 +131,8 @@ class Editor extends Component
         $prefs = EditorPreference::get(auth()->id(), 'editor', []);
         $prefs['previewTargets'][$this->content->space_id] = $value;
         EditorPreference::set(auth()->id(), 'editor', $prefs);
+
+        $this->dispatchPreviewFrameRefresh();
     }
 
     protected function saveEditorPreference(string $key, mixed $value): void
@@ -748,6 +750,7 @@ class Editor extends Component
         $this->previewVersion++;
         $this->editorSyncVersion++;
         $this->dispatch('saved');
+        $this->dispatchPreviewFrameRefresh();
     }
 
     protected function markSaving(): void
@@ -792,6 +795,12 @@ class Editor extends Component
         $this->saveState = 'conflict';
         $this->conflictMessage = 'This content changed in another session. The editor has refreshed to the latest version.';
         $this->lastSavedAt = $freshContent->updated_at;
+        $this->dispatchPreviewFrameRefresh();
+    }
+
+    protected function dispatchPreviewFrameRefresh(): void
+    {
+        $this->dispatch('preview-frame-refresh', url: $this->previewFrameUrl);
     }
 
     public function setSelectedBlockFromPreview(int $blockId): void
