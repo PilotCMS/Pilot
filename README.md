@@ -65,6 +65,14 @@ npm run dev
 php artisan serve
 ```
 
+7. Set up Laravel Boost (for Cursor / Claude Code):
+
+```bash
+php artisan boost:update
+```
+
+Boost config lives in `boost.json`. Generated agent files (`.cursor/`, `.claude/`, `AGENTS.md`, etc.) are gitignored and recreated locally by that command. In Cursor, enable **laravel-boost** in MCP settings after running it.
+
 ## Default Login
 
 After seeding, you can log in with:
