@@ -4,6 +4,7 @@ use App\Models\Block;
 use App\Models\Content;
 use App\Models\Space;
 use App\Models\User;
+use App\Support\Cms\ContentLifecycle;
 
 it('redirects guests from admin content preview', function () {
     $user = User::factory()->create();
@@ -241,6 +242,44 @@ it('renders a cta block in the admin preview canvas', function () {
         ->assertSee('Take action')
         ->assertSee('href="/signup"', false)
         ->assertDontSee('Fallback preview');
+});
+
+it('renders a selected content revision without restoring it', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Revision Preview',
+        'slug' => 'revision-preview',
+        'created_by' => $user->id,
+    ]);
+
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'data' => [
+            'title' => ['en' => 'Revision CTA'],
+            'button_text' => ['en' => 'Revision action'],
+            'button_url' => ['en' => '/revision'],
+        ],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Revision preview', $user->id);
+
+    $block->update([
+        'data' => [
+            'title' => ['en' => 'Current CTA'],
+            'button_text' => ['en' => 'Current action'],
+            'button_url' => ['en' => '/current'],
+        ],
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.content.preview', ['content' => $content, 'revision' => $revision->id]))
+        ->assertOk()
+        ->assertSee('Revision CTA')
+        ->assertSee('Revision action')
+        ->assertDontSee('Current CTA');
+
+    expect($block->refresh()->data['title']['en'])->toBe('Current CTA');
 });
 
 it('renders nested columns content in the admin preview canvas', function () {

@@ -3,13 +3,17 @@
 use App\Livewire\Admin\Content\BlockEditor;
 use App\Livewire\Admin\Content\ContentSyncPoller;
 use App\Livewire\Admin\Content\Editor;
+use App\Models\Activity;
 use App\Models\Block;
 use App\Models\BlockComment;
 use App\Models\BlockType;
 use App\Models\Content;
 use App\Models\ContentPresence;
+use App\Models\ContentRevision;
 use App\Models\Space;
 use App\Models\User;
+use App\Support\Cms\ContentLifecycle;
+use App\Support\Cms\ContentRevisionInspector;
 use Livewire\Livewire;
 
 it('keeps block library state open until a block is inserted', function () {
@@ -576,6 +580,409 @@ it('restores nested blocks from a content revision', function () {
         ->and($restoredChild->type)->toBe('cta')
         ->and($restoredChild->data['title'])->toBe('Nested CTA')
         ->and($restoredChild->data['_column'])->toBe(1);
+});
+
+it('creates a rollback checkpoint before restoring a revision', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Original page',
+        'slug' => 'original-page',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => [
+            'title' => 'Original hero',
+            'subtitle' => 'Original subtitle',
+        ],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Known good', $user->id);
+
+    $content->update(['name' => 'Current draft']);
+    $content->allBlocks()->delete();
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'data' => ['title' => 'Current CTA'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('restoreRevision', $revision->id)
+        ->assertHasNoErrors();
+
+    $rollbackRevision = ContentRevision::query()
+        ->where('content_id', $content->id)
+        ->where('revision_type', 'pre_restore')
+        ->where('source_revision_id', $revision->id)
+        ->firstOrFail();
+
+    expect($content->refresh()->name)->toBe('Original page')
+        ->and($content->allBlocks()->first()->data['title'])->toBe('Original hero')
+        ->and($rollbackRevision->label)->toBe('Before restore')
+        ->and($rollbackRevision->snapshot['content']['name'])->toBe('Current draft')
+        ->and($rollbackRevision->snapshot['blocks'][0]['data']['title'])->toBe('Current CTA')
+        ->and(Activity::query()->where('action', 'restored revision')->where('subject_id', $content->id)->exists())->toBeTrue();
+});
+
+it('shows a revision comparison before restore', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Original page',
+        'slug' => 'original-page',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Original hero'],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Known good', $user->id);
+
+    $content->update([
+        'name' => 'Current draft',
+        'slug' => 'current-draft',
+    ]);
+    $content->allBlocks()->delete();
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'data' => ['title' => 'Current CTA'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('selectRevision', $revision->id)
+        ->assertSet('selectedRevisionId', $revision->id)
+        ->assertSee('Changed fields')
+        ->assertSee('Current draft')
+        ->assertSee('Original page')
+        ->assertSee('Block changes')
+        ->assertSee('Hero')
+        ->assertSee('Changed type, content')
+        ->assertSee('Title')
+        ->assertSee('Current CTA')
+        ->assertSee('Original hero')
+        ->assertSee('Comparing against Current draft')
+        ->assertSee('Restoring fully will replace the current block tree');
+});
+
+it('compares revisions through the revision inspector service', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Current page',
+        'created_by' => $user->id,
+    ]);
+
+    BlockType::factory()->create([
+        'key' => 'hero',
+        'name' => 'Hero',
+        'schema' => [
+            'fields' => [
+                ['key' => 'title', 'label' => 'Title'],
+            ],
+        ],
+    ]);
+
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Revision hero'],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Hero checkpoint', $user->id);
+
+    $block->update(['data' => ['title' => 'Current hero']]);
+    $content->update(['name' => 'Changed page']);
+
+    $comparison = app(ContentRevisionInspector::class)->compare(
+        $content,
+        $revision,
+        blockTypes: BlockType::query()->get()->keyBy('key'),
+    );
+
+    expect($comparison['has_changes'])->toBeTrue()
+        ->and($comparison['content_changes'][0]['label'])->toBe('Title')
+        ->and($comparison['block_changes'][0]['label'])->toBe('Hero')
+        ->and($comparison['block_changes'][0]['field_changes'][0]['label'])->toBe('Title')
+        ->and($comparison['block_changes'][0]['field_changes'][0]['current'])->toBe('Current hero')
+        ->and($comparison['block_changes'][0]['field_changes'][0]['revision'])->toBe('Revision hero');
+});
+
+it('creates named checkpoints from the revision panel', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->set('checkpointLabel', 'Before homepage rewrite')
+        ->call('saveCheckpoint')
+        ->assertHasNoErrors()
+        ->assertSet('checkpointLabel', '');
+
+    $revision = ContentRevision::query()->where('content_id', $content->id)->firstOrFail();
+
+    expect($revision->label)->toBe('Before homepage rewrite')
+        ->and($revision->revision_type)->toBe('manual')
+        ->and($revision->user_id)->toBe($user->id);
+});
+
+it('shows changes since the published revision', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Published page',
+        'slug' => 'published-page',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Published hero'],
+    ]);
+
+    $publishedRevision = app(ContentLifecycle::class)->publish($content, $user->id);
+
+    $content->update([
+        'name' => 'Draft page',
+        'slug' => 'draft-page',
+    ]);
+    $block->update(['data' => ['title' => 'Draft hero']]);
+    $content->touch();
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content->refresh()])
+        ->assertSee('Since publish: 2 fields, 1 blocks')
+        ->call('selectPublishedRevision')
+        ->assertSet('selectedRevisionId', $publishedRevision->id)
+        ->assertSet('rightPanelTab', 'seo')
+        ->assertSee('Published page')
+        ->assertSee('Draft page')
+        ->assertSee('Block changes');
+});
+
+it('filters revisions and loads more history', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+
+    foreach (range(1, 22) as $index) {
+        app(ContentLifecycle::class)->createRevision($content, 'Checkpoint '.str_pad((string) $index, 3, '0', STR_PAD_LEFT), $user->id, 'manual');
+    }
+
+    app(ContentLifecycle::class)->createRevision($content, 'Published checkpoint', $otherUser->id, 'published');
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSee('Checkpoint 022')
+        ->assertDontSee('Checkpoint 001')
+        ->call('loadMoreRevisions')
+        ->assertSee('Checkpoint 001')
+        ->set('revisionTypeFilter', 'published')
+        ->assertSee('Published checkpoint')
+        ->assertDontSee('Checkpoint 022')
+        ->set('revisionTypeFilter', '')
+        ->set('revisionAuthorFilter', (string) $otherUser->id)
+        ->assertSee('Published checkpoint')
+        ->assertDontSee('Checkpoint 022');
+});
+
+it('compares a selected revision against another revision', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'First title',
+        'created_by' => $user->id,
+    ]);
+
+    $firstRevision = app(ContentLifecycle::class)->createRevision($content, 'First checkpoint', $user->id);
+
+    $content->update(['name' => 'Second title']);
+    $secondRevision = app(ContentLifecycle::class)->createRevision($content, 'Second checkpoint', $user->id);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('selectRevision', $firstRevision->id)
+        ->set('compareRevisionId', (string) $secondRevision->id)
+        ->assertSee('Comparing against Second checkpoint')
+        ->assertSee('First title')
+        ->assertSee('Second title');
+});
+
+it('selectively restores page fields and individual blocks from a revision', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Original title',
+        'slug' => 'original-title',
+        'created_by' => $user->id,
+    ]);
+
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Original hero'],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Original checkpoint', $user->id);
+
+    $content->update([
+        'name' => 'Draft title',
+        'slug' => 'draft-title',
+    ]);
+    $content->allBlocks()->first()->update(['data' => ['title' => 'Draft hero']]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('selectRevision', $revision->id)
+        ->call('restoreSelectedRevisionContent')
+        ->assertHasNoErrors();
+
+    expect($content->refresh()->name)->toBe('Original title')
+        ->and($content->allBlocks()->first()->data['title'])->toBe('Draft hero');
+
+    $content->update(['name' => 'Draft title']);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content->refresh()])
+        ->call('selectRevision', $revision->id)
+        ->call('restoreSelectedRevisionBlock', '1')
+        ->assertHasNoErrors();
+
+    expect($content->refresh()->name)->toBe('Draft title')
+        ->and($content->allBlocks()->first()->data['title'])->toBe('Original hero');
+});
+
+it('selectively restores nested blocks from a revision path', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+
+    $columns = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'columns',
+        'data' => ['columns' => 2],
+    ]);
+
+    $nestedBlock = Block::factory()->create([
+        'content_id' => $content->id,
+        'parent_block_id' => $columns->id,
+        'type' => 'cta',
+        'data' => [
+            'title' => 'Original nested CTA',
+            '_column' => 0,
+        ],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Nested checkpoint', $user->id);
+
+    $nestedBlock->update([
+        'data' => [
+            'title' => 'Changed nested CTA',
+            '_column' => 0,
+        ],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('selectRevision', $revision->id)
+        ->call('restoreSelectedRevisionBlock', '1.1')
+        ->assertHasNoErrors();
+
+    $restoredNestedBlock = Block::query()
+        ->where('content_id', $content->id)
+        ->whereNotNull('parent_block_id')
+        ->firstOrFail();
+
+    expect($restoredNestedBlock->data['title'])->toBe('Original nested CTA')
+        ->and($restoredNestedBlock->parent_block_id)->toBe($columns->id);
+});
+
+it('creates deduped automatic checkpoints before risky operations', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    $block = Block::factory()->create(['content_id' => $content->id]);
+
+    app(ContentLifecycle::class)->createRevisionIfChanged($content, 'Initial auto checkpoint', $user->id, 'auto');
+    app(ContentLifecycle::class)->createRevisionIfChanged($content, 'Duplicate auto checkpoint', $user->id, 'auto');
+
+    expect(ContentRevision::query()->where('content_id', $content->id)->where('revision_type', 'auto')->count())->toBe(1);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('deleteBlock', $block->id)
+        ->assertHasNoErrors();
+
+    expect(ContentRevision::query()->where('content_id', $content->id)->where('revision_type', 'auto')->count())->toBe(1);
+});
+
+it('prunes old automatic revisions by retention limit', function () {
+    config(['cms.auto_revision_retention' => 3]);
+
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    Block::factory()->create(['content_id' => $content->id]);
+
+    foreach (range(1, 5) as $index) {
+        $content->update(['name' => 'Auto checkpoint '.$index]);
+        app(ContentLifecycle::class)->createRevisionIfChanged($content->refresh(), 'Auto '.$index, $user->id, 'auto');
+    }
+
+    $autoRevisions = ContentRevision::query()
+        ->where('content_id', $content->id)
+        ->where('revision_type', 'auto')
+        ->latest()
+        ->get();
+
+    expect($autoRevisions)->toHaveCount(3)
+        ->and($autoRevisions->pluck('label')->all())->toBe(['Auto 5', 'Auto 4', 'Auto 3']);
+});
+
+it('restores reusable block metadata from a content revision', function () {
+    $user = User::factory()->create();
+    $sourceContent = Content::factory()->create(['created_by' => $user->id]);
+    $content = Content::factory()->create(['created_by' => $user->id]);
+
+    $sourceBlock = Block::factory()->create([
+        'content_id' => $sourceContent->id,
+        'type' => 'hero',
+        'reusable_key' => 'global-hero',
+        'reusable_name' => 'Global Hero',
+        'data' => ['title' => 'Global'],
+    ]);
+
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'reusable_source_block_id' => $sourceBlock->id,
+        'type' => 'hero',
+        'reusable_key' => 'global-hero',
+        'reusable_name' => 'Global Hero',
+        'data' => ['title' => 'Instance'],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Reusable checkpoint', $user->id);
+
+    $content->allBlocks()->delete();
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('restoreRevision', $revision->id)
+        ->assertHasNoErrors();
+
+    $restoredBlock = $content->allBlocks()->firstOrFail();
+
+    expect($restoredBlock->reusable_source_block_id)->toBe($sourceBlock->id)
+        ->and($restoredBlock->reusable_key)->toBe('global-hero')
+        ->and($restoredBlock->reusable_name)->toBe('Global Hero')
+        ->and($restoredBlock->data['title'])->toBe('Instance');
 });
 
 it('tracks editor presence and selected block context', function () {

@@ -241,7 +241,17 @@
                 <i class="ph ph-eye" aria-hidden="true"></i>
                 View preview
             </a>
-            <button type="button" wire:click="saveCheckpoint" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Save</button>
+            @if($this->publishedRevisionComparison)
+                <button type="button" wire:click="selectPublishedRevision" class="hidden items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold shadow-sm transition-colors 2xl:inline-flex {{ $this->publishedRevisionComparison['has_changes'] ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
+                    <i class="ph {{ $this->publishedRevisionComparison['has_changes'] ? 'ph-git-diff' : 'ph-check-circle' }}"></i>
+                    @if($this->publishedRevisionComparison['has_changes'])
+                        Since publish: {{ count($this->publishedRevisionComparison['content_changes']) }} fields, {{ count($this->publishedRevisionComparison['block_changes']) }} blocks
+                    @else
+                        Matches published
+                    @endif
+                </button>
+            @endif
+            <button type="button" wire:click="saveCheckpoint" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Create checkpoint</button>
             <div class="flex rounded-md shadow-sm">
                 <button type="button" wire:click="publish" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-l-md transition-colors border-r border-teal-600">Publish</button>
                 <button type="button" class="px-2 bg-teal-500 hover:bg-teal-600 rounded-r-md transition-colors text-white"><i class="ph ph-caret-down"></i></button>
@@ -737,20 +747,183 @@
                     </div>
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Revision history</span>
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Revision history</span>
+                        <span class="text-[11px] font-medium text-slate-400">{{ $this->revisions->count() }} of {{ $this->revisionTotalCount }}</span>
+                    </div>
+                    <div class="mb-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                        <label class="text-xs font-semibold text-slate-600 block mb-1.5">Create checkpoint</label>
+                        <div class="flex gap-2">
+                            <input type="text" wire:model="checkpointLabel" placeholder="e.g. Before homepage rewrite" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                            <button type="button" wire:click="saveCheckpoint" class="shrink-0 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Save</button>
+                        </div>
+                        @error('checkpointLabel') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
+                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Filters</div>
+                        <div class="grid grid-cols-2 gap-2">
+                        <select wire:model.live="revisionTypeFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <option value="">All types</option>
+                            @foreach($this->revisionTypeOptions as $revisionType)
+                                <option value="{{ $revisionType }}">{{ str_replace('_', ' ', $revisionType) }}</option>
+                            @endforeach
+                        </select>
+                        <select wire:model.live="revisionAuthorFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                            <option value="">All authors</option>
+                            @foreach($this->revisionAuthorOptions as $revisionAuthor)
+                                <option value="{{ $revisionAuthor->id }}">{{ $revisionAuthor->name }}</option>
+                            @endforeach
+                        </select>
+                        </div>
+                    </div>
+                    @if($this->selectedRevision && $this->selectedRevisionComparison)
+                        <div class="mb-3 rounded-lg border border-teal-200 bg-teal-50 p-3 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-semibold text-slate-800">{{ $this->selectedRevision->label ?? 'Revision' }}</div>
+                                    <div class="mt-0.5 text-xs text-slate-500">{{ $this->selectedRevision->created_at->format('M j, Y g:i A') }} · {{ $this->selectedRevision->user?->name ?? 'System' }}</div>
+                                    <div class="mt-1 inline-flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700">
+                                        <i class="ph ph-eye"></i>
+                                        Previewing snapshot
+                                    </div>
+                                </div>
+                                <button type="button" wire:click="clearSelectedRevision" class="shrink-0 text-slate-400 hover:text-slate-600" title="Close revision details">
+                                    <i class="ph ph-x"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 rounded-md bg-white p-2">
+                                <label class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Compare against</label>
+                                <select wire:model.live="compareRevisionId" class="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                                    <option value="">Current draft</option>
+                                    @foreach($this->comparisonRevisionOptions as $comparisonRevision)
+                                        <option value="{{ $comparisonRevision->id }}">{{ $comparisonRevision->label ?? 'Revision #'.$comparisonRevision->id }} · {{ $comparisonRevision->created_at->format('M j') }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @if($this->selectedRevisionComparison['has_changes'])
+                                <div class="mt-3 grid grid-cols-3 gap-2 text-center">
+                                    <div class="rounded-md bg-white p-2">
+                                        <div class="text-base font-bold text-slate-800">{{ count($this->selectedRevisionComparison['content_changes']) }}</div>
+                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fields</div>
+                                    </div>
+                                    <div class="rounded-md bg-white p-2">
+                                        <div class="text-base font-bold text-slate-800">{{ $this->selectedRevisionComparison['block_summary']['revision_total'] }}</div>
+                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Blocks</div>
+                                    </div>
+                                    <div class="rounded-md bg-white p-2">
+                                        <div class="text-base font-bold text-slate-800">{{ $this->selectedRevisionComparison['block_summary']['changed'] + $this->selectedRevisionComparison['block_summary']['added'] + $this->selectedRevisionComparison['block_summary']['removed'] }}</div>
+                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Block diffs</div>
+                                    </div>
+                                </div>
+
+                                @if(count($this->selectedRevisionComparison['content_changes']) > 0)
+                                    <div class="mt-3 space-y-2">
+                                        <div class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Changed fields</div>
+                                        @foreach($this->selectedRevisionComparison['content_changes'] as $change)
+                                            <div class="rounded-md bg-white p-2 text-xs">
+                                                <div class="font-semibold text-slate-700">{{ $change['label'] }}</div>
+                                                <div class="mt-1 grid grid-cols-2 gap-2 text-slate-500">
+                                                    <div>
+                                                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Current</div>
+                                                        <div class="break-words">{{ $change['current'] }}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Revision</div>
+                                                        <div class="break-words">{{ $change['revision'] }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                @if(count($this->selectedRevisionComparison['block_changes']) > 0)
+                                    <div class="mt-3 space-y-2">
+                                        <div class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Block changes</div>
+                                        @foreach(array_slice($this->selectedRevisionComparison['block_changes'], 0, 8) as $change)
+                                            <div class="flex items-start justify-between gap-3 rounded-md bg-white p-2 text-xs">
+                                                <div class="min-w-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $change['action'] === 'added' ? 'bg-green-50 text-green-700' : ($change['action'] === 'removed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700') }}">{{ $change['action'] }}</span>
+                                                        <span class="font-semibold text-slate-700">{{ $change['label'] }}</span>
+                                                    </div>
+                                                    @if(count($change['fields']) > 0)
+                                                        <div class="mt-1 text-slate-500">Changed {{ implode(', ', $change['fields']) }}</div>
+                                                    @endif
+                                                    @if(count($change['field_changes']) > 0)
+                                                        <div class="mt-2 space-y-1.5">
+                                                            @foreach(array_slice($change['field_changes'], 0, 3) as $fieldChange)
+                                                                <div class="rounded border border-slate-100 bg-slate-50 p-2">
+                                                                    <div class="font-semibold text-slate-700">{{ $fieldChange['label'] }}</div>
+                                                                    <div class="mt-1 grid grid-cols-2 gap-2 text-slate-500">
+                                                                        <div>
+                                                                            <div class="text-[10px] uppercase tracking-wide text-slate-400">Current</div>
+                                                                            <div class="break-words">{{ $fieldChange['current'] }}</div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div class="text-[10px] uppercase tracking-wide text-slate-400">Revision</div>
+                                                                            <div class="break-words">{{ $fieldChange['revision'] }}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                            @if(count($change['field_changes']) > 3)
+                                                                <div class="text-slate-400">And {{ count($change['field_changes']) - 3 }} more field changes.</div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                    @if($change['action'] !== 'removed')
+                                                        <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="mt-2 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-100">Restore this block</button>
+                                                    @endif
+                                                </div>
+                                                <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{{ $change['path'] }}</span>
+                                            </div>
+                                        @endforeach
+                                        @if(count($this->selectedRevisionComparison['block_changes']) > 8)
+                                            <div class="rounded-md bg-white p-2 text-xs text-slate-500">And {{ count($this->selectedRevisionComparison['block_changes']) - 8 }} more block changes.</div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <div class="mt-3 rounded-md bg-white p-2 text-xs text-slate-600">
+                                    Comparing against {{ $this->selectedRevisionComparison['base_label'] }}. Restoring fully will replace the current block tree of {{ $this->selectedRevisionComparison['block_summary']['current_total'] }} blocks with {{ $this->selectedRevisionComparison['block_summary']['revision_total'] }} blocks from this revision.
+                                </div>
+                            @else
+                                <div class="mt-3 rounded-md bg-white p-3 text-sm font-medium text-slate-600">This revision matches the current draft.</div>
+                            @endif
+
+                            <div class="mt-3 grid grid-cols-2 gap-2">
+                                <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="rounded-md border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-50">Restore fields</button>
+                                <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="rounded-md bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700">Restore all</button>
+                            </div>
+                        </div>
+                    @endif
                     <div class="space-y-2">
                         @forelse($this->revisions as $revision)
-                        <div class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50">
-                            <div>
-                                <span class="text-sm font-medium text-slate-700">{{ $revision->label ?? 'Revision' }}</span>
+                        <div class="flex items-center justify-between gap-3 py-2 px-3 rounded-lg {{ $selectedRevisionId === $revision->id ? 'bg-teal-50 ring-1 ring-teal-200' : 'hover:bg-slate-50' }}">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="truncate text-sm font-medium text-slate-700">{{ $revision->label ?? 'Revision' }}</span>
+                                    <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ str_replace('_', ' ', $revision->revision_type ?? 'manual') }}</span>
+                                </div>
                                 <span class="text-xs text-slate-400 block">{{ $revision->created_at->diffForHumans() }} · {{ $revision->user?->name ?? 'System' }}</span>
+                                @if($revision->sourceRevision)
+                                    <span class="text-xs text-slate-400 block">From {{ $revision->sourceRevision->label ?? 'revision #'.$revision->sourceRevision->id }}</span>
+                                @endif
                             </div>
-                            <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore this revision?" class="text-xs font-medium text-teal-600 hover:underline">Restore</button>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline">Inspect</button>
+                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="text-xs font-medium text-teal-600 hover:underline">Restore</button>
+                            </div>
                         </div>
                         @empty
                         <p class="text-sm text-slate-400">No revisions yet.</p>
                         @endforelse
                     </div>
+                    @if($this->revisionTotalCount > $this->revisions->count())
+                        <button type="button" wire:click="loadMoreRevisions" class="mt-3 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Load more revisions</button>
+                    @endif
                 </div>
             </div>
         </div>

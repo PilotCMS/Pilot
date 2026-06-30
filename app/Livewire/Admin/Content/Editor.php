@@ -15,6 +15,7 @@ use App\Models\ContentType;
 use App\Models\EditorPreference;
 use App\Models\User;
 use App\Support\Cms\ContentLifecycle;
+use App\Support\Cms\ContentRevisionInspector;
 use App\Support\Cms\ContentSyncFingerprint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -65,6 +66,18 @@ class Editor extends Component
     public string $reviewNote = '';
 
     public string $reusableBlockName = '';
+
+    public string $checkpointLabel = '';
+
+    public ?int $selectedRevisionId = null;
+
+    public $compareRevisionId = '';
+
+    public string $revisionTypeFilter = '';
+
+    public string $revisionAuthorFilter = '';
+
+    public int $revisionsPerPage = 20;
 
     public int $previewVersion = 1;
 
@@ -420,6 +433,7 @@ class Editor extends Component
     public function deleteBlock($blockId)
     {
         $this->markSaving();
+        app(ContentLifecycle::class)->createRevisionIfChanged($this->content, 'Before block delete', auth()->id(), 'auto');
 
         $block = Block::findOrFail($blockId);
         $position = $block->position;
@@ -527,6 +541,7 @@ class Editor extends Component
     {
         $this->markSaving();
 
+        app(ContentLifecycle::class)->createRevisionIfChanged($this->content, 'Before publish', auth()->id(), 'auto');
         app(ContentLifecycle::class)->publish($this->content, auth()->id());
         $this->content->refresh();
 
@@ -729,14 +744,126 @@ class Editor extends Component
         app(ContentLifecycle::class)->createRevision($this->content, $label, auth()->id());
     }
 
+    public function saveCheckpoint(): void
+    {
+        $this->validate([
+            'checkpointLabel' => 'nullable|string|max:120',
+        ]);
+
+        $label = trim($this->checkpointLabel) !== '' ? trim($this->checkpointLabel) : 'Manual checkpoint';
+
+        app(ContentLifecycle::class)->createRevisionIfChanged($this->content, $label, auth()->id(), 'manual');
+        $this->checkpointLabel = '';
+        $this->markSaved();
+    }
+
     public function restoreRevision($revisionId): void
     {
         $revision = ContentRevision::where('content_id', $this->content->id)->findOrFail($revisionId);
-        app(ContentLifecycle::class)->restoreRevision($this->content, $revision, auth()->id());
+        $rollbackRevision = app(ContentLifecycle::class)->restoreRevision($this->content, $revision, auth()->id());
 
         $this->loadBlocks();
         $this->content->refresh();
+
+        $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'full');
+
+        $this->selectedRevisionId = null;
+        $this->compareRevisionId = '';
         $this->markSaved();
+    }
+
+    public function restoreSelectedRevisionContent(): void
+    {
+        $revision = $this->selectedRevision;
+
+        if (! $revision) {
+            return;
+        }
+
+        $rollbackRevision = app(ContentLifecycle::class)->restoreRevisionContent($this->content, $revision, auth()->id());
+        $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'content');
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    public function restoreSelectedRevisionBlock(string $path): void
+    {
+        $revision = $this->selectedRevision;
+
+        if (! $revision) {
+            return;
+        }
+
+        $rollbackRevision = app(ContentLifecycle::class)->restoreRevisionBlock($this->content, $revision, $path, auth()->id());
+        $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'block', ['block_path' => $path]);
+        $this->loadBlocks();
+        $this->content->refresh();
+        $this->markSaved();
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    protected function recordRevisionRestoreActivity(ContentRevision $revision, ContentRevision $rollbackRevision, string $scope, array $meta = []): void
+    {
+        Activity::create([
+            'space_id' => $this->content->space_id,
+            'user_id' => auth()->id(),
+            'action' => 'restored revision',
+            'subject_type' => Content::class,
+            'subject_id' => $this->content->id,
+            'meta' => [
+                'restored_revision_id' => $revision->id,
+                'restored_revision_label' => $revision->label,
+                'rollback_revision_id' => $rollbackRevision->id,
+                'restore_scope' => $scope,
+                ...$meta,
+            ],
+        ]);
+    }
+
+    public function selectRevision(int $revisionId): void
+    {
+        ContentRevision::query()
+            ->where('content_id', $this->content->id)
+            ->findOrFail($revisionId);
+
+        $this->selectedRevisionId = $revisionId;
+        $this->compareRevisionId = '';
+        $this->selectedPreviewTargetId = '';
+        $this->dispatchPreviewFrameRefresh();
+    }
+
+    public function clearSelectedRevision(): void
+    {
+        $this->selectedRevisionId = null;
+        $this->compareRevisionId = '';
+        $this->dispatchPreviewFrameRefresh();
+    }
+
+    public function selectPublishedRevision(): void
+    {
+        if (! $this->content->published_revision_id) {
+            return;
+        }
+
+        $this->selectRevision((int) $this->content->published_revision_id);
+        $this->rightPanelTab = 'seo';
+    }
+
+    public function loadMoreRevisions(): void
+    {
+        $this->revisionsPerPage += 20;
+    }
+
+    public function updatedRevisionTypeFilter(): void
+    {
+        $this->revisionsPerPage = 20;
+    }
+
+    public function updatedRevisionAuthorFilter(): void
+    {
+        $this->revisionsPerPage = 20;
     }
 
     protected function markSaved(): void
@@ -816,12 +943,6 @@ class Editor extends Component
         $this->touchPresence();
     }
 
-    public function saveCheckpoint(): void
-    {
-        $this->createRevision('Manual save');
-        $this->markSaved();
-    }
-
     public function handleOpenAssetPicker($payload = null)
     {
         if ($payload === null) {
@@ -885,7 +1006,111 @@ class Editor extends Component
 
     public function getRevisionsProperty()
     {
-        return $this->content->revisions()->with('user')->take(20)->get();
+        return $this->content->revisions()
+            ->with(['user', 'sourceRevision'])
+            ->when($this->revisionTypeFilter !== '', fn ($query) => $query->where('revision_type', $this->revisionTypeFilter))
+            ->when($this->revisionAuthorFilter !== '', fn ($query) => $query->where('user_id', (int) $this->revisionAuthorFilter))
+            ->take($this->revisionsPerPage)
+            ->get();
+    }
+
+    public function getRevisionTotalCountProperty(): int
+    {
+        return $this->content->revisions()
+            ->when($this->revisionTypeFilter !== '', fn ($query) => $query->where('revision_type', $this->revisionTypeFilter))
+            ->when($this->revisionAuthorFilter !== '', fn ($query) => $query->where('user_id', (int) $this->revisionAuthorFilter))
+            ->count();
+    }
+
+    public function getRevisionTypeOptionsProperty(): Collection
+    {
+        return $this->content->revisions()
+            ->reorder()
+            ->select('revision_type')
+            ->distinct()
+            ->orderBy('revision_type')
+            ->pluck('revision_type')
+            ->filter()
+            ->values();
+    }
+
+    public function getRevisionAuthorOptionsProperty(): Collection
+    {
+        return User::query()
+            ->whereIn('id', $this->content->revisions()->whereNotNull('user_id')->select('user_id'))
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    public function getComparisonRevisionOptionsProperty(): Collection
+    {
+        return $this->content->revisions()
+            ->with('user')
+            ->when($this->selectedRevisionId, fn ($query) => $query->whereKeyNot($this->selectedRevisionId))
+            ->take(50)
+            ->get();
+    }
+
+    public function getSelectedRevisionProperty(): ?ContentRevision
+    {
+        if (! $this->selectedRevisionId) {
+            return null;
+        }
+
+        return ContentRevision::query()
+            ->where('content_id', $this->content->id)
+            ->with(['user', 'sourceRevision'])
+            ->find($this->selectedRevisionId);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getSelectedRevisionComparisonProperty(): ?array
+    {
+        $revision = $this->selectedRevision;
+
+        if (! $revision) {
+            return null;
+        }
+
+        $baseRevision = $this->compareRevisionId
+            ? ContentRevision::query()
+                ->where('content_id', $this->content->id)
+                ->find($this->compareRevisionId)
+            : null;
+
+        return app(ContentRevisionInspector::class)->compare(
+            $this->content,
+            $revision,
+            baseRevision: $baseRevision,
+            blockTypes: collect($this->blockTypes),
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getPublishedRevisionComparisonProperty(): ?array
+    {
+        if (! $this->content->published_revision_id) {
+            return null;
+        }
+
+        $revision = ContentRevision::query()
+            ->where('content_id', $this->content->id)
+            ->find($this->content->published_revision_id);
+
+        if (! $revision) {
+            return null;
+        }
+
+        return app(ContentRevisionInspector::class)->compare(
+            $this->content,
+            $revision,
+            ignoredContentFields: ['status', 'workflow_status', 'scheduled_for'],
+            blockTypes: collect($this->blockTypes),
+        );
     }
 
     public function getReviewersProperty(): Collection
@@ -1033,6 +1258,7 @@ class Editor extends Component
             'pilot_in_context' => 0,
             'pilot_in_context_panel' => 0,
             'pilot_selected_block' => $this->selectedBlockId ? (int) $this->selectedBlockId : '',
+            'revision' => $this->selectedPreviewTargetId === '' && $this->selectedRevisionId ? $this->selectedRevisionId : '',
         ]);
     }
 
