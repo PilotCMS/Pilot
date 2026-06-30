@@ -152,6 +152,107 @@ it('indexes reference fields from block schemas', function () {
         ->exists())->toBeTrue();
 });
 
+it('suggests internal page links for link-like block fields', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Home',
+        'slug' => 'home',
+        'created_by' => $user->id,
+    ]);
+    Content::factory()->create([
+        'name' => 'About',
+        'slug' => 'about',
+        'created_by' => $user->id,
+    ]);
+
+    $blockType = BlockType::factory()->create([
+        'key' => 'cta-link',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'text',
+                    'key' => 'button_url',
+                    'label' => 'Button URL',
+                ],
+            ],
+        ],
+    ]);
+
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'cta-link',
+        'data' => ['button_url' => ''],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(BlockEditor::class, [
+            'block' => $block->toArray(),
+            'blockType' => $blockType,
+        ])
+        ->assertSee('Internal page...')
+        ->assertSee('About /about')
+        ->call('updateField', 'button_url', '/about')
+        ->assertSet('data.button_url', '/about');
+});
+
+it('suggests internal page links for repeater link fields', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    Content::factory()->create([
+        'name' => 'Pricing',
+        'slug' => 'pricing',
+        'created_by' => $user->id,
+    ]);
+
+    $blockType = BlockType::factory()->create([
+        'key' => 'nav-links',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'repeater',
+                    'key' => 'links',
+                    'label' => 'Links',
+                    'fields' => [
+                        [
+                            'type' => 'text',
+                            'key' => 'label',
+                            'label' => 'Label',
+                        ],
+                        [
+                            'type' => 'text',
+                            'key' => 'href',
+                            'label' => 'Href',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'nav-links',
+        'data' => [
+            'links' => [
+                [
+                    'label' => 'Plans',
+                    'href' => '',
+                ],
+            ],
+        ],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(BlockEditor::class, [
+            'block' => $block->toArray(),
+            'blockType' => $blockType,
+        ])
+        ->call('toggleRepeaterItem', 'links', 0)
+        ->assertSee('Pricing /pricing')
+        ->call('updateRepeaterField', 'links', 0, 'href', '/pricing')
+        ->assertSet('data.links.0.href', '/pricing');
+});
+
 it('does not delete content when its space is deleted', function () {
     $space = Space::factory()->create();
     $content = Content::factory()->create([

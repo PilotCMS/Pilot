@@ -940,6 +940,52 @@ it('opens revisions and checkpoint workflows in a modal', function () {
         ->assertSee('Checkpoint label');
 });
 
+it('undoes the latest page edit from an auto checkpoint', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Home',
+        'slug' => 'home',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSeeHtml('aria-label="Undo last change"')
+        ->call('updateContent', 'name', 'Landing')
+        ->call('undoLastChange');
+
+    expect($content->refresh()->name)->toBe('Home')
+        ->and($content->slug)->toBe('home')
+        ->and($content->revisions()->where('revision_type', 'auto')->count())->toBe(0)
+        ->and($content->revisions()->where('revision_type', 'pre_restore')->count())->toBe(1);
+});
+
+it('undoes repeated block edits in reverse checkpoint order', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Original hero'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('updateBlock', $block->id, 'title', 'First hero')
+        ->call('updateBlock', $block->id, 'title', 'Second hero')
+        ->call('undoLastChange');
+
+    expect($content->refresh()->allBlocks()->firstOrFail()->data['title'])->toBe('First hero');
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content->refresh()])
+        ->call('undoLastChange');
+
+    expect($content->refresh()->allBlocks()->firstOrFail()->data['title'])->toBe('Original hero')
+        ->and($content->revisions()->where('revision_type', 'auto')->count())->toBe(0);
+});
+
 it('filters revisions and loads more history', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();

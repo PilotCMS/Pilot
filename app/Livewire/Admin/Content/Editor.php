@@ -187,6 +187,8 @@ class Editor extends Component
             $insertPosition = $this->blocks ? max(array_column($this->blocks, 'position')) + 1 : 0;
         }
 
+        $this->createUndoCheckpoint('Before block add', ['operation' => 'add_block']);
+
         // Shift positions
         Block::where('content_id', $this->content->id)
             ->when($parentId, fn ($query) => $query->where('parent_block_id', $parentId), fn ($query) => $query->whereNull('parent_block_id'))
@@ -258,6 +260,7 @@ class Editor extends Component
         $this->markSaving();
 
         $original = Block::findOrFail($blockId);
+        $this->createUndoCheckpoint('Before block duplicate', ['operation' => 'duplicate_block']);
 
         $newPosition = $original->position + 1;
         Block::where('content_id', $this->content->id)
@@ -286,6 +289,7 @@ class Editor extends Component
         $this->markSaving();
 
         $lifecycle = app(ContentLifecycle::class);
+        $this->createUndoCheckpoint('Before page edit', ['operation' => 'update_content', 'field' => $field]);
 
         // Auto-generate slug when name changes and slug hasn't been manually edited
         if ($field === 'name' && $this->content->slug === Str::slug($this->content->name)) {
@@ -371,6 +375,7 @@ class Editor extends Component
     public function updateContentMeta($key, $value)
     {
         $this->markSaving();
+        $this->createUndoCheckpoint('Before metadata edit', ['operation' => 'update_content_meta', 'field' => $key]);
 
         $meta = $this->content->meta ?? [];
         $meta[$key] = $value;
@@ -389,6 +394,8 @@ class Editor extends Component
         if (! in_array($field, ['categories', 'tags'], true)) {
             return;
         }
+
+        $this->createUndoCheckpoint('Before taxonomy edit', ['operation' => 'update_taxonomy', 'field' => $field]);
 
         app(ContentLifecycle::class)->updateContent($this->content, [
             $field => $this->taxonomyValuesFromString($value),
@@ -418,6 +425,8 @@ class Editor extends Component
         $this->markSaving();
 
         $block = Block::findOrFail($blockId);
+        $this->createUndoCheckpoint('Before block edit', ['operation' => 'update_block', 'block_id' => $block->id, 'field' => $fieldKey]);
+
         $data = $block->data ?? [];
         $data[$fieldKey] = $value;
         $block->update(['data' => $data]);
@@ -435,7 +444,7 @@ class Editor extends Component
     public function deleteBlock($blockId)
     {
         $this->markSaving();
-        app(ContentLifecycle::class)->createRevisionIfChanged($this->content, 'Before block delete', auth()->id(), 'auto');
+        $this->createUndoCheckpoint('Before block delete', ['operation' => 'delete_block', 'block_id' => $blockId]);
 
         $block = Block::findOrFail($blockId);
         $position = $block->position;
@@ -461,6 +470,8 @@ class Editor extends Component
         if ($currentIndex === false) {
             return;
         }
+
+        $this->createUndoCheckpoint('Before block reorder', ['operation' => 'sort_block', 'block_id' => (int) $itemId]);
 
         array_splice($blockIds, $currentIndex, 1);
         array_splice($blockIds, $position, 0, [(int) $itemId]);
@@ -502,6 +513,8 @@ class Editor extends Component
         if ($targetIndex < 0 || $targetIndex >= $siblings->count()) {
             return;
         }
+
+        $this->createUndoCheckpoint('Before block move', ['operation' => 'move_block', 'block_id' => $block->id]);
 
         $ordered = $siblings->values()->all();
         [$ordered[$currentIndex], $ordered[$targetIndex]] = [$ordered[$targetIndex], $ordered[$currentIndex]];
@@ -703,6 +716,8 @@ class Editor extends Component
             ->where('content_id', $this->content->id)
             ->findOrFail($this->selectedBlockId);
 
+        $this->createUndoCheckpoint('Before reusable block change', ['operation' => 'make_reusable_block', 'block_id' => $block->id]);
+
         $block->update([
             'reusable_source_block_id' => null,
             'reusable_key' => Str::slug($this->reusableBlockName).'-'.$block->id,
@@ -722,6 +737,8 @@ class Editor extends Component
             ->whereNull('reusable_source_block_id')
             ->whereNotNull('reusable_key')
             ->findOrFail($sourceBlockId);
+
+        $this->createUndoCheckpoint('Before reusable block insert', ['operation' => 'insert_reusable_block', 'source_block_id' => $source->id]);
 
         $position = $this->blocks ? max(array_column($this->blocks, 'position')) + 1 : 0;
 
@@ -756,6 +773,33 @@ class Editor extends Component
 
         app(ContentLifecycle::class)->createRevisionIfChanged($this->content, $label, auth()->id(), 'manual');
         $this->checkpointLabel = '';
+        $this->markSaved();
+    }
+
+    public function undoLastChange(): void
+    {
+        $undoRevision = $this->undoRevision;
+
+        if (! $undoRevision) {
+            return;
+        }
+
+        $this->markSaving();
+
+        $rollbackRevision = app(ContentLifecycle::class)->restoreRevision($this->content, $undoRevision, auth()->id());
+
+        $this->recordRevisionRestoreActivity($undoRevision, $rollbackRevision, 'undo', [
+            'consumed_revision_id' => $undoRevision->id,
+            'consumed_revision_label' => $undoRevision->label,
+        ]);
+
+        $undoRevision->delete();
+
+        $this->loadBlocks();
+        $this->content->refresh();
+        $this->selectedRevisionId = null;
+        $this->compareRevisionId = '';
+        $this->selectedPreviewTargetId = '';
         $this->markSaved();
     }
 
@@ -904,6 +948,21 @@ class Editor extends Component
     }
 
     /**
+     * @param  array<string, mixed>  $meta
+     */
+    protected function createUndoCheckpoint(string $label, array $meta = []): ?ContentRevision
+    {
+        return app(ContentLifecycle::class)->createRevisionIfChanged(
+            $this->content,
+            $label,
+            auth()->id(),
+            'auto',
+            null,
+            ['undoable' => true, ...$meta],
+        );
+    }
+
+    /**
      * @return array<int, string>
      */
     protected function taxonomyValuesFromString(string $value): array
@@ -1037,6 +1096,17 @@ class Editor extends Component
             ->when($this->revisionTypeFilter !== '', fn ($query) => $query->where('revision_type', $this->revisionTypeFilter))
             ->when($this->revisionAuthorFilter !== '', fn ($query) => $query->where('user_id', (int) $this->revisionAuthorFilter))
             ->count();
+    }
+
+    public function getUndoRevisionProperty(): ?ContentRevision
+    {
+        return $this->content->revisions()
+            ->reorder()
+            ->where('revision_type', 'auto')
+            ->where('meta->undoable', true)
+            ->latest()
+            ->latest('id')
+            ->first();
     }
 
     public function getRevisionTypeOptionsProperty(): Collection

@@ -251,6 +251,9 @@
                     @endif
                 </button>
             @endif
+            <button type="button" wire:click="undoLastChange" @disabled(! $this->undoRevision) class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:shadow-none disabled:hover:bg-white" title="{{ $this->undoRevision ? 'Undo last change' : 'Nothing to undo' }}" aria-label="Undo last change">
+                <i class="ph ph-arrow-counter-clockwise text-lg"></i>
+            </button>
             <button type="button" wire:click="openRevisionModal" class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50" title="Revisions" aria-label="Revisions">
                 <i class="ph ph-clock-counter-clockwise text-lg"></i>
             </button>

@@ -16,6 +16,28 @@ class BlockEditor extends Component
 
     public array $expandedRepeaterItems = [];
 
+    /**
+     * @param  array<string, mixed>  $field
+     */
+    public function isLinkField(array $field): bool
+    {
+        $type = strtolower((string) ($field['type'] ?? ''));
+        $key = strtolower((string) ($field['key'] ?? ''));
+
+        if (in_array($type, ['link', 'url'], true)) {
+            return true;
+        }
+
+        return str_contains($key, 'url')
+            || str_contains($key, 'href')
+            || str_contains($key, 'link');
+    }
+
+    public function relativeContentUrl(Content $content): string
+    {
+        return '/'.trim($content->slug, '/');
+    }
+
     public function mount($block, $blockType)
     {
         $this->block = $block;
@@ -121,7 +143,7 @@ class BlockEditor extends Component
             'contentChoices' => Content::query()
                 ->where('type', 'page')
                 ->orderBy('name')
-                ->get(['id', 'name', 'slug']),
+                ->get(['id', 'name', 'slug', 'status']),
         ]);
     }
 }

@@ -42,6 +42,12 @@
                     wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
                     class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all"
                 />
+                @if($this->isLinkField($field) && $contentChoices->isNotEmpty())
+                    @include('livewire.admin.content.partials.internal-link-picker', [
+                        'fieldKey' => $field['key'],
+                        'value' => $fieldValue,
+                    ])
+                @endif
             @elseif($field['type'] === 'textarea')
                 <textarea rows="{{ $field['rows'] ?? 4 }}"
                     placeholder="{{ $field['placeholder'] ?? '' }}"
@@ -191,6 +197,14 @@
                                                     wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
                                                     class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
                                                 />
+                                                @if($this->isLinkField($subField) && $contentChoices->isNotEmpty())
+                                                    @include('livewire.admin.content.partials.internal-link-picker', [
+                                                        'fieldKey' => $field['key'],
+                                                        'subFieldKey' => $subField['key'],
+                                                        'repeaterIndex' => $idx,
+                                                        'value' => $subFieldValue,
+                                                    ])
+                                                @endif
                                             @endif
 
                                             @if(!empty($subField['help']))
@@ -248,6 +262,12 @@
                     wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
                     class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
                 />
+                @if($this->isLinkField($field) && $contentChoices->isNotEmpty())
+                    @include('livewire.admin.content.partials.internal-link-picker', [
+                        'fieldKey' => $field['key'],
+                        'value' => $fieldValue,
+                    ])
+                @endif
             @endif
 
             @if(!empty($field['help']))
