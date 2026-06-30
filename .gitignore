@@ -21,3 +21,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Laravel Boost (regenerate with `php artisan boost:install` / `boost:update`)
+/.claude/
+/.cursor/
+.mcp.json
+AGENTS.md
+CLAUDE.md
