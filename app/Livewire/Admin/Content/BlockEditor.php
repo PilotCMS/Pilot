@@ -14,6 +14,8 @@ class BlockEditor extends Component
 
     public $data = [];
 
+    public array $expandedRepeaterItems = [];
+
     public function mount($block, $blockType)
     {
         $this->block = $block;
@@ -42,7 +44,18 @@ class BlockEditor extends Component
         }
         $items[] = $newItem;
         $this->data[$key] = $items;
+        $this->expandedRepeaterItems[$key][count($items) - 1] = true;
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
+    }
+
+    public function toggleRepeaterItem(string $key, int $index): void
+    {
+        $this->expandedRepeaterItems[$key][$index] = ! ($this->expandedRepeaterItems[$key][$index] ?? false);
+    }
+
+    public function isRepeaterItemExpanded(string $key, int $index): bool
+    {
+        return (bool) ($this->expandedRepeaterItems[$key][$index] ?? false);
     }
 
     public function removeRepeaterItem(string $key, int $index): void
@@ -51,6 +64,13 @@ class BlockEditor extends Component
         $items = is_array($items) ? $items : [];
         array_splice($items, $index, 1);
         $this->data[$key] = $items;
+
+        if (isset($this->expandedRepeaterItems[$key])) {
+            $expandedItems = $this->expandedRepeaterItems[$key];
+            unset($expandedItems[$index]);
+            $this->expandedRepeaterItems[$key] = array_values($expandedItems);
+        }
+
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
     }
 
@@ -61,7 +81,22 @@ class BlockEditor extends Component
         if (! isset($items[$index])) {
             $items[$index] = [];
         }
-        $items[$index][$subKey] = $value;
+
+        $subField = null;
+        foreach ($this->blockType->schema['fields'] ?? [] as $field) {
+            if (($field['key'] ?? '') !== $key) {
+                continue;
+            }
+
+            foreach ($field['fields'] ?? [] as $candidate) {
+                if (($candidate['key'] ?? '') === $subKey) {
+                    $subField = $candidate;
+                    break 2;
+                }
+            }
+        }
+
+        $items[$index][$subKey] = ($subField['translatable'] ?? false) ? ['en' => $value] : $value;
         $this->data[$key] = $items;
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
     }

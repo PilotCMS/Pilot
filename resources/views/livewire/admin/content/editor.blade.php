@@ -251,7 +251,10 @@
                     @endif
                 </button>
             @endif
-            <button type="button" wire:click="saveCheckpoint" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Create checkpoint</button>
+            <button type="button" wire:click="openRevisionModal" class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50" title="Revisions" aria-label="Revisions">
+                <i class="ph ph-clock-counter-clockwise text-lg"></i>
+            </button>
+            <button type="button" wire:click="openCheckpointModal" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Save checkpoint</button>
             <div class="flex rounded-md shadow-sm">
                 <button type="button" wire:click="publish" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-l-md transition-colors border-r border-teal-600">Publish</button>
                 <button type="button" class="px-2 bg-teal-500 hover:bg-teal-600 rounded-r-md transition-colors text-white"><i class="ph ph-caret-down"></i></button>
@@ -260,16 +263,23 @@
     </header>
 
     {{-- Content area: below fixed header (pt-16), with right padding when aside is open --}}
-    <div class="flex pt-16 h-screen min-w-0" style="{{ $drawerOpen ? 'margin-right: var(--admin-rail-width);' : '' }}">
+    <div class="flex pt-16 h-screen min-w-0" style="margin-right: {{ $drawerOpen ? 'var(--admin-rail-width)' : '3rem' }};">
     {{-- Left: Content Tree (Variant: w-72) --}}
-    @if(!$leftSidebarCollapsed)
-    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col shrink-0 z-40 hidden xl:flex" aria-label="Content tree">
-        <div class="h-16 border-b border-slate-100 flex items-center justify-between px-5 shrink-0">
+    <aside class="{{ $leftSidebarCollapsed ? 'w-12' : 'w-72' }} bg-white border-r border-slate-200 flex flex-col shrink-0 z-40 hidden xl:flex" aria-label="Content tree">
+        <div class="shrink-0 border-b border-slate-200 bg-white px-4 py-2 flex items-center {{ $leftSidebarCollapsed ? 'justify-center' : 'justify-between' }}">
+            @if($leftSidebarCollapsed)
+                <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Expand content panel" aria-label="Expand content panel"><i class="ph ph-sidebar-simple"></i></button>
+            @else
             <div class="flex items-center gap-2">
                 <span class="font-bold text-slate-800">Content</span>
             </div>
-            <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="New page"><i class="ph ph-plus-circle text-xl"></i></a>
+            <div class="flex items-center gap-1">
+                <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="New page"><i class="ph ph-plus-circle text-xl"></i></a>
+                <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Collapse content panel" aria-label="Collapse content panel"><i class="ph ph-sidebar-simple"></i></button>
+            </div>
+            @endif
         </div>
+        @if(!$leftSidebarCollapsed)
         <div class="p-4 shrink-0">
             <div class="relative group">
                 <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none"></i>
@@ -325,12 +335,8 @@
                 <div class="h-full bg-teal-500 w-3/4 rounded-full"></div>
             </div>
         </div>
+        @endif
     </aside>
-    @else
-    <div class="w-12 shrink-0 border-r border-slate-200 bg-white flex flex-col items-center py-2">
-        <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-teal-600" title="Expand sidebar" aria-label="Expand sidebar"><i class="ph ph-caret-right"></i></button>
-    </div>
-    @endif
 
     {{-- Center: Canvas only (header is fixed above) --}}
     <main class="flex-1 min-w-0 flex flex-col bg-slate-100 relative" role="main" aria-label="Page canvas">
@@ -345,7 +351,7 @@
             </div>
         </div>
 
-        <div x-show="canvasMode === 'preview'" x-cloak class="flex-1 min-h-0 overflow-hidden bg-slate-100 p-4">
+        <div x-show="canvasMode === 'preview'" x-cloak class="relative flex-1 min-h-0 overflow-hidden bg-slate-100 p-4">
             <iframe
                 x-ref="previewFrame"
                 x-on:load="syncPreviewSelection()"
@@ -356,6 +362,13 @@
                 class="mx-auto h-full max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-[width]"
                 title="Live preview"
             ></iframe>
+
+            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="absolute bottom-8 left-1/2 z-50 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer border border-slate-700/50 hover:bg-black">
+                <i class="ph-bold ph-plus text-teal-400"></i>
+                <span class="font-medium text-sm">Add Block</span>
+                <div class="w-px h-4 bg-slate-700"></div>
+                <span class="text-xs text-slate-400 font-mono">⌘K</span>
+            </button>
         </div>
 
         <div x-show="canvasMode === 'compose'" class="flex min-h-0 flex-1 overflow-hidden">
@@ -415,16 +428,16 @@
     </div>{{-- /content area (pt-16, pr-[500px] when drawer open) --}}
 
     {{-- Right: Edit Panel — fixed top 0, bottom 0, right 0, 500px, 100% view height --}}
-    @if($drawerOpen)
     @php
         $editPanelTabs = ['content' => 'Content', 'comments' => 'Comments', 'validation' => 'Checks', 'seo' => 'Advanced'];
         $hasSelectedBlock = $selectedBlockId !== null;
         $sel = $hasSelectedBlock ? $this->selectedBlock : null;
         $bt = $sel ? ($blockTypes[$sel['type']] ?? null) : null;
     @endphp
-    <aside class="fixed top-16 bottom-0 right-0 bg-white border-l border-slate-200 flex flex-col shadow-xl z-40" aria-label="Edit panel" style="width: var(--admin-rail-width);">
+    <aside class="fixed top-16 bottom-0 right-0 bg-white border-l border-slate-200 flex flex-col z-40 {{ $drawerOpen ? 'shadow-xl' : 'shadow-lg' }}" aria-label="Edit panel" style="width: {{ $drawerOpen ? 'var(--admin-rail-width)' : '3rem' }};">
         {{-- Header: breadcrumb nav (Page > Block Name) with actions --}}
-        <div class="h-14 border-b border-slate-200 flex items-center justify-between px-5 bg-white shrink-0">
+        <div class="shrink-0 border-b border-slate-200 bg-white px-4 py-2 flex items-center {{ $drawerOpen ? 'justify-between' : 'justify-center' }}">
+            @if($drawerOpen)
             <div class="flex items-center gap-1.5 min-w-0">
                 {{-- "Page" is always the root, clickable to deselect block --}}
                 <button type="button" wire:click="$set('selectedBlockId', null)" class="flex items-center gap-1.5 {{ $hasSelectedBlock ? 'text-slate-400 hover:text-teal-600' : 'text-slate-800' }} transition-colors shrink-0">
@@ -444,9 +457,14 @@
                 <button type="button" wire:click="duplicateBlock({{ $selectedBlockId }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600" title="Duplicate"><i class="ph ph-copy"></i></button>
                 <button type="button" wire:click="deleteBlock({{ $selectedBlockId }})" wire:confirm="Delete this block?" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" title="Delete"><i class="ph ph-trash"></i></button>
                 @endif
+                <button type="button" wire:click="toggleDrawer" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-teal-600" title="Collapse inspector" aria-label="Collapse inspector"><i class="ph ph-sidebar-simple"></i></button>
             </div>
+            @else
+                <button type="button" wire:click="toggleDrawer" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Expand inspector" aria-label="Expand inspector"><i class="ph ph-sidebar-simple"></i></button>
+            @endif
         </div>
 
+        @if($drawerOpen)
         {{-- Tabs --}}
         <div class="flex border-b border-slate-200 bg-slate-50/50 shrink-0">
             @foreach($editPanelTabs as $tab => $label)
@@ -746,185 +764,6 @@
                         @error('scheduledFor') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
-                <div>
-                    <div class="mb-2 flex items-center justify-between gap-3">
-                        <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Revision history</span>
-                        <span class="text-[11px] font-medium text-slate-400">{{ $this->revisions->count() }} of {{ $this->revisionTotalCount }}</span>
-                    </div>
-                    <div class="mb-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-                        <label class="text-xs font-semibold text-slate-600 block mb-1.5">Create checkpoint</label>
-                        <div class="flex gap-2">
-                            <input type="text" wire:model="checkpointLabel" placeholder="e.g. Before homepage rewrite" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
-                            <button type="button" wire:click="saveCheckpoint" class="shrink-0 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Save</button>
-                        </div>
-                        @error('checkpointLabel') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-2">
-                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Filters</div>
-                        <div class="grid grid-cols-2 gap-2">
-                        <select wire:model.live="revisionTypeFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                            <option value="">All types</option>
-                            @foreach($this->revisionTypeOptions as $revisionType)
-                                <option value="{{ $revisionType }}">{{ str_replace('_', ' ', $revisionType) }}</option>
-                            @endforeach
-                        </select>
-                        <select wire:model.live="revisionAuthorFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                            <option value="">All authors</option>
-                            @foreach($this->revisionAuthorOptions as $revisionAuthor)
-                                <option value="{{ $revisionAuthor->id }}">{{ $revisionAuthor->name }}</option>
-                            @endforeach
-                        </select>
-                        </div>
-                    </div>
-                    @if($this->selectedRevision && $this->selectedRevisionComparison)
-                        <div class="mb-3 rounded-lg border border-teal-200 bg-teal-50 p-3 shadow-sm">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <div class="truncate text-sm font-semibold text-slate-800">{{ $this->selectedRevision->label ?? 'Revision' }}</div>
-                                    <div class="mt-0.5 text-xs text-slate-500">{{ $this->selectedRevision->created_at->format('M j, Y g:i A') }} · {{ $this->selectedRevision->user?->name ?? 'System' }}</div>
-                                    <div class="mt-1 inline-flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700">
-                                        <i class="ph ph-eye"></i>
-                                        Previewing snapshot
-                                    </div>
-                                </div>
-                                <button type="button" wire:click="clearSelectedRevision" class="shrink-0 text-slate-400 hover:text-slate-600" title="Close revision details">
-                                    <i class="ph ph-x"></i>
-                                </button>
-                            </div>
-                            <div class="mt-3 rounded-md bg-white p-2">
-                                <label class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Compare against</label>
-                                <select wire:model.live="compareRevisionId" class="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                                    <option value="">Current draft</option>
-                                    @foreach($this->comparisonRevisionOptions as $comparisonRevision)
-                                        <option value="{{ $comparisonRevision->id }}">{{ $comparisonRevision->label ?? 'Revision #'.$comparisonRevision->id }} · {{ $comparisonRevision->created_at->format('M j') }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            @if($this->selectedRevisionComparison['has_changes'])
-                                <div class="mt-3 grid grid-cols-3 gap-2 text-center">
-                                    <div class="rounded-md bg-white p-2">
-                                        <div class="text-base font-bold text-slate-800">{{ count($this->selectedRevisionComparison['content_changes']) }}</div>
-                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fields</div>
-                                    </div>
-                                    <div class="rounded-md bg-white p-2">
-                                        <div class="text-base font-bold text-slate-800">{{ $this->selectedRevisionComparison['block_summary']['revision_total'] }}</div>
-                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Blocks</div>
-                                    </div>
-                                    <div class="rounded-md bg-white p-2">
-                                        <div class="text-base font-bold text-slate-800">{{ $this->selectedRevisionComparison['block_summary']['changed'] + $this->selectedRevisionComparison['block_summary']['added'] + $this->selectedRevisionComparison['block_summary']['removed'] }}</div>
-                                        <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Block diffs</div>
-                                    </div>
-                                </div>
-
-                                @if(count($this->selectedRevisionComparison['content_changes']) > 0)
-                                    <div class="mt-3 space-y-2">
-                                        <div class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Changed fields</div>
-                                        @foreach($this->selectedRevisionComparison['content_changes'] as $change)
-                                            <div class="rounded-md bg-white p-2 text-xs">
-                                                <div class="font-semibold text-slate-700">{{ $change['label'] }}</div>
-                                                <div class="mt-1 grid grid-cols-2 gap-2 text-slate-500">
-                                                    <div>
-                                                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Current</div>
-                                                        <div class="break-words">{{ $change['current'] }}</div>
-                                                    </div>
-                                                    <div>
-                                                        <div class="text-[10px] uppercase tracking-wide text-slate-400">Revision</div>
-                                                        <div class="break-words">{{ $change['revision'] }}</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                @if(count($this->selectedRevisionComparison['block_changes']) > 0)
-                                    <div class="mt-3 space-y-2">
-                                        <div class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Block changes</div>
-                                        @foreach(array_slice($this->selectedRevisionComparison['block_changes'], 0, 8) as $change)
-                                            <div class="flex items-start justify-between gap-3 rounded-md bg-white p-2 text-xs">
-                                                <div class="min-w-0">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $change['action'] === 'added' ? 'bg-green-50 text-green-700' : ($change['action'] === 'removed' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700') }}">{{ $change['action'] }}</span>
-                                                        <span class="font-semibold text-slate-700">{{ $change['label'] }}</span>
-                                                    </div>
-                                                    @if(count($change['fields']) > 0)
-                                                        <div class="mt-1 text-slate-500">Changed {{ implode(', ', $change['fields']) }}</div>
-                                                    @endif
-                                                    @if(count($change['field_changes']) > 0)
-                                                        <div class="mt-2 space-y-1.5">
-                                                            @foreach(array_slice($change['field_changes'], 0, 3) as $fieldChange)
-                                                                <div class="rounded border border-slate-100 bg-slate-50 p-2">
-                                                                    <div class="font-semibold text-slate-700">{{ $fieldChange['label'] }}</div>
-                                                                    <div class="mt-1 grid grid-cols-2 gap-2 text-slate-500">
-                                                                        <div>
-                                                                            <div class="text-[10px] uppercase tracking-wide text-slate-400">Current</div>
-                                                                            <div class="break-words">{{ $fieldChange['current'] }}</div>
-                                                                        </div>
-                                                                        <div>
-                                                                            <div class="text-[10px] uppercase tracking-wide text-slate-400">Revision</div>
-                                                                            <div class="break-words">{{ $fieldChange['revision'] }}</div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            @endforeach
-                                                            @if(count($change['field_changes']) > 3)
-                                                                <div class="text-slate-400">And {{ count($change['field_changes']) - 3 }} more field changes.</div>
-                                                            @endif
-                                                        </div>
-                                                    @endif
-                                                    @if($change['action'] !== 'removed')
-                                                        <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="mt-2 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-100">Restore this block</button>
-                                                    @endif
-                                                </div>
-                                                <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{{ $change['path'] }}</span>
-                                            </div>
-                                        @endforeach
-                                        @if(count($this->selectedRevisionComparison['block_changes']) > 8)
-                                            <div class="rounded-md bg-white p-2 text-xs text-slate-500">And {{ count($this->selectedRevisionComparison['block_changes']) - 8 }} more block changes.</div>
-                                        @endif
-                                    </div>
-                                @endif
-
-                                <div class="mt-3 rounded-md bg-white p-2 text-xs text-slate-600">
-                                    Comparing against {{ $this->selectedRevisionComparison['base_label'] }}. Restoring fully will replace the current block tree of {{ $this->selectedRevisionComparison['block_summary']['current_total'] }} blocks with {{ $this->selectedRevisionComparison['block_summary']['revision_total'] }} blocks from this revision.
-                                </div>
-                            @else
-                                <div class="mt-3 rounded-md bg-white p-3 text-sm font-medium text-slate-600">This revision matches the current draft.</div>
-                            @endif
-
-                            <div class="mt-3 grid grid-cols-2 gap-2">
-                                <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="rounded-md border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-50">Restore fields</button>
-                                <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="rounded-md bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700">Restore all</button>
-                            </div>
-                        </div>
-                    @endif
-                    <div class="space-y-2">
-                        @forelse($this->revisions as $revision)
-                        <div class="flex items-center justify-between gap-3 py-2 px-3 rounded-lg {{ $selectedRevisionId === $revision->id ? 'bg-teal-50 ring-1 ring-teal-200' : 'hover:bg-slate-50' }}">
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <span class="truncate text-sm font-medium text-slate-700">{{ $revision->label ?? 'Revision' }}</span>
-                                    <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ str_replace('_', ' ', $revision->revision_type ?? 'manual') }}</span>
-                                </div>
-                                <span class="text-xs text-slate-400 block">{{ $revision->created_at->diffForHumans() }} · {{ $revision->user?->name ?? 'System' }}</span>
-                                @if($revision->sourceRevision)
-                                    <span class="text-xs text-slate-400 block">From {{ $revision->sourceRevision->label ?? 'revision #'.$revision->sourceRevision->id }}</span>
-                                @endif
-                            </div>
-                            <div class="flex shrink-0 items-center gap-2">
-                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline">Inspect</button>
-                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="text-xs font-medium text-teal-600 hover:underline">Restore</button>
-                            </div>
-                        </div>
-                        @empty
-                        <p class="text-sm text-slate-400">No revisions yet.</p>
-                        @endforelse
-                    </div>
-                    @if($this->revisionTotalCount > $this->revisions->count())
-                        <button type="button" wire:click="loadMoreRevisions" class="mt-3 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Load more revisions</button>
-                    @endif
-                </div>
             </div>
         </div>
 
@@ -948,16 +787,35 @@
                 @endif
             </div>
         </div>
+        @endif
     </aside>
-    @endif
 
-    @if(!$drawerOpen)
-    <div class="fixed right-4 top-1/2 -translate-y-1/2 z-10">
-        <button type="button" wire:click="toggleDrawer" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-lg shadow-lg transition-colors flex items-center gap-2">
-            <i class="ph ph-sliders-horizontal"></i>
-            Inspector
-        </button>
-    </div>
+    @if($revisionModalOpen)
+        <div
+            wire:keydown.escape="closeRevisionModal"
+            class="fixed inset-0 z-50"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="revision-modal-title"
+        >
+            <button type="button" wire:click="closeRevisionModal" class="absolute inset-0 h-full w-full bg-slate-500/25" aria-label="Close revisions"></button>
+            <button type="button" wire:click="closeRevisionModal" class="fixed right-4 top-4 z-[60] flex h-10 w-10 items-center justify-center rounded-md bg-white text-slate-500 shadow-lg ring-1 ring-slate-900/10 hover:bg-slate-50 hover:text-slate-700" title="Close" aria-label="Close revisions">
+                <i class="ph ph-x text-lg"></i>
+            </button>
+            <div class="relative flex h-full w-full items-center justify-center p-4 sm:p-6">
+                <div class="flex h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-slate-900/5 sm:h-[calc(100vh-3rem)]">
+                    <div class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 pr-16">
+                        <div>
+                            <h2 id="revision-modal-title" class="text-base font-semibold text-slate-800">Revisions</h2>
+                            <p class="mt-0.5 text-xs text-slate-400">{{ $this->revisions->count() }} of {{ $this->revisionTotalCount }} loaded</p>
+                        </div>
+                    </div>
+                    <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-4">
+                        @include('livewire.admin.content.partials.revisions-panel')
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
     {{-- Block Library Modal --}}
@@ -970,7 +828,28 @@
     >
         <div class="absolute inset-0 bg-slate-500/25" aria-hidden="true"></div>
         <div class="relative h-full w-full overflow-y-auto p-4 sm:p-6 md:p-20">
-            <div x-on:click.stop class="mx-auto max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5">
+            <div
+                x-on:click.stop
+                x-data="{
+                    blockSearch: '',
+                    blockMatches(name, key, description) {
+                        const query = this.blockSearch.trim().toLowerCase();
+
+                        if (! query) {
+                            return true;
+                        }
+
+                        return [name, key, description].some((value) => String(value || '').toLowerCase().includes(query));
+                    },
+                    hasBlockMatches() {
+                        return Array.from(this.$refs.blockGrid?.querySelectorAll('[data-block-search-text]') || []).some((element) => {
+                            return ! this.blockSearch.trim() || element.dataset.blockSearchText.includes(this.blockSearch.trim().toLowerCase());
+                        });
+                    },
+                }"
+                x-effect="if (! blockLibraryOpen) blockSearch = ''"
+                class="mx-auto max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5"
+            >
                 <div class="p-6">
                     <h2 class="mb-1 text-lg font-bold text-slate-800">Add Block</h2>
                     @if($addBlockPosition === 'inside' && $addBlockParentId)
@@ -984,13 +863,35 @@
                         <a href="{{ route('admin.blocks.create') }}" wire:navigate class="inline-flex items-center gap-2 rounded-md bg-teal-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600">Create Block Type</a>
                     </div>
                     @else
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="relative mb-4">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input
+                            type="search"
+                            x-model.debounce.100ms="blockSearch"
+                            placeholder="Search blocks"
+                            class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                        />
+                    </div>
+                    <div x-ref="blockGrid" class="grid grid-cols-2 gap-3">
                         @foreach($blockTypes as $blockType)
-                        <button type="button" wire:click="addBlock('{{ $blockType->key }}')" class="rounded-lg border border-slate-200 p-4 text-left transition-colors hover:bg-slate-50 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2">
+                        @php
+                            $blockDescription = $blockType->schema['description'] ?? '';
+                            $blockSearchText = strtolower(trim($blockType->name.' '.$blockType->key.' '.$blockDescription));
+                        @endphp
+                        <button
+                            type="button"
+                            x-show="blockMatches(@js($blockType->name), @js($blockType->key), @js($blockDescription))"
+                            wire:click="addBlock('{{ $blockType->key }}')"
+                            data-block-search-text="{{ $blockSearchText }}"
+                            class="rounded-lg border border-slate-200 p-4 text-left transition-colors hover:bg-slate-50 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                        >
                             <div class="font-medium text-slate-800">{{ $blockType->name }}</div>
-                            <div class="mt-0.5 text-sm text-slate-500">{{ $blockType->schema['description'] ?? '' }}</div>
+                            <div class="mt-0.5 text-sm text-slate-500">{{ $blockDescription }}</div>
                         </button>
                         @endforeach
+                    </div>
+                    <div x-show="! hasBlockMatches()" x-cloak class="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                        No blocks match your search.
                     </div>
                     <div class="mt-6 border-t border-slate-200 pt-4">
                         <a href="{{ route('admin.blocks.index') }}" class="text-sm text-teal-600 hover:underline" wire:navigate>Manage block types</a>

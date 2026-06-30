@@ -69,6 +69,8 @@ class Editor extends Component
 
     public string $checkpointLabel = '';
 
+    public bool $revisionModalOpen = false;
+
     public ?int $selectedRevisionId = null;
 
     public $compareRevisionId = '';
@@ -757,6 +759,21 @@ class Editor extends Component
         $this->markSaved();
     }
 
+    public function openRevisionModal(): void
+    {
+        $this->revisionModalOpen = true;
+    }
+
+    public function openCheckpointModal(): void
+    {
+        $this->revisionModalOpen = true;
+    }
+
+    public function closeRevisionModal(): void
+    {
+        $this->revisionModalOpen = false;
+    }
+
     public function restoreRevision($revisionId): void
     {
         $revision = ContentRevision::where('content_id', $this->content->id)->findOrFail($revisionId);
@@ -830,6 +847,7 @@ class Editor extends Component
 
         $this->selectedRevisionId = $revisionId;
         $this->compareRevisionId = '';
+        $this->revisionModalOpen = true;
         $this->selectedPreviewTargetId = '';
         $this->dispatchPreviewFrameRefresh();
     }
@@ -848,7 +866,6 @@ class Editor extends Component
         }
 
         $this->selectRevision((int) $this->content->published_revision_id);
-        $this->rightPanelTab = 'seo';
     }
 
     public function loadMoreRevisions(): void

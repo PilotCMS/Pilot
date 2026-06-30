@@ -2,7 +2,8 @@
     @foreach($blockType->schema['fields'] ?? [] as $field)
         @php
             $rawFieldValue = $data[$field['key']] ?? '';
-            $isObjectList = is_array($rawFieldValue) && array_is_list($rawFieldValue) && ! empty($rawFieldValue) && collect($rawFieldValue)->every(fn ($item) => is_array($item));
+            $hasSchemaRepeaterFields = ($field['type'] ?? null) === 'repeater' && ! empty($field['fields']);
+            $isObjectList = ! $hasSchemaRepeaterFields && is_array($rawFieldValue) && array_is_list($rawFieldValue) && ! empty($rawFieldValue) && collect($rawFieldValue)->every(fn ($item) => is_array($item));
             $objectKeys = $isObjectList
                 ? collect($rawFieldValue)->flatMap(fn ($item) => array_keys($item))->unique()->values()
                 : collect();
@@ -112,16 +113,95 @@
                             $itemLabel = $item['label'] ?? $item['name'] ?? null;
                             $itemLabel = is_array($itemLabel) ? ($itemLabel['en'] ?? reset($itemLabel) ?: '') : $itemLabel;
                             $displayTitle = $itemLabel ?: ($field['label'] . ' ' . ($idx + 1));
+                            $isExpanded = $this->isRepeaterItemExpanded($field['key'], $idx);
                         @endphp
-                        <div class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-300 transition-colors cursor-pointer group/item relative overflow-hidden">
+                        <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-300 transition-colors group/item relative overflow-hidden">
                             @if($idx === 0)<div class="absolute left-0 top-0 bottom-0 w-1 bg-teal-500"></div>@endif
-                            <i class="ph ph-dots-six-vertical text-slate-300 cursor-move shrink-0" aria-hidden="true"></i>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs font-bold text-slate-700">{{ $displayTitle }}</div>
-                                <div class="text-[10px] text-slate-400 truncate">{{ $subVal ?: 'Empty' }}</div>
+                            <div class="flex items-center gap-3 p-3">
+                                <i class="ph ph-dots-six-vertical text-slate-300 cursor-move shrink-0" aria-hidden="true"></i>
+                                <button
+                                    type="button"
+                                    wire:click="toggleRepeaterItem(@js($field['key']), {{ $idx }})"
+                                    class="flex flex-1 min-w-0 items-center gap-3 text-left"
+                                    aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
+                                >
+                                    <span class="flex-1 min-w-0">
+                                        <span class="block text-xs font-bold text-slate-700">{{ $displayTitle }}</span>
+                                        <span class="block text-[10px] text-slate-400 truncate">{{ $subVal ?: 'Empty' }}</span>
+                                    </span>
+                                    <i class="ph {{ $isExpanded ? 'ph-caret-down' : 'ph-caret-right' }} text-slate-400 group-hover/item:text-teal-500 shrink-0"></i>
+                                </button>
+                                <button type="button" wire:click.stop="removeRepeaterItem(@js($field['key']), {{ $idx }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 shrink-0" title="Remove"><i class="ph ph-trash"></i></button>
                             </div>
-                            <i class="ph ph-caret-right text-slate-400 group-hover/item:text-teal-500 shrink-0"></i>
-                            <button type="button" wire:click="removeRepeaterItem('{{ $field['key'] }}', {{ $idx }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 shrink-0" title="Remove"><i class="ph ph-trash"></i></button>
+
+                            @if($isExpanded)
+                                <div class="border-t border-slate-100 bg-slate-50/70 p-3 space-y-3">
+                                    @forelse($field['fields'] ?? [] as $subField)
+                                        @php
+                                            $subFieldValue = $item[$subField['key']] ?? '';
+                                            $subFieldValue = is_array($subFieldValue) ? ($subFieldValue['en'] ?? reset($subFieldValue) ?: '') : $subFieldValue;
+                                            $subFieldType = $subField['type'] ?? 'text';
+                                        @endphp
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1.5">
+                                                <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">{{ $subField['label'] ?? $subField['key'] }}</label>
+                                                <span class="text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded font-mono">{{ $subFieldType }}</span>
+                                            </div>
+
+                                            @if($subFieldType === 'textarea' || $subFieldType === 'richtext')
+                                                <textarea rows="{{ $subField['rows'] ?? ($subFieldType === 'richtext' ? 5 : 3) }}"
+                                                    placeholder="{{ $subField['placeholder'] ?? '' }}"
+                                                    wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
+                                                    class="w-full min-h-[72px] rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none resize-none transition-all focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                                >{{ $subFieldValue }}</textarea>
+                                            @elseif($subFieldType === 'number')
+                                                <input type="number"
+                                                    value="{{ $subFieldValue !== '' ? $subFieldValue : ($subField['default'] ?? '') }}"
+                                                    min="{{ $subField['min'] ?? '' }}"
+                                                    max="{{ $subField['max'] ?? '' }}"
+                                                    placeholder="{{ $subField['placeholder'] ?? '' }}"
+                                                    wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
+                                                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                                                />
+                                            @elseif($subFieldType === 'boolean')
+                                                <label class="flex items-center gap-2 cursor-pointer">
+                                                    <input type="checkbox"
+                                                        wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.checked)"
+                                                        {{ $subFieldValue ? 'checked' : '' }}
+                                                        class="rounded border-slate-200 text-teal-500 focus:ring-teal-500"
+                                                    />
+                                                    <span class="text-sm text-slate-600">Enabled</span>
+                                                </label>
+                                            @elseif($subFieldType === 'select')
+                                                <div class="relative">
+                                                    <select wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
+                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer"
+                                                    >
+                                                        <option value="">Select...</option>
+                                                        @foreach($subField['options'] ?? [] as $option)
+                                                            <option value="{{ $option['value'] ?? '' }}" {{ $subFieldValue === ($option['value'] ?? '') ? 'selected' : '' }}>{{ $option['label'] ?? $option['value'] ?? '' }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                                                </div>
+                                            @else
+                                                <input type="text"
+                                                    value="{{ $subFieldValue }}"
+                                                    placeholder="{{ $subField['placeholder'] ?? ($subFieldType === 'image' ? 'Image URL' : '') }}"
+                                                    wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
+                                                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                                                />
+                                            @endif
+
+                                            @if(!empty($subField['help']))
+                                                <p class="mt-1 text-[10px] text-slate-400">{{ $subField['help'] }}</p>
+                                            @endif
+                                        </div>
+                                    @empty
+                                        <p class="text-xs text-slate-400">No fields configured for this repeater.</p>
+                                    @endforelse
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                     <button type="button" wire:click="addRepeaterItem('{{ $field['key'] }}')" class="text-[10px] text-teal-600 font-bold hover:underline">

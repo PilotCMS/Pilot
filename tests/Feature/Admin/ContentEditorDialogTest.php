@@ -225,6 +225,65 @@ it('updates a nested json object field in the cms block editor', function () {
         ->assertDispatched('block-updated');
 });
 
+it('expands schema repeater items and updates their nested fields', function () {
+    $blockType = BlockType::create([
+        'key' => 'gallery',
+        'name' => 'Gallery',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'repeater',
+                    'key' => 'images',
+                    'label' => 'Images',
+                    'fields' => [
+                        [
+                            'type' => 'image',
+                            'key' => 'image',
+                            'label' => 'Image',
+                        ],
+                        [
+                            'type' => 'text',
+                            'key' => 'caption',
+                            'label' => 'Caption',
+                            'translatable' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    $block = [
+        'id' => 456,
+        'type' => 'gallery',
+        'data' => [
+            'images' => [
+                [
+                    'image' => '/storage/assets/first.jpg',
+                    'caption' => ['en' => 'First image'],
+                ],
+            ],
+        ],
+    ];
+
+    Livewire::test(BlockEditor::class, [
+        'block' => $block,
+        'blockType' => $blockType,
+    ])
+        ->assertSee('Images 1')
+        ->assertDontSee('Image URL')
+        ->call('toggleRepeaterItem', 'images', 0)
+        ->assertSet('expandedRepeaterItems.images.0', true)
+        ->assertSee('Caption')
+        ->assertSee('Image URL')
+        ->call('updateRepeaterField', 'images', 0, 'caption', 'Updated caption')
+        ->assertSet('data.images.0.caption.en', 'Updated caption')
+        ->assertDispatched('block-updated')
+        ->call('toggleRepeaterItem', 'images', 0)
+        ->assertSet('expandedRepeaterItems.images.0', false);
+});
+
 it('moves top level blocks with the compose editor arrow controls', function () {
     $user = User::factory()->create();
     $space = Space::create([
@@ -360,6 +419,95 @@ it('opens the content fields panel when selecting a block from preview', functio
         ->assertSet('selectedBlockId', $block->id)
         ->assertSet('drawerOpen', true)
         ->assertSet('rightPanelTab', 'content');
+});
+
+it('shows the add block action on the preview panel', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->assertSee('x-show="canvasMode === \'preview\'"', false)
+        ->assertSee('Add Block');
+});
+
+it('renders searchable block choices in the add block modal', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    BlockType::create([
+        'key' => 'testimonial',
+        'name' => 'Testimonial',
+        'schema' => ['description' => 'Customer quote'],
+        'is_global' => false,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('blockLibraryOpen', true)
+        ->assertSee('Search blocks')
+        ->assertSee('No blocks match your search.')
+        ->assertSee('data-block-search-text="testimonial testimonial customer quote"', false);
+});
+
+it('can collapse the editor side panels for a wider canvas', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->assertSee('Collapse content panel')
+        ->assertSee('Collapse inspector')
+        ->assertSee('shrink-0 border-b border-slate-200 bg-white px-4 py-2', false)
+        ->call('toggleLeftSidebar')
+        ->assertSet('leftSidebarCollapsed', true)
+        ->assertSee('Expand content panel')
+        ->call('toggleDrawer')
+        ->assertSet('drawerOpen', false)
+        ->assertSee('width: 3rem', false)
+        ->assertSee('Expand inspector');
 });
 
 it('refreshes selected block fields when content changes outside the editor', function () {
@@ -766,10 +914,30 @@ it('shows changes since the published revision', function () {
         ->assertSee('Since publish: 2 fields, 1 blocks')
         ->call('selectPublishedRevision')
         ->assertSet('selectedRevisionId', $publishedRevision->id)
-        ->assertSet('rightPanelTab', 'seo')
+        ->assertSet('revisionModalOpen', true)
         ->assertSee('Published page')
         ->assertSee('Draft page')
         ->assertSee('Block changes');
+});
+
+it('opens revisions and checkpoint workflows in a modal', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSet('revisionModalOpen', false)
+        ->assertSeeHtml('aria-label="Revisions"')
+        ->assertSee('Save checkpoint')
+        ->call('openRevisionModal')
+        ->assertSet('revisionModalOpen', true)
+        ->assertSee('Checkpoint label')
+        ->assertSeeHtml('class="fixed right-4 top-4')
+        ->call('closeRevisionModal')
+        ->assertSet('revisionModalOpen', false)
+        ->call('openCheckpointModal')
+        ->assertSet('revisionModalOpen', true)
+        ->assertSee('Checkpoint label');
 });
 
 it('filters revisions and loads more history', function () {
@@ -785,6 +953,7 @@ it('filters revisions and loads more history', function () {
 
     Livewire::actingAs($user)
         ->test(Editor::class, ['content' => $content])
+        ->call('openRevisionModal')
         ->assertSee('Checkpoint 022')
         ->assertDontSee('Checkpoint 001')
         ->call('loadMoreRevisions')
