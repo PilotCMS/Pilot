@@ -41,4 +41,34 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+<style>
+    :root.dark {
+        color-scheme: dark;
+    }
+</style>
+<script>
+    window.Flux = {
+        applyAppearance(appearance) {
+            const root = document.documentElement;
+            const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const resolvedAppearance = appearance === 'system'
+                ? (systemIsDark ? 'dark' : 'light')
+                : appearance;
+            const isDark = resolvedAppearance === 'dark';
+
+            root.classList.toggle('dark', isDark);
+            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            root.style.colorScheme = isDark ? 'dark' : 'light';
+
+            if (appearance === 'system') {
+                window.localStorage.removeItem('flux.appearance');
+            } else {
+                window.localStorage.setItem('flux.appearance', appearance);
+            }
+        },
+    };
+
+    window.Flux.applyAppearance(window.localStorage.getItem('flux.appearance') || 'system');
+</script>
+
 @vite(['resources/css/app.css', 'resources/js/app.js'])

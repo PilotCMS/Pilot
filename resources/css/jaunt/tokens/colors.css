@@ -1,0 +1,175 @@
+/* ==========================================================================
+   Jaunt — Color System
+   --------------------------------------------------------------------------
+   Two layers:
+     1. PRIMITIVES  — raw scales. Never reference these directly in product UI.
+     2. SEMANTIC     — role-based aliases (--surface-*, --text-*, --border-*).
+                       Always build components against these.
+   Dark theme is Jaunt's native environment (the app runs dark by default);
+   light theme is a first-class peer. Toggle by setting data-theme on <html>.
+   ========================================================================== */
+
+:root {
+  /* ---- PRIMITIVES : Neutral (very slightly cool, "software" gray) ------- */
+  --gray-0:    #ffffff;
+  --gray-25:   #fbfbfc;
+  --gray-50:   #f6f7f9;
+  --gray-100:  #edeef1;
+  --gray-150:  #e4e6ea;
+  --gray-200:  #d6d9df;
+  --gray-300:  #bcc1c9;
+  --gray-400:  #949aa5;
+  --gray-500:  #6b7280;
+  --gray-600:  #4c525c;
+  --gray-700:  #363a42;
+  --gray-800:  #24272d;
+  --gray-850:  #191b1f;
+  --gray-900:  #131418;
+  --gray-950:  #0c0d10;
+  --gray-1000: #08090b;
+
+  /* ---- PRIMITIVES : Teal (Jaunt signature — "go", waypoints, place) ----- */
+  --teal-50:   #e4faf6;
+  --teal-100:  #c0f2ea;
+  --teal-200:  #8ee7db;
+  --teal-300:  #52d6c8;
+  --teal-400:  #23bfb0;
+  --teal-500:  #06a89a;
+  --teal-600:  #058b80;
+  --teal-700:  #0a6f67;
+  --teal-800:  #0e5852;
+  --teal-900:  #103f3c;
+
+  /* ---- PRIMITIVES : Iris (reserved exclusively for AI moments) ---------- */
+  --iris-50:   #efeeff;
+  --iris-100:  #e0ddff;
+  --iris-200:  #c7c1ff;
+  --iris-300:  #a79dff;
+  --iris-400:  #8a7bff;
+  --iris-500:  #7059f7;
+  --iris-600:  #5b43dd;
+  --iris-700:  #4834b0;
+  --iris-800:  #362881;
+  --iris-900:  #241a54;
+
+  /* ---- PRIMITIVES : Semantic hues -------------------------------------- */
+  --green-400: #3dcb7f;  --green-500: #1f9d5f;  --green-600: #167a49;
+  --amber-400: #f5b942;  --amber-500: #e0930d;  --amber-600: #b5720a;
+  --red-400:   #f5686d;  --red-500:   #e5484d;  --red-600:   #c13539;
+  --blue-400:  #5b95f7;  --blue-500:  #2f6feb;  --blue-600:  #2255c4;
+
+  /* ---- PRIMITIVES : Data-viz categorical (calm, harmonic) --------------- */
+  --viz-1: #06a89a;  --viz-2: #7059f7;  --viz-3: #2f6feb;
+  --viz-4: #e0930d;  --viz-5: #e5484d;  --viz-6: #1f9d5f;
+  --viz-7: #d8659c;  --viz-8: #5b6472;
+}
+
+/* ==========================================================================
+   LIGHT THEME  (default)
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces — stacked from page floor up to floating elements */
+  --surface-app:      var(--gray-50);    /* app background / canvas */
+  --surface-sunken:   var(--gray-100);   /* wells, insets, track backgrounds */
+  --surface-card:     var(--gray-0);     /* panels, cards, table body */
+  --surface-raised:   var(--gray-0);     /* menus, popovers, dialogs */
+  --surface-overlay:  rgba(19, 20, 24, 0.32); /* scrim behind modals */
+  --surface-hover:    rgba(19, 20, 24, 0.04);
+  --surface-active:   rgba(19, 20, 24, 0.07);
+  --surface-selected: var(--teal-50);
+
+  /* Text */
+  --text-primary:    var(--gray-900);
+  --text-secondary:  var(--gray-600);
+  --text-tertiary:   var(--gray-500);
+  --text-disabled:   var(--gray-400);
+  --text-on-accent:  var(--gray-0);
+  --text-link:       var(--teal-600);
+
+  /* Borders / lines */
+  --border-subtle:   var(--gray-100);   /* hairlines between rows */
+  --border-default:  var(--gray-200);   /* card + input outlines */
+  --border-strong:   var(--gray-300);   /* emphasized dividers */
+  --border-focus:    var(--teal-500);
+
+  /* Accent (interactive primary) */
+  --accent:          var(--teal-600);
+  --accent-hover:    var(--teal-700);
+  --accent-active:   var(--teal-800);
+  --accent-subtle:   var(--teal-50);
+  --accent-subtle-hover: var(--teal-100);
+  --accent-text:     var(--teal-700);
+  --accent-border:   var(--teal-200);
+
+  /* AI — iris, always the same signal across the product */
+  --ai-accent:       var(--iris-600);
+  --ai-text:         var(--iris-700);
+  --ai-subtle:       var(--iris-50);
+  --ai-border:       var(--iris-200);
+  --ai-glow:         rgba(112, 89, 247, 0.16);
+
+  /* Status */
+  --success:      var(--green-600);  --success-subtle: #e5f6ec;  --success-border: #b6e6c9;
+  --warning:      var(--amber-600);  --warning-subtle: #fdf3df;  --warning-border: #f5dfa8;
+  --danger:       var(--red-600);    --danger-subtle:  #fdebec;  --danger-border:  #f6c2c4;
+  --info:         var(--blue-600);   --info-subtle:    #eaf1fe;  --info-border:    #c2d6fb;
+
+  /* Focus ring (used as box-shadow spread) */
+  --ring: 0 0 0 3px rgba(6, 168, 154, 0.32);
+  --ring-ai: 0 0 0 3px rgba(112, 89, 247, 0.30);
+  --ring-danger: 0 0 0 3px rgba(229, 72, 77, 0.30);
+}
+
+/* ==========================================================================
+   DARK THEME  (native)
+   ========================================================================== */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-app:      var(--gray-1000);
+  --surface-sunken:   #060709;
+  --surface-card:     var(--gray-950);
+  --surface-raised:   var(--gray-900);
+  --surface-overlay:  rgba(0, 0, 0, 0.58);
+  --surface-hover:    rgba(255, 255, 255, 0.05);
+  --surface-active:   rgba(255, 255, 255, 0.09);
+  --surface-selected: rgba(6, 168, 154, 0.14);
+
+  --text-primary:    #f4f5f7;
+  --text-secondary:  #9aa1ad;
+  --text-tertiary:   #6e7681;
+  --text-disabled:   #4b515b;
+  --text-on-accent:  #04201d;
+  --text-link:       var(--teal-300);
+
+  --border-subtle:   rgba(255, 255, 255, 0.06);
+  --border-default:  rgba(255, 255, 255, 0.10);
+  --border-strong:   rgba(255, 255, 255, 0.16);
+  --border-focus:    var(--teal-400);
+
+  --accent:          var(--teal-400);
+  --accent-hover:    var(--teal-300);
+  --accent-active:   var(--teal-200);
+  --accent-subtle:   rgba(6, 168, 154, 0.14);
+  --accent-subtle-hover: rgba(6, 168, 154, 0.22);
+  --accent-text:     var(--teal-300);
+  --accent-border:   rgba(35, 191, 176, 0.36);
+
+  --ai-accent:       var(--iris-400);
+  --ai-text:         var(--iris-300);
+  --ai-subtle:       rgba(112, 89, 247, 0.16);
+  --ai-border:       rgba(138, 123, 255, 0.36);
+  --ai-glow:         rgba(138, 123, 255, 0.24);
+
+  --success:      var(--green-400);  --success-subtle: rgba(31, 157, 95, 0.16);   --success-border: rgba(61, 203, 127, 0.34);
+  --warning:      var(--amber-400);  --warning-subtle: rgba(224, 147, 13, 0.16);  --warning-border: rgba(245, 185, 66, 0.34);
+  --danger:       var(--red-400);    --danger-subtle:  rgba(229, 72, 77, 0.16);   --danger-border:  rgba(245, 104, 109, 0.34);
+  --info:         var(--blue-400);   --info-subtle:    rgba(47, 111, 235, 0.16);  --info-border:    rgba(91, 149, 247, 0.34);
+
+  --ring: 0 0 0 3px rgba(35, 191, 176, 0.34);
+  --ring-ai: 0 0 0 3px rgba(138, 123, 255, 0.32);
+  --ring-danger: 0 0 0 3px rgba(245, 104, 109, 0.32);
+}

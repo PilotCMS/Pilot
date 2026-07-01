@@ -56,7 +56,7 @@
             </div>
 
             {{-- Table header --}}
-            <div class="grid grid-cols-[auto_1fr_120px_100px_100px_140px_120px] items-center gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div class="grid grid-cols-[auto_1fr_120px_100px_100px_140px_120px] items-center gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-400 uppercase tracking-wider dark:border-strong dark:bg-hover dark:text-tertiary">
                 <div class="w-5"><input type="checkbox" class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" disabled /></div>
                 <div>Name</div>
                 <div>Folder</div>
@@ -68,7 +68,7 @@
 
             {{-- Table rows --}}
             @forelse($blockTypes as $blockType)
-                <div class="grid grid-cols-[auto_1fr_120px_100px_100px_140px_120px] items-center gap-4 px-5 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors group" wire:key="block-type-{{ $blockType->id }}">
+                <div class="grid grid-cols-[auto_1fr_120px_100px_100px_140px_120px] items-center gap-4 px-5 py-4 border-b border-subtle transition-colors hover:bg-slate-50/60 dark:border-white/10 dark:hover:bg-white/[0.04] group" wire:key="block-type-{{ $blockType->id }}">
                     <div class="w-5"><input type="checkbox" class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" /></div>
 
                     {{-- Name + key --}}

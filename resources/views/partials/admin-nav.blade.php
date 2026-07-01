@@ -1,92 +1,92 @@
-<nav class="h-full min-h-0 bg-slate-100 border-r border-slate-200 flex flex-col shrink-0 z-40" aria-label="Main" style="width: var(--admin-nav-width);">
-    <div class="px-4 pt-4 pb-3 border-b border-slate-200">
-        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3" wire:navigate title="Pilot">
-            <span class="w-9 h-9 rounded-lg bg-teal-500/15 border border-teal-400/30 flex items-center justify-center overflow-hidden p-1.5">
-                <img src="{{ asset('img/logo.svg') }}" alt="Pilot" class="w-full h-full object-contain" />
+@php
+    $workspaceItems = [
+        ['route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'icon' => 'ph-squares-four', 'label' => 'Dashboard'],
+        ['route' => 'admin.content.index', 'active' => 'admin.content.*', 'icon' => 'ph-files', 'label' => 'Content'],
+        ['route' => 'admin.blocks.index', 'active' => 'admin.blocks.*', 'icon' => 'ph-cube', 'label' => 'Blocks'],
+        ['route' => 'admin.content-types.index', 'active' => 'admin.content-types.*', 'icon' => 'ph-blueprint', 'label' => 'Types'],
+        ['route' => 'admin.assets.index', 'active' => 'admin.assets.*', 'icon' => 'ph-image', 'label' => 'Assets'],
+        ['route' => 'admin.datasources.index', 'active' => 'admin.datasources.*', 'icon' => 'ph-database', 'label' => 'Datasources'],
+    ];
+
+    $adminItems = [
+        ['route' => 'admin.spaces.index', 'active' => 'admin.spaces.*', 'icon' => 'ph-stack', 'label' => 'Spaces'],
+        ['route' => 'admin.users.index', 'active' => 'admin.users.*', 'icon' => 'ph-users', 'label' => 'Users', 'can' => 'manage users'],
+        ['route' => 'admin.settings.index', 'active' => 'admin.settings.*', 'icon' => 'ph-gear', 'label' => 'Settings'],
+    ];
+
+    $navLinkClasses = function (string $activePattern): string {
+        $base = 'group flex h-[30px] items-center gap-2.5 rounded-sm px-2.5 text-sm transition-colors duration-100';
+
+        return request()->routeIs($activePattern)
+            ? $base . ' bg-active text-primary font-medium shadow-xs'
+            : $base . ' text-secondary hover:bg-hover hover:text-primary';
+    };
+@endphp
+
+<nav class="h-full min-h-0 bg-app border-r border-subtle flex flex-col shrink-0 z-sidebar" aria-label="Main" style="width: var(--admin-nav-width);">
+    <div class="flex h-topbar items-center px-3.5">
+        <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm px-1.5 py-1.5 text-left transition-colors duration-100 hover:bg-hover" wire:navigate title="Pilot CMS">
+            <span class="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-sm bg-accent text-on-accent shadow-xs">
+                <img src="{{ asset('img/logo.svg') }}" alt="" class="h-[17px] w-[17px] object-contain" />
             </span>
-            <span class="leading-tight">
-                <span class="block text-sm font-semibold text-slate-900">Pilot CMS</span>
-                <span class="block text-[11px] text-slate-500">Workspace</span>
+            <span class="min-w-0 flex-1 text-sm font-medium leading-tight text-primary">
+                <span class="block truncate">Pilot CMS</span>
+                <span class="block truncate text-2xs font-normal text-tertiary">Jaunt workspace</span>
             </span>
+            <i class="ph ph-caret-up-down text-sm text-tertiary" aria-hidden="true"></i>
         </a>
     </div>
 
-    <div class="px-3 py-3 border-b border-slate-200">
-        <button type="button" x-data x-on:click="$dispatch('open-command-palette')" class="w-full h-9 rounded-md bg-white border border-slate-200 text-slate-500 text-xs px-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-            <span class="flex items-center gap-2">
-                <i class="ph ph-magnifying-glass text-sm"></i>
-                Search
-            </span>
-            <span class="text-[10px] text-slate-400">⌘K</span>
+    <div class="mx-3 mb-2 mt-1">
+        <button type="button" x-data x-on:click="$dispatch('open-command-palette')" class="flex h-[30px] w-full items-center gap-2 rounded-sm border border-[color:var(--border-default)] bg-card px-2.5 text-sm text-tertiary shadow-xs transition-colors duration-100 hover:border-strong hover:text-secondary">
+            <i class="ph ph-magnifying-glass text-sm" aria-hidden="true"></i>
+            <span>Search</span>
+            <kbd class="ml-auto rounded-xs border border-subtle bg-sunken px-1.5 py-0.5 font-mono text-2xs text-tertiary">⌘K</kbd>
         </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-3 py-3 space-y-5">
-        <div>
-            <p class="px-2 text-[10px] font-semibold tracking-[0.14em] uppercase text-slate-400 mb-2">Workspace</p>
-            <div class="space-y-1">
-                <a href="{{ route('admin.dashboard') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.dashboard') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-squares-four text-base"></i>
-                    <span>Dashboard</span>
+    <div class="flex-1 overflow-y-auto px-2 pb-3">
+        <div class="px-2 pb-1 pt-0.5 text-2xs font-semibold uppercase tracking-[0.06em] text-tertiary">Workspace</div>
+        <div class="space-y-px">
+            @foreach ($workspaceItems as $item)
+                @php $isActive = request()->routeIs($item['active']); @endphp
+                <a href="{{ route($item['route']) }}" class="{{ $navLinkClasses($item['active']) }}" wire:navigate>
+                    <i class="ph {{ $item['icon'] }} text-base {{ $isActive ? 'text-accent' : 'text-tertiary group-hover:text-secondary' }}" aria-hidden="true"></i>
+                    <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
                 </a>
-                <a href="{{ route('admin.content.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.content.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-files text-base"></i>
-                    <span>Content</span>
-                </a>
-                <a href="{{ route('admin.blocks.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.blocks.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-cube text-base"></i>
-                    <span>Blocks</span>
-                </a>
-                <a href="{{ route('admin.content-types.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.content-types.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-blueprint text-base"></i>
-                    <span>Types</span>
-                </a>
-                <a href="{{ route('admin.assets.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.assets.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-image text-base"></i>
-                    <span>Assets</span>
-                </a>
-                <a href="{{ route('admin.datasources.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.datasources.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-database text-base"></i>
-                    <span>Datasources</span>
-                </a>
-            </div>
+            @endforeach
         </div>
 
-        <div>
-            <p class="px-2 text-[10px] font-semibold tracking-[0.14em] uppercase text-slate-400 mb-2">Admin</p>
-            <div class="space-y-1">
-                <a href="{{ route('admin.spaces.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.spaces.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-stack text-base"></i>
-                    <span>Spaces</span>
+        <div class="px-2 pb-1 pt-4 text-2xs font-semibold uppercase tracking-[0.06em] text-tertiary">Admin</div>
+        <div class="space-y-px">
+            @foreach ($adminItems as $item)
+                @continue(isset($item['can']) && auth()->user()->cannot($item['can']))
+                @php $isActive = request()->routeIs($item['active']); @endphp
+                <a href="{{ route($item['route']) }}" class="{{ $navLinkClasses($item['active']) }}" wire:navigate>
+                    <i class="ph {{ $item['icon'] }} text-base {{ $isActive ? 'text-accent' : 'text-tertiary group-hover:text-secondary' }}" aria-hidden="true"></i>
+                    <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
                 </a>
-                @can('manage users')
-                <a href="{{ route('admin.users.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.users.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-users text-base"></i>
-                    <span>Users</span>
-                </a>
-                @endcan
-                <a href="{{ route('admin.settings.index') }}" class="h-9 rounded-md px-2.5 text-sm flex items-center gap-2.5 transition-colors {{ request()->routeIs('admin.settings.*') ? 'bg-white border border-slate-200 text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70' }}" wire:navigate>
-                    <i class="ph ph-gear text-base"></i>
-                    <span>Settings</span>
-                </a>
-            </div>
+            @endforeach
         </div>
     </div>
 
-    <div class="border-t border-slate-200 p-3">
+    <div class="border-t border-subtle p-2">
         <flux:dropdown position="top" align="start">
-            <button type="button" class="w-full rounded-md px-2 py-2 flex items-center gap-2 text-left hover:bg-slate-200/70 transition-colors" aria-label="User menu">
-                <span class="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-400 to-blue-500 border border-slate-200 shrink-0"></span>
-                <span class="min-w-0">
-                    <span class="block text-xs font-medium text-slate-800 truncate">{{ auth()->user()->name }}</span>
-                    <span class="block text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</span>
+            <button type="button" class="flex w-full items-center gap-2.5 rounded-sm p-1.5 text-left transition-colors duration-100 hover:bg-hover" aria-label="User menu">
+                <span class="relative inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-xs font-semibold text-accent-text">
+                    {{ str(auth()->user()->name)->trim()->substr(0, 1)->upper() }}
+                    <span class="absolute -bottom-px -right-px h-2 w-2 rounded-full border-2 border-app bg-success"></span>
                 </span>
-                <i class="ph ph-caret-up-down ml-auto text-slate-400"></i>
+                <span class="min-w-0 flex-1 text-sm font-medium text-primary">
+                    <span class="block truncate">{{ auth()->user()->name }}</span>
+                    <span class="block truncate text-2xs font-normal text-tertiary">{{ auth()->user()->email }}</span>
+                </span>
+                <i class="ph ph-gear text-sm text-tertiary" aria-hidden="true"></i>
             </button>
             <flux:menu>
                 <div class="p-2 text-sm">
-                    <div class="font-medium text-gray-900">{{ auth()->user()->name }}</div>
-                    <div class="text-gray-500 text-xs">{{ auth()->user()->email }}</div>
+                    <div class="font-medium text-primary">{{ auth()->user()->name }}</div>
+                    <div class="text-tertiary text-xs">{{ auth()->user()->email }}</div>
                 </div>
                 <flux:menu.separator />
                 <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>

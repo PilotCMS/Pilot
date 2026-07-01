@@ -4,7 +4,7 @@
         @include('partials.head')
         @stack('admin-head')
     </head>
-    <body class="admin-app h-full min-h-screen w-full flex bg-gray-50 text-slate-800 overflow-hidden font-sans antialiased selection:bg-teal-100 selection:text-teal-900" style="--admin-nav-width: 248px; --admin-rail-width: clamp(320px, 22vw, 420px);">
+    <body class="admin-app h-full min-h-screen w-full flex bg-app text-primary overflow-hidden font-sans antialiased selection:bg-accent-subtle selection:text-accent-text" style="--admin-nav-width: var(--sidebar-w); --admin-rail-width: clamp(320px, 22vw, 420px);">
         <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
 
         @include('partials.admin-nav')

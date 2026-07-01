@@ -1237,6 +1237,30 @@ it('tracks editor presence and selected block context', function () {
         ->and($presence->status)->toBe('editing');
 });
 
+it('clears stale selected block presence after undo restores block snapshots', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Original hero'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->call('touchPresence')
+        ->call('updateBlock', $block->id, 'title', 'Edited hero')
+        ->call('undoLastChange')
+        ->call('touchPresence')
+        ->assertSet('selectedBlockId', null);
+
+    $presence = ContentPresence::query()->where('content_id', $content->id)->where('user_id', $user->id)->firstOrFail();
+
+    expect($presence->selected_block_id)->toBeNull()
+        ->and($presence->status)->toBe('viewing');
+});
+
 it('adds and resolves comments for a selected block', function () {
     $user = User::factory()->create();
     $space = Space::create([

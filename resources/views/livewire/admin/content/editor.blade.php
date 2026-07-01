@@ -10,9 +10,15 @@
         previewFrameSrc: @js($this->previewFrameUrl),
         saveState: @entangle('saveState'),
         conflictMessage: @entangle('conflictMessage'),
+        drawerOpen: @entangle('drawerOpen'),
+        leftSidebarCollapsed: @entangle('leftSidebarCollapsed'),
         previewWidth() {
+            const desktopWidth = ! this.drawerOpen && this.leftSidebarCollapsed
+                ? 'min(100%, 1600px)'
+                : 'min(100%, 1280px)';
+
             return {
-                desktop: 'min(100%, 1280px)',
+                desktop: desktopWidth,
                 tablet: '768px',
                 mobile: '390px'
             }[this.previewDevice];
@@ -184,7 +190,7 @@
             });
         }
     }"
-    class="h-screen w-full relative bg-gray-50 text-slate-800 overflow-hidden selection:bg-teal-100 selection:text-teal-900"
+    class="cms-shell h-screen w-full relative overflow-hidden selection:bg-accent-subtle selection:text-accent-text"
 >
     <livewire:admin.content.content-sync-poller
         :content-id="$content->id"
@@ -192,35 +198,35 @@
     />
 
     {{-- Fixed header: top 0, left 70px (after nav), right 500px (before aside when open) --}}
-    <header class="fixed top-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm transition-[right]" aria-label="Editor toolbar" style="left: var(--admin-nav-width); right: 0;">
+    <header class="fixed top-0 flex h-topbar items-center justify-between gap-4 border-b border-subtle bg-app px-[var(--pad-view)] z-30 transition-[right]" aria-label="Editor toolbar" style="left: var(--admin-nav-width); right: 0;">
         <div class="flex items-center gap-3">
-            <nav class="flex items-center text-sm text-slate-500" aria-label="Breadcrumb">
-                <a href="{{ route('admin.content.index') }}" class="hover:text-teal-600 cursor-pointer transition-colors" wire:navigate>{{ $content->space?->name ?? 'Space' }}</a>
-                <i class="ph ph-caret-right mx-2 text-xs text-slate-300" aria-hidden="true"></i>
+            <nav class="flex items-center text-sm text-tertiary" aria-label="Breadcrumb">
+                <a href="{{ route('admin.content.index') }}" class="cursor-pointer transition-colors hover:text-secondary" wire:navigate>{{ $content->space?->name ?? 'Space' }}</a>
+                <i class="ph ph-caret-right mx-2 text-xs text-disabled" aria-hidden="true"></i>
                 @foreach($this->breadcrumbs as $crumb)
-                    <a href="{{ route('admin.content.index', ['folder' => $crumb->id]) }}" wire:navigate class="hover:text-teal-600 transition-colors truncate max-w-[100px]">{{ $crumb->name }}</a>
-                    <i class="ph ph-caret-right mx-2 text-xs text-slate-300" aria-hidden="true"></i>
+                    <a href="{{ route('admin.content.index', ['folder' => $crumb->id]) }}" wire:navigate class="truncate max-w-[100px] transition-colors hover:text-secondary">{{ $crumb->name }}</a>
+                    <i class="ph ph-caret-right mx-2 text-xs text-disabled" aria-hidden="true"></i>
                 @endforeach
-                <span class="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded">{{ $content->name }}</span>
+                <span class="rounded-sm bg-active px-2 py-1 font-semibold text-primary">{{ $content->name }}</span>
             </nav>
-            <div class="h-4 w-px bg-slate-300 mx-1" aria-hidden="true"></div>
+            <div class="h-4 w-px bg-strong mx-1" aria-hidden="true"></div>
             @if($content->status === 'draft')
-                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-100 rounded-full">
-                    <div class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
+                <div class="cms-badge cms-badge-warning">
+                    <div class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>
                     <span class="text-xs font-semibold">Unpublished Changes</span>
                 </div>
             @else
-                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 border border-green-200 rounded-full">
-                    <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                <div class="cms-badge cms-badge-success">
+                    <div class="w-1.5 h-1.5 rounded-full bg-current"></div>
                     <span class="text-xs font-semibold">Published</span>
                 </div>
             @endif
         </div>
 
-        <div class="absolute left-1/2 -translate-x-1/2 flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shadow-inner">
-            <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:class="previewDevice === 'desktop' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-all transform hover:scale-105" title="Desktop"><i class="ph ph-desktop text-lg"></i></button>
-            <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:class="previewDevice === 'tablet' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-colors" title="Tablet"><i class="ph ph-device-tablet text-lg"></i></button>
-            <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:class="previewDevice === 'mobile' ? 'bg-white text-teal-600 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-teal-600 hover:bg-white/50'" class="w-9 h-8 flex items-center justify-center rounded transition-colors" title="Mobile"><i class="ph ph-device-mobile text-lg"></i></button>
+        <div class="cms-seg absolute left-1/2 -translate-x-1/2">
+            <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:data-active="previewDevice === 'desktop' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Desktop"><i class="ph ph-desktop text-lg"></i></button>
+            <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:data-active="previewDevice === 'tablet' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Tablet"><i class="ph ph-device-tablet text-lg"></i></button>
+            <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:data-active="previewDevice === 'mobile' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Mobile"><i class="ph ph-device-mobile text-lg"></i></button>
         </div>
 
         <div class="flex items-center gap-3">
@@ -228,19 +234,6 @@
                 <i class="ph" x-bind:class="conflictMessage ? 'ph-warning-circle' : saveState === 'saving' ? 'ph-spinner-gap animate-spin' : 'ph-check-circle'"></i>
                 <span x-text="saveLabel()">Saved</span>
             </div>
-            <div class="relative">
-                <select wire:model.live="selectedPreviewTargetId" class="h-9 min-w-32 appearance-none rounded-md border border-slate-300 bg-white pl-3 pr-8 text-sm font-medium text-slate-600 shadow-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
-                    <option value="">Internal</option>
-                    @foreach($this->previewTargets as $previewTarget)
-                        <option value="{{ $previewTarget->id }}">{{ $previewTarget->name }}</option>
-                    @endforeach
-                </select>
-                <i class="ph ph-caret-down pointer-events-none absolute right-2.5 top-2.5 text-slate-400"></i>
-            </div>
-            <a href="{{ $this->previewUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
-                <i class="ph ph-eye" aria-hidden="true"></i>
-                View preview
-            </a>
             @if($this->publishedRevisionComparison)
                 <button type="button" wire:click="selectPublishedRevision" class="hidden items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold shadow-sm transition-colors 2xl:inline-flex {{ $this->publishedRevisionComparison['has_changes'] ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
                     <i class="ph {{ $this->publishedRevisionComparison['has_changes'] ? 'ph-git-diff' : 'ph-check-circle' }}"></i>
@@ -251,16 +244,32 @@
                     @endif
                 </button>
             @endif
-            <button type="button" wire:click="undoLastChange" @disabled(! $this->undoRevision) class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:shadow-none disabled:hover:bg-white" title="{{ $this->undoRevision ? 'Undo last change' : 'Nothing to undo' }}" aria-label="Undo last change">
+            <button type="button" wire:click="undoLastChange" @disabled(! $this->undoRevision) class="cms-iconbtn border border-default bg-card shadow-xs disabled:cursor-not-allowed disabled:opacity-45" title="{{ $this->undoRevision ? 'Undo last change' : 'Nothing to undo' }}" aria-label="Undo last change">
                 <i class="ph ph-arrow-counter-clockwise text-lg"></i>
             </button>
-            <button type="button" wire:click="openRevisionModal" class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50" title="Revisions" aria-label="Revisions">
+            <button type="button" wire:click="openRevisionModal" class="cms-iconbtn border border-default bg-card shadow-xs" title="Revisions" aria-label="Revisions">
                 <i class="ph ph-clock-counter-clockwise text-lg"></i>
             </button>
-            <button type="button" wire:click="openCheckpointModal" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm" title="Save checkpoint">Save</button>
-            <div class="flex rounded-md shadow-sm">
-                <button type="button" wire:click="publish" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-l-md transition-colors border-r border-teal-600">Publish</button>
-                <button type="button" class="px-2 bg-teal-500 hover:bg-teal-600 rounded-r-md transition-colors text-white"><i class="ph ph-caret-down"></i></button>
+            <div class="min-w-[92px]">
+                <button
+                    type="button"
+                    wire:click="openCheckpointModal"
+                    x-cloak
+                    x-show="saveState !== 'saved'"
+                    x-bind:disabled="saveState === 'saving'"
+                    class="cms-btn cms-btn-primary h-9 w-full disabled:cursor-wait disabled:opacity-75"
+                    title="Save checkpoint"
+                >
+                    Save
+                </button>
+                <button
+                    type="button"
+                    wire:click="publish"
+                    x-show="saveState === 'saved'"
+                    class="cms-btn cms-btn-primary h-9 w-full"
+                >
+                    Publish
+                </button>
             </div>
         </div>
     </header>
@@ -268,13 +277,13 @@
     {{-- Content area: below fixed header (pt-16), with right padding when aside is open --}}
     <div class="flex pt-16 h-screen min-w-0" style="margin-right: {{ $drawerOpen ? 'var(--admin-rail-width)' : '3rem' }};">
     {{-- Left: Content Tree (Variant: w-72) --}}
-    <aside class="{{ $leftSidebarCollapsed ? 'w-12' : 'w-72' }} bg-white border-r border-slate-200 flex flex-col shrink-0 z-40 hidden xl:flex" aria-label="Content tree">
-        <div class="shrink-0 border-b border-slate-200 bg-white px-4 py-2 flex items-center {{ $leftSidebarCollapsed ? 'justify-center' : 'justify-between' }}">
+    <aside class="{{ $leftSidebarCollapsed ? 'w-12' : 'w-72' }} bg-app border-r border-subtle flex flex-col shrink-0 z-40 hidden xl:flex" aria-label="Content tree">
+        <div class="shrink-0 border-b border-subtle bg-app px-4 py-2 flex items-center {{ $leftSidebarCollapsed ? 'justify-center' : 'justify-between' }}">
             @if($leftSidebarCollapsed)
                 <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Expand content panel" aria-label="Expand content panel"><i class="ph ph-sidebar-simple"></i></button>
             @else
             <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-800">Content</span>
+                <span class="font-semibold text-primary">Content</span>
             </div>
             <div class="flex items-center gap-1">
                 <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="New page"><i class="ph ph-plus-circle text-xl"></i></a>
@@ -342,19 +351,38 @@
     </aside>
 
     {{-- Center: Canvas only (header is fixed above) --}}
-    <main class="flex-1 min-w-0 flex flex-col bg-slate-100 relative" role="main" aria-label="Page canvas">
-        <div class="shrink-0 border-b border-slate-200 bg-white px-4 py-2">
-            <div class="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 p-1 text-xs font-medium">
-                <button type="button" x-on:click="canvasMode = 'compose'" x-bind:class="canvasMode === 'compose' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="rounded px-3 py-1.5 transition-colors">
-                    Compose
-                </button>
-                <button type="button" x-on:click="canvasMode = 'preview'" x-bind:class="canvasMode === 'preview' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="rounded px-3 py-1.5 transition-colors">
-                    Preview
-                </button>
+    <main class="flex-1 min-w-0 flex flex-col bg-sunken relative" role="main" aria-label="Page canvas">
+        <div class="shrink-0 border-b border-subtle bg-app px-4 py-2">
+            <div class="flex items-center justify-between gap-3">
+                <div class="cms-seg">
+                    <button type="button" x-on:click="canvasMode = 'compose'" x-bind:data-active="canvasMode === 'compose' ? 'true' : 'false'" class="cms-seg-btn">
+                        Compose
+                    </button>
+                    <button type="button" x-on:click="canvasMode = 'preview'" x-bind:data-active="canvasMode === 'preview' ? 'true' : 'false'" class="cms-seg-btn">
+                        Preview
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <select wire:model.live="selectedPreviewTargetId" class="cms-select min-w-32">
+                            <option value="">Internal</option>
+                            @foreach($this->previewTargets as $previewTarget)
+                                <option value="{{ $previewTarget->id }}">{{ $previewTarget->name }}</option>
+                            @endforeach
+                        </select>
+                        <i class="ph ph-caret-down pointer-events-none absolute right-2.5 top-1.5 text-tertiary"></i>
+                    </div>
+
+                    <a href="{{ $this->previewUrl }}" target="_blank" rel="noopener noreferrer" class="cms-btn cms-btn-secondary !h-control-sm">
+                        <i class="ph ph-eye" aria-hidden="true"></i>
+                        View preview
+                    </a>
+                </div>
             </div>
         </div>
 
-        <div x-show="canvasMode === 'preview'" x-cloak class="relative flex-1 min-h-0 overflow-hidden bg-slate-100 p-4">
+        <div x-show="canvasMode === 'preview'" x-cloak class="relative flex-1 min-h-0 overflow-hidden bg-sunken p-4">
             <iframe
                 x-ref="previewFrame"
                 x-on:load="syncPreviewSelection()"
@@ -362,7 +390,7 @@
                 name="pilot-cms-preview"
                 x-bind:src="previewFrameSrc"
                 x-bind:style="`width: ${previewWidth()}`"
-                class="mx-auto h-full max-w-full rounded-xl border border-slate-200 bg-white shadow-sm transition-[width]"
+                class="mx-auto h-full max-w-full rounded-lg border border-default bg-card shadow-lg transition-[width]"
                 title="Live preview"
             ></iframe>
 

@@ -81,6 +81,33 @@ it('shows preview targets in the content editor and generates external preview u
         ->assertSee('pilot-in-context-field-updated', false);
 });
 
+it('keeps the selected preview target after undoing a change', function () {
+    $user = User::factory()->create();
+    $space = Space::factory()->create();
+    $content = Content::factory()->create([
+        'space_id' => $space->id,
+        'slug' => 'home',
+        'name' => 'Home',
+        'created_by' => $user->id,
+    ]);
+
+    $target = SpacePreviewTarget::factory()->create([
+        'space_id' => $space->id,
+        'name' => 'Production',
+        'url' => 'https://production.test',
+        'is_default' => true,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSet('selectedPreviewTargetId', $target->id)
+        ->call('updateContent', 'name', 'Landing')
+        ->assertSet('selectedPreviewTargetId', $target->id)
+        ->call('undoLastChange')
+        ->assertSet('selectedPreviewTargetId', $target->id)
+        ->assertSee('https://production.test/_pilot/preview/'.$content->id, false);
+});
+
 it('serves and updates in-context block fields from the package preview routes', function () {
     $user = User::factory()->create();
     $space = Space::factory()->create();

@@ -1,246 +1,223 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    {{-- Fixed header: top 0, left 70px (after nav), right 500px (before aside) --}}
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Content Stories</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Manage your website content structure and entries.</p>
+<div class="cms-shell flex h-full w-full min-w-0 flex-col">
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Content</h1>
+            <p class="cms-subtitle">Pages, folders and global content for your site.</p>
         </div>
-        @can('create content')
-        <a href="{{ route('admin.content.create', ['type' => 'page']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors">
-            <i class="ph ph-plus"></i>
-            New page
-        </a>
-        @endcan
+
+        <div class="cms-actions">
+            @can('create content')
+                <a href="{{ route('admin.content.create', ['type' => 'folder', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="cms-btn cms-btn-secondary">
+                    <i class="ph ph-folder-plus" aria-hidden="true"></i>
+                    New folder
+                </a>
+                <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="cms-btn cms-btn-primary">
+                    <i class="ph ph-plus" aria-hidden="true"></i>
+                    New page
+                </a>
+            @endcan
+        </div>
     </header>
 
-    <div class="flex flex-1 min-h-0">
+    <div class="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <main class="min-w-0 overflow-y-auto">
+            <div class="flex min-h-full flex-col gap-6 p-[var(--pad-view)]">
+                @php $stats = $this->stats; @endphp
+                <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <div class="cms-panel p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['total']) }}</div>
+                                <div class="cms-subtitle">Total stories</div>
+                            </div>
+                            <span class="cms-tile cms-tile-info"><i class="ph-fill ph-files" aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                    <div class="cms-panel p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['published']) }}</div>
+                                <div class="cms-subtitle">Published</div>
+                            </div>
+                            <span class="cms-tile text-success bg-success-subtle"><i class="ph-fill ph-check-circle" aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                    <div class="cms-panel p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['drafts']) }}</div>
+                                <div class="cms-subtitle">Drafts</div>
+                            </div>
+                            <span class="cms-tile text-warning bg-warning-subtle"><i class="ph-fill ph-pencil-simple" aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                    <div class="cms-panel p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ $stats['languages'] }}</div>
+                                <div class="cms-subtitle">Languages</div>
+                            </div>
+                            <span class="cms-tile cms-tile-accent"><i class="ph-fill ph-globe" aria-hidden="true"></i></span>
+                        </div>
+                    </div>
+                </div>
 
-    {{-- Main content: flex-1, fills space left of aside --}}
-    <main class="flex-1 min-w-0 overflow-y-auto">
-        <div class="w-full p-6 md:p-10">
+                <div class="cms-panel">
+                    <div class="cms-toolbar">
+                        <label class="cms-input w-52">
+                            <i class="ph ph-magnifying-glass text-tertiary" aria-hidden="true"></i>
+                            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search content" />
+                        </label>
 
-        {{-- Stats cards --}}
-        @php $stats = $this->stats; @endphp
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
-                    <i class="ph-fill ph-files text-xl"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-slate-900">{{ number_format($stats['total']) }}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">Total Stories</div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-500 shrink-0">
-                    <i class="ph-fill ph-check-circle text-xl"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-slate-900">{{ number_format($stats['published']) }}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">Published</div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
-                    <i class="ph-fill ph-pencil-simple text-xl"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-slate-900">{{ number_format($stats['drafts']) }}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">Drafts</div>
-                </div>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-start gap-4">
-                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-500 shrink-0">
-                    <i class="ph-fill ph-globe text-xl"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-slate-900">{{ $stats['languages'] }}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">Languages</div>
-                </div>
-            </div>
-        </div>
+                        <div class="cms-seg" aria-label="Content type filter">
+                            <button type="button" wire:click="setTypeFilter('all')" class="cms-seg-btn" data-active="{{ $typeFilter === 'all' ? 'true' : 'false' }}">All</button>
+                            <button type="button" wire:click="setTypeFilter('page')" class="cms-seg-btn" data-active="{{ $typeFilter === 'page' ? 'true' : 'false' }}">Pages</button>
+                            <button type="button" wire:click="setTypeFilter('folder')" class="cms-seg-btn" data-active="{{ $typeFilter === 'folder' ? 'true' : 'false' }}">Folders</button>
+                            <button type="button" wire:click="setTypeFilter('global')" class="cms-seg-btn" data-active="{{ $typeFilter === 'global' ? 'true' : 'false' }}">Global</button>
+                        </div>
 
-        {{-- Table card --}}
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <span class="flex-1"></span>
 
-            {{-- Filter bar --}}
-            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-                <div class="flex items-center gap-1">
-                    {{-- Search --}}
-                    <div class="relative mr-3">
-                        <i class="ph ph-funnel absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Filter" class="pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-md bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none w-28 placeholder-slate-400" />
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xs font-semibold uppercase tracking-[0.06em] text-tertiary">Sort</span>
+                            <div class="relative">
+                                <select wire:model.live="sortBy" class="cms-select">
+                                    <option value="updated_at">Last updated</option>
+                                    <option value="name">Name</option>
+                                    <option value="created_at">Created</option>
+                                    <option value="status">Status</option>
+                                </select>
+                                <i class="ph ph-caret-down pointer-events-none absolute right-2 top-1.5 text-tertiary" aria-hidden="true"></i>
+                            </div>
+                        </div>
                     </div>
 
-                    {{-- Type tabs --}}
-                    <button wire:click="setTypeFilter('all')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $typeFilter === 'all' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">All Content</button>
-                    <button wire:click="setTypeFilter('page')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $typeFilter === 'page' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">Pages</button>
-                    <button wire:click="setTypeFilter('folder')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $typeFilter === 'folder' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">Folders</button>
-                    <button wire:click="setTypeFilter('global')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $typeFilter === 'global' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">Global</button>
+                    <div class="min-w-[720px]">
+                        <div class="cms-table-head">
+                            <div><input type="checkbox" class="rounded border-strong text-accent focus:ring-accent" disabled /></div>
+                            <div>Name</div>
+                            <div>Type</div>
+                            <div>Updated</div>
+                            <div>Status</div>
+                        </div>
+
+                        @forelse($this->contentTree as $row)
+                            @php $content = $row->content; $depth = $row->depth; @endphp
+                            <div class="cms-table-row group" wire:key="content-{{ $content->id }}">
+                                <div><input type="checkbox" class="rounded border-strong text-accent focus:ring-accent" /></div>
+
+                                <div class="flex min-w-0 items-center gap-2" style="padding-left: {{ $depth * 20 }}px;">
+                                    @if($content->isFolder())
+                                        <button type="button" wire:click="toggleFolder({{ $content->id }})" class="cms-iconbtn !h-5 !w-5" aria-label="{{ $this->isFolderExpanded($content->id) ? 'Collapse' : 'Expand' }}">
+                                            <i class="ph {{ $this->isFolderExpanded($content->id) ? 'ph-caret-down' : 'ph-caret-right' }} text-xs" aria-hidden="true"></i>
+                                        </button>
+                                        <span class="cms-tile cms-tile-info"><i class="ph-fill ph-folder" aria-hidden="true"></i></span>
+                                    @else
+                                        <span class="w-5 shrink-0" aria-hidden="true"></span>
+                                        <span class="cms-tile"><i class="ph ph-file-text" aria-hidden="true"></i></span>
+                                    @endif
+
+                                    <div class="min-w-0 flex-1">
+                                        @if($content->isFolder())
+                                            <span class="block truncate text-sm font-medium text-primary">{{ $content->name }}</span>
+                                        @else
+                                            <a href="{{ route('admin.content.editor', $content) }}" wire:navigate class="block truncate text-sm font-medium text-primary hover:text-accent-text">{{ $content->name }}</a>
+                                        @endif
+                                        <span class="block truncate font-mono text-2xs text-tertiary">/{{ $content->slug }}</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    @if($content->isFolder())
+                                        <span class="cms-badge cms-badge-info">Folder</span>
+                                    @elseif($content->type === 'global')
+                                        <span class="cms-badge cms-badge-accent">Global</span>
+                                    @else
+                                        <span class="cms-badge cms-badge-accent">Page</span>
+                                    @endif
+                                </div>
+
+                                <div>
+                                    <div class="text-sm text-secondary">{{ $content->updated_at->diffForHumans() }}</div>
+                                    <div class="text-2xs text-tertiary">by {{ $content->updater?->name ?? $content->creator?->name ?? 'System' }}</div>
+                                </div>
+
+                                <div>
+                                    <span class="cms-status">
+                                        @if($content->status === 'published')
+                                            <span class="cms-status-dot cms-status-dot-success"></span>
+                                            Published
+                                        @elseif($content->status === 'draft')
+                                            <span class="cms-status-dot"></span>
+                                            Draft
+                                        @else
+                                            <span class="cms-status-dot cms-status-dot-warning"></span>
+                                            {{ ucfirst($content->status) }}
+                                        @endif
+                                    </span>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="flex flex-col items-center justify-center px-4 py-20 text-center">
+                                <div class="cms-tile !h-14 !w-14 !rounded-lg"><i class="ph ph-folder-open text-2xl" aria-hidden="true"></i></div>
+                                <p class="mt-4 text-sm font-medium text-primary">No content found</p>
+                                <p class="cms-subtitle">Get started by creating a folder or page.</p>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <span class="uppercase tracking-wide font-semibold">Sort by</span>
-                    <select wire:model.live="sortBy" class="text-sm text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none">
-                        <option value="updated_at">Last Updated</option>
-                        <option value="name">Name</option>
-                        <option value="created_at">Created</option>
-                        <option value="status">Status</option>
-                    </select>
+                <div class="flex items-center justify-center gap-2 text-2xs text-tertiary">
+                    <i class="ph ph-info" aria-hidden="true"></i>
+                    Drag folders to reorder your content structure.
                 </div>
             </div>
+        </main>
 
-            {{-- Table header --}}
-            <div class="grid grid-cols-[auto_1fr_140px_180px_140px] items-center gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                <div class="w-5"><input type="checkbox" class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" disabled /></div>
-                <div>Name</div>
-                <div>Content Type</div>
-                <div>Last Updated</div>
-                <div>Status</div>
+        <aside class="cms-rail hidden xl:flex" aria-label="Space Activity">
+            <div class="cms-rail-head">
+                <i class="ph ph-activity text-tertiary" aria-hidden="true"></i>
+                <h2 class="cms-rail-title">Space activity</h2>
             </div>
-
-            {{-- Table rows (tree: expandable folders) --}}
-            @forelse($this->contentTree as $row)
-                @php $content = $row->content; $depth = $row->depth; @endphp
-                <div class="grid grid-cols-[auto_1fr_140px_180px_140px] items-center gap-4 px-5 py-4 border-b border-slate-50 hover:bg-slate-50/50 transition-colors group" wire:key="content-{{ $content->id }}">
-                    {{-- Checkbox --}}
-                    <div class="w-5"><input type="checkbox" class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" /></div>
-
-                    {{-- Name + slug (indent by depth, expand/collapse for folders) --}}
-                    <div class="flex items-center gap-2 min-w-0" style="padding-left: {{ $depth * 20 }}px;">
-                        @if($content->isFolder())
-                            <button type="button" wire:click="toggleFolder({{ $content->id }})" class="w-6 h-6 flex items-center justify-center rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0 transition-colors" aria-label="{{ $this->isFolderExpanded($content->id) ? 'Collapse' : 'Expand' }}">
-                                @if($this->isFolderExpanded($content->id))
-                                    <i class="ph ph-caret-down text-sm"></i>
-                                @else
-                                    <i class="ph ph-caret-right text-sm"></i>
-                                @endif
-                            </button>
-                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
-                                <i class="ph-fill ph-folder text-sm"></i>
-                            </div>
-                        @else
-                            <div class="w-6 shrink-0" aria-hidden="true"></div>
-                            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                                <i class="ph ph-file-text text-sm"></i>
-                            </div>
-                        @endif
-                        <div class="min-w-0 flex-1">
-                            @if($content->isPage())
-                                <a href="{{ route('admin.content.editor', $content) }}" wire:navigate class="text-sm font-semibold text-slate-800 hover:text-teal-600 transition-colors truncate block">{{ $content->name }}</a>
-                            @elseif($content->isFolder())
-                                <span class="text-sm font-semibold text-slate-800 truncate block">{{ $content->name }}</span>
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                @forelse($this->recentActivity as $activity)
+                    <div class="cms-rail-item">
+                        <span class="cms-avatar">
+                            @if($activity->user)
+                                {{ strtoupper(substr($activity->user->name, 0, 1)) }}{{ strtoupper(substr(explode(' ', $activity->user->name)[1] ?? '', 0, 1)) }}
                             @else
-                                <a href="{{ route('admin.content.editor', $content) }}" wire:navigate class="text-sm font-semibold text-slate-800 hover:text-teal-600 transition-colors truncate block">{{ $content->name }}</a>
+                                API
                             @endif
-                            <span class="text-xs text-slate-400 truncate block">/{{ $content->slug }}</span>
-                        </div>
-                    </div>
-
-                    {{-- Content type badge --}}
-                    <div>
-                        @if($content->isFolder())
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600">Folder</span>
-                        @elseif($content->type === 'global')
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-600">Global</span>
-                        @else
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-600">Page</span>
-                        @endif
-                    </div>
-
-                    {{-- Last updated --}}
-                    <div>
-                        <div class="text-sm text-slate-700">{{ $content->updated_at->diffForHumans() }}</div>
-                        <div class="text-xs text-slate-400">by {{ $content->updater?->name ?? $content->creator?->name ?? 'System' }}</div>
-                    </div>
-
-                    {{-- Status --}}
-                    <div class="flex items-center gap-2">
-                        @if($content->status === 'published')
-                            <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                            <span class="text-sm text-slate-700">Published</span>
-                        @elseif($content->status === 'draft')
-                            <div class="w-2 h-2 rounded-full bg-slate-300"></div>
-                            <span class="text-sm text-slate-500">Draft</span>
-                        @else
-                            <div class="w-2 h-2 rounded-full bg-amber-400"></div>
-                            <span class="text-sm text-slate-700">{{ ucfirst($content->status) }}</span>
-                        @endif
-                    </div>
-                </div>
-            @empty
-                <div class="flex flex-col items-center justify-center py-20 px-4">
-                    <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-                        <i class="ph ph-folder-open text-2xl text-slate-400"></i>
-                    </div>
-                    <p class="text-sm font-medium text-slate-700">No content found</p>
-                    <p class="text-xs text-slate-400 mt-1">Get started by creating a folder or page.</p>
-                    @can('create content')
-                    <div class="mt-5 flex gap-3">
-                        <a href="{{ route('admin.content.create', ['type' => 'folder', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">New Folder</a>
-                        <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-md transition-colors shadow-sm">New Page</a>
-                    </div>
-                    @endcan
-                </div>
-            @endforelse
-
-        </div>
-
-        {{-- Tip --}}
-        <div class="flex items-center justify-center gap-2 mt-6 text-xs text-slate-400">
-            <i class="ph ph-info"></i>
-            <span>Tip: You can drag and drop folders to reorder your content structure.</span>
-        </div>
-
-        </div>{{-- /max-w centered --}}
-    </main>
-
-    {{-- Right aside: Space Activity --}}
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Space Activity">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0">
-            <h2 class="text-sm font-bold text-slate-800">Space Activity</h2>
-        </div>
-        <div class="flex-1 overflow-y-auto divide-y divide-slate-50">
-            @forelse($this->recentActivity as $activity)
-                <div class="px-5 py-4 flex gap-3">
-                    @if($activity->user)
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
-                            {{ strtoupper(substr($activity->user->name, 0, 1)) }}{{ strtoupper(substr(explode(' ', $activity->user->name)[1] ?? '', 0, 1)) }}
-                        </div>
-                    @else
-                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-teal-600 shrink-0 mt-0.5">
-                            API
-                        </div>
-                    @endif
-                    <div class="min-w-0 flex-1">
-                        <p class="text-sm text-slate-700 leading-snug">
-                            <span class="font-semibold">{{ $activity->user?->name ?? 'System' }}</span>
-                            {{ $activity->action }}
-                            @if($activity->subject)
-                                @php
-                                    $subjectName = $activity->subject->name ?? $activity->subject->key ?? class_basename($activity->subject_type);
-                                    $subjectRoute = null;
-                                    if ($activity->subject instanceof \App\Models\Content && $activity->subject->isPage()) {
-                                        $subjectRoute = route('admin.content.editor', $activity->subject);
-                                    }
-                                @endphp
-                                @if($subjectRoute)
-                                    <a href="{{ $subjectRoute }}" wire:navigate class="text-teal-600 font-medium hover:underline">{{ $subjectName }}</a>.
-                                @else
-                                    <span class="text-teal-600 font-medium">{{ $subjectName }}</span>.
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm leading-snug text-secondary">
+                                <strong class="font-semibold text-primary">{{ $activity->user?->name ?? 'System' }}</strong>
+                                {{ $activity->action }}
+                                @if($activity->subject)
+                                    @php
+                                        $subjectName = $activity->subject->name ?? $activity->subject->key ?? class_basename($activity->subject_type);
+                                        $subjectRoute = null;
+                                        if ($activity->subject instanceof \App\Models\Content && $activity->subject->isPage()) {
+                                            $subjectRoute = route('admin.content.editor', $activity->subject);
+                                        }
+                                    @endphp
+                                    @if($subjectRoute)
+                                        <a href="{{ $subjectRoute }}" wire:navigate class="font-medium text-accent-text hover:underline">{{ $subjectName }}</a>.
+                                    @else
+                                        <span class="font-medium text-accent-text">{{ $subjectName }}</span>.
+                                    @endif
                                 @endif
-                            @endif
-                        </p>
-                        <span class="text-xs text-slate-400 mt-1 block">{{ $activity->created_at->diffForHumans() }}</span>
+                            </p>
+                            <time class="mt-1 block text-2xs text-tertiary">{{ $activity->created_at->diffForHumans() }}</time>
+                        </div>
                     </div>
-                </div>
-            @empty
-                <div class="px-5 py-8 text-center">
-                    <i class="ph ph-clock-counter-clockwise text-2xl text-slate-300"></i>
-                    <p class="text-xs text-slate-400 mt-2">No recent activity</p>
-                </div>
-            @endforelse
-        </div>
-    </aside>
+                @empty
+                    <div class="p-8 text-center">
+                        <i class="ph ph-clock-counter-clockwise text-2xl text-tertiary" aria-hidden="true"></i>
+                        <p class="mt-2 text-xs text-tertiary">No recent activity</p>
+                    </div>
+                @endforelse
+            </div>
+        </aside>
     </div>
 </div>

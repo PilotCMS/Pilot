@@ -681,14 +681,17 @@ class Editor extends Component
             return;
         }
 
+        $selectedBlockId = $this->validSelectedBlockId();
+        $this->selectedBlockId = $selectedBlockId;
+
         ContentPresence::updateOrCreate(
             [
                 'content_id' => $this->content->id,
                 'user_id' => auth()->id(),
             ],
             [
-                'selected_block_id' => $this->selectedBlockId,
-                'status' => $this->selectedBlockId ? 'editing' : 'viewing',
+                'selected_block_id' => $selectedBlockId,
+                'status' => $selectedBlockId ? 'editing' : 'viewing',
                 'last_seen_at' => now(),
             ],
         );
@@ -797,9 +800,9 @@ class Editor extends Component
 
         $this->loadBlocks();
         $this->content->refresh();
+        $this->selectedBlockId = $this->validSelectedBlockId();
         $this->selectedRevisionId = null;
         $this->compareRevisionId = '';
-        $this->selectedPreviewTargetId = '';
         $this->markSaved();
     }
 
@@ -828,6 +831,7 @@ class Editor extends Component
 
         $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'full');
 
+        $this->selectedBlockId = $this->validSelectedBlockId();
         $this->selectedRevisionId = null;
         $this->compareRevisionId = '';
         $this->markSaved();
@@ -960,6 +964,22 @@ class Editor extends Component
             null,
             ['undoable' => true, ...$meta],
         );
+    }
+
+    protected function validSelectedBlockId(): ?int
+    {
+        if (! $this->selectedBlockId) {
+            return null;
+        }
+
+        $selectedBlockId = (int) $this->selectedBlockId;
+
+        return Block::query()
+            ->where('content_id', $this->content->id)
+            ->whereKey($selectedBlockId)
+            ->exists()
+                ? $selectedBlockId
+                : null;
     }
 
     /**

@@ -1,29 +1,20 @@
 import '@tailwindplus/elements';
+import { createIcons, icons } from 'lucide';
 
-const disableDarkMode = () => {
-    const root = document.documentElement;
+let lucideRescanTimer;
 
-    if (root.classList.contains('dark')) {
-        root.classList.remove('dark');
-    }
+const renderLucideIcons = () => {
+    clearTimeout(lucideRescanTimer);
 
-    if (root.style.colorScheme !== 'light') {
-        root.style.colorScheme = 'light';
-    }
-
-    if (window.localStorage.getItem('flux.appearance') !== 'light') {
-        window.localStorage.setItem('flux.appearance', 'light');
-    }
-
-    if (window.Flux && window.Flux.appearance !== 'light') {
-        window.Flux.appearance = 'light';
-    }
+    lucideRescanTimer = setTimeout(() => {
+        createIcons({ icons });
+    }, 16);
 };
 
-disableDarkMode();
+document.addEventListener('DOMContentLoaded', renderLucideIcons);
+document.addEventListener('livewire:navigated', renderLucideIcons);
 
-new MutationObserver(disableDarkMode).observe(document.documentElement, {
-    attributeFilter: ['class'],
+new MutationObserver(renderLucideIcons).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
 });
-
-document.addEventListener('livewire:navigated', disableDarkMode);
