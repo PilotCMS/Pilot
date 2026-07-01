@@ -257,7 +257,7 @@
             <button type="button" wire:click="openRevisionModal" class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50" title="Revisions" aria-label="Revisions">
                 <i class="ph ph-clock-counter-clockwise text-lg"></i>
             </button>
-            <button type="button" wire:click="openCheckpointModal" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">Save checkpoint</button>
+            <button type="button" wire:click="openCheckpointModal" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm" title="Save checkpoint">Save</button>
             <div class="flex rounded-md shadow-sm">
                 <button type="button" wire:click="publish" class="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-l-md transition-colors border-r border-teal-600">Publish</button>
                 <button type="button" class="px-2 bg-teal-500 hover:bg-teal-600 rounded-r-md transition-colors text-white"><i class="ph ph-caret-down"></i></button>

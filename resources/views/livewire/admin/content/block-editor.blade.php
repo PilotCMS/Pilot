@@ -36,17 +36,19 @@
                     @endforeach
                 </div>
             @elseif($field['type'] === 'text')
-                <input type="text"
-                    value="{{ $fieldValue }}"
-                    placeholder="{{ $field['placeholder'] ?? '' }}"
-                    wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all"
-                />
                 @if($this->isLinkField($field) && $contentChoices->isNotEmpty())
-                    @include('livewire.admin.content.partials.internal-link-picker', [
+                    @include('livewire.admin.content.partials.link-input', [
                         'fieldKey' => $field['key'],
+                        'placeholder' => $field['placeholder'] ?? '',
                         'value' => $fieldValue,
                     ])
+                @else
+                    <input type="text"
+                        value="{{ $fieldValue }}"
+                        placeholder="{{ $field['placeholder'] ?? '' }}"
+                        wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all"
+                    />
                 @endif
             @elseif($field['type'] === 'textarea')
                 <textarea rows="{{ $field['rows'] ?? 4 }}"
@@ -191,19 +193,21 @@
                                                     <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
                                                 </div>
                                             @else
-                                                <input type="text"
-                                                    value="{{ $subFieldValue }}"
-                                                    placeholder="{{ $subField['placeholder'] ?? ($subFieldType === 'image' ? 'Image URL' : '') }}"
-                                                    wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
-                                                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
-                                                />
                                                 @if($this->isLinkField($subField) && $contentChoices->isNotEmpty())
-                                                    @include('livewire.admin.content.partials.internal-link-picker', [
+                                                    @include('livewire.admin.content.partials.link-input', [
                                                         'fieldKey' => $field['key'],
                                                         'subFieldKey' => $subField['key'],
                                                         'repeaterIndex' => $idx,
+                                                        'placeholder' => $subField['placeholder'] ?? ($subFieldType === 'image' ? 'Image URL' : ''),
                                                         'value' => $subFieldValue,
                                                     ])
+                                                @else
+                                                    <input type="text"
+                                                        value="{{ $subFieldValue }}"
+                                                        placeholder="{{ $subField['placeholder'] ?? ($subFieldType === 'image' ? 'Image URL' : '') }}"
+                                                        wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
+                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                                                    />
                                                 @endif
                                             @endif
 
@@ -256,17 +260,19 @@
                     <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
                 </div>
             @else
-                <input type="text"
-                    value="{{ $fieldValue }}"
-                    placeholder="{{ $field['placeholder'] ?? '' }}"
-                    wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
-                />
                 @if($this->isLinkField($field) && $contentChoices->isNotEmpty())
-                    @include('livewire.admin.content.partials.internal-link-picker', [
+                    @include('livewire.admin.content.partials.link-input', [
                         'fieldKey' => $field['key'],
+                        'placeholder' => $field['placeholder'] ?? '',
                         'value' => $fieldValue,
                     ])
+                @else
+                    <input type="text"
+                        value="{{ $fieldValue }}"
+                        placeholder="{{ $field['placeholder'] ?? '' }}"
+                        wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                    />
                 @endif
             @endif
 

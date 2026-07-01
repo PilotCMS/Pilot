@@ -189,10 +189,12 @@ it('suggests internal page links for link-like block fields', function () {
             'block' => $block->toArray(),
             'blockType' => $blockType,
         ])
-        ->assertSee('Internal page...')
+        ->assertSeeHtml('list="internal-links-button-url"')
         ->assertSee('About /about')
         ->call('updateField', 'button_url', '/about')
-        ->assertSet('data.button_url', '/about');
+        ->assertSet('data.button_url', '/about')
+        ->call('updateField', 'button_url', 'https://example.com/custom')
+        ->assertSet('data.button_url', 'https://example.com/custom');
 });
 
 it('suggests internal page links for repeater link fields', function () {
@@ -248,9 +250,12 @@ it('suggests internal page links for repeater link fields', function () {
             'blockType' => $blockType,
         ])
         ->call('toggleRepeaterItem', 'links', 0)
+        ->assertSeeHtml('list="internal-links-links-href-0"')
         ->assertSee('Pricing /pricing')
         ->call('updateRepeaterField', 'links', 0, 'href', '/pricing')
-        ->assertSet('data.links.0.href', '/pricing');
+        ->assertSet('data.links.0.href', '/pricing')
+        ->call('updateRepeaterField', 'links', 0, 'href', 'mailto:sales@example.com')
+        ->assertSet('data.links.0.href', 'mailto:sales@example.com');
 });
 
 it('does not delete content when its space is deleted', function () {
