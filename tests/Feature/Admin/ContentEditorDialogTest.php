@@ -169,6 +169,7 @@ it('stores focal point metadata when selecting an asset for a block field', func
 
     Livewire::test(Editor::class, ['content' => $content])
         ->set('selectedBlockId', $block->id)
+        ->assertSet('editorSyncVersion', 1)
         ->call('handleAssetSelected', [
             'fieldKey' => 'image',
             'asset' => [
@@ -176,7 +177,8 @@ it('stores focal point metadata when selecting an asset for a block field', func
                 'focal_x' => 37.5,
                 'focal_y' => 62.5,
             ],
-        ]);
+        ])
+        ->assertSet('editorSyncVersion', 1);
 
     $block->refresh();
 

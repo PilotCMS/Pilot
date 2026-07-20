@@ -840,6 +840,7 @@ class Editor extends Component
         $this->selectedBlockId = $this->validSelectedBlockId();
         $this->selectedRevisionId = null;
         $this->compareRevisionId = '';
+        $this->editorSyncVersion++;
         $this->markSaved();
     }
 
@@ -871,6 +872,7 @@ class Editor extends Component
         $this->selectedBlockId = $this->validSelectedBlockId();
         $this->selectedRevisionId = null;
         $this->compareRevisionId = '';
+        $this->editorSyncVersion++;
         $this->markSaved();
     }
 
@@ -885,6 +887,7 @@ class Editor extends Component
         $rollbackRevision = app(ContentLifecycle::class)->restoreRevisionContent($this->content, $revision, auth()->id());
         $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'content');
         $this->content->refresh();
+        $this->editorSyncVersion++;
         $this->markSaved();
     }
 
@@ -900,6 +903,7 @@ class Editor extends Component
         $this->recordRevisionRestoreActivity($revision, $rollbackRevision, 'block', ['block_path' => $path]);
         $this->loadBlocks();
         $this->content->refresh();
+        $this->editorSyncVersion++;
         $this->markSaved();
     }
 
@@ -975,7 +979,6 @@ class Editor extends Component
         $this->conflictMessage = null;
         $this->savedJustNow = true;
         $this->previewVersion++;
-        $this->editorSyncVersion++;
         $this->dispatch('saved');
         $this->dispatchPreviewFrameRefresh();
     }
