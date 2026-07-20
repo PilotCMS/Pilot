@@ -18,6 +18,7 @@ use App\Support\Cms\ContentLifecycle;
 use App\Support\Cms\ContentRevisionInspector;
 use App\Support\Cms\ContentSyncFingerprint;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -85,12 +86,15 @@ class Editor extends Component
 
     public int $editorSyncVersion = 1;
 
+    public array $expandedRepeaterItemsByBlock = [];
+
     public ?string $lastKnownContentUpdatedAt = null;
 
     public ?string $lastKnownContentSyncKey = null;
 
     protected $listeners = [
         'block-updated' => 'handleBlockUpdated',
+        'repeater-expansion-updated' => 'handleRepeaterExpansionUpdated',
         'asset-selected' => 'handleAssetSelected',
         'open-asset-picker' => 'handleOpenAssetPicker',
         'content-external-change-detected' => 'syncExternalChanges',
@@ -420,6 +424,21 @@ class Editor extends Component
         }
     }
 
+    public function handleRepeaterExpansionUpdated($blockId = null, $fieldKey = null, $expandedItems = []): void
+    {
+        if (is_array($blockId)) {
+            $fieldKey = $blockId['fieldKey'] ?? $blockId[1] ?? null;
+            $expandedItems = $blockId['expandedItems'] ?? $blockId[2] ?? [];
+            $blockId = $blockId['blockId'] ?? $blockId[0] ?? null;
+        }
+
+        if ($blockId === null || $fieldKey === null) {
+            return;
+        }
+
+        $this->expandedRepeaterItemsByBlock[(int) $blockId][(string) $fieldKey] = is_array($expandedItems) ? $expandedItems : [];
+    }
+
     public function updateBlock($blockId, $fieldKey, $value)
     {
         $this->markSaving();
@@ -444,20 +463,35 @@ class Editor extends Component
     public function deleteBlock($blockId)
     {
         $this->markSaving();
-        $this->createUndoCheckpoint('Before block delete', ['operation' => 'delete_block', 'block_id' => $blockId]);
 
-        $block = Block::findOrFail($blockId);
+        $block = Block::where('content_id', $this->content->id)->findOrFail($blockId);
+        $this->createUndoCheckpoint('Before block delete', ['operation' => 'delete_block', 'block_id' => $block->id]);
+
         $position = $block->position;
-        $block->delete();
+        $parentBlockId = $block->parent_block_id;
 
-        Block::where('content_id', $this->content->id)
-            ->when($block->parent_block_id, fn ($query) => $query->where('parent_block_id', $block->parent_block_id), fn ($query) => $query->whereNull('parent_block_id'))
-            ->where('position', '>', $position)
-            ->decrement('position');
+        DB::transaction(function () use ($block, $parentBlockId, $position): void {
+            $this->deleteBlockTree($block);
+
+            Block::where('content_id', $this->content->id)
+                ->when($parentBlockId, fn ($query) => $query->where('parent_block_id', $parentBlockId), fn ($query) => $query->whereNull('parent_block_id'))
+                ->where('position', '>', $position)
+                ->decrement('position');
+
+            $this->content->touch();
+            $this->content->update(['updated_by' => auth()->id()]);
+            app(ContentLifecycle::class)->syncReferences($this->content);
+        });
 
         $this->loadBlocks();
-        $this->selectedBlockId = $this->blocks[0]['id'] ?? null;
+        $this->selectedBlockId = $parentBlockId ?? ($this->blocks[0]['id'] ?? null);
         $this->markSaved();
+    }
+
+    protected function deleteBlockTree(Block $block): void
+    {
+        $block->children()->get()->each(fn (Block $child): mixed => $this->deleteBlockTree($child));
+        $block->delete();
     }
 
     public function sortItem($itemId, $position)
@@ -577,6 +611,7 @@ class Editor extends Component
         $this->markSaving();
         app(ContentLifecycle::class)->unpublish($this->content, auth()->id());
         $this->content->refresh();
+        $this->dispatch('toast', message: 'Content unpublished', suppressAutosave: true);
         $this->markSaved();
     }
 
@@ -585,6 +620,7 @@ class Editor extends Component
         $this->markSaving();
         app(ContentLifecycle::class)->requestReview($this->content, auth()->id());
         $this->content->refresh();
+        $this->dispatch('toast', message: 'Review requested', suppressAutosave: true);
         $this->markSaved();
     }
 
@@ -598,6 +634,7 @@ class Editor extends Component
 
         app(ContentLifecycle::class)->schedule($this->content, $this->scheduledFor, auth()->id());
         $this->content->refresh();
+        $this->dispatch('toast', message: 'Publishing scheduled', suppressAutosave: true);
         $this->markSaved();
     }
 
@@ -896,15 +933,12 @@ class Editor extends Component
         $this->selectedRevisionId = $revisionId;
         $this->compareRevisionId = '';
         $this->revisionModalOpen = true;
-        $this->selectedPreviewTargetId = '';
-        $this->dispatchPreviewFrameRefresh();
     }
 
     public function clearSelectedRevision(): void
     {
         $this->selectedRevisionId = null;
         $this->compareRevisionId = '';
-        $this->dispatchPreviewFrameRefresh();
     }
 
     public function selectPublishedRevision(): void
@@ -1365,7 +1399,6 @@ class Editor extends Component
             'pilot_in_context' => 0,
             'pilot_in_context_panel' => 0,
             'pilot_selected_block' => $this->selectedBlockId ? (int) $this->selectedBlockId : '',
-            'revision' => $this->selectedPreviewTargetId === '' && $this->selectedRevisionId ? $this->selectedRevisionId : '',
         ]);
     }
 

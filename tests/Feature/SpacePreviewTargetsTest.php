@@ -9,6 +9,7 @@ use App\Models\Content;
 use App\Models\Space;
 use App\Models\SpacePreviewTarget;
 use App\Models\User;
+use App\Support\Cms\ContentLifecycle;
 use Livewire\Livewire;
 
 it('saves named preview targets from space settings', function () {
@@ -106,6 +107,35 @@ it('keeps the selected preview target after undoing a change', function () {
         ->call('undoLastChange')
         ->assertSet('selectedPreviewTargetId', $target->id)
         ->assertSee('https://production.test/_pilot/preview/'.$content->id, false);
+});
+
+it('keeps the selected preview target when inspecting a revision', function () {
+    $user = User::factory()->create();
+    $space = Space::factory()->create();
+    $content = Content::factory()->create([
+        'space_id' => $space->id,
+        'slug' => 'home',
+        'name' => 'Home',
+        'created_by' => $user->id,
+    ]);
+
+    $target = SpacePreviewTarget::factory()->create([
+        'space_id' => $space->id,
+        'name' => 'Production',
+        'url' => 'https://production.test',
+        'is_default' => true,
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Production checkpoint', $user->id);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSet('selectedPreviewTargetId', $target->id)
+        ->call('selectRevision', $revision->id)
+        ->assertSet('selectedRevisionId', $revision->id)
+        ->assertSet('selectedPreviewTargetId', $target->id)
+        ->assertSee('https://production.test/_pilot/preview/'.$content->id, false)
+        ->assertDontSee('revision='.$revision->id, false);
 });
 
 it('serves and updates in-context block fields from the package preview routes', function () {

@@ -75,6 +75,11 @@ class Create extends Component
             'published_at' => $this->status === 'published' ? now() : null,
         ]);
 
+        session()->flash('toast', [
+            'message' => $content->status === 'published' ? 'Content created and published' : 'Content created',
+            'type' => 'success',
+        ]);
+
         return $this->redirect(
             $content->isPage()
                 ? route('admin.content.editor', $content)

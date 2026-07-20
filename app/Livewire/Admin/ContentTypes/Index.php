@@ -74,6 +74,7 @@ class Index extends Component
     public function save(): void
     {
         $this->validate();
+        $message = $this->editingId ? 'Content type saved' : 'Content type created';
 
         ContentType::updateOrCreate(
             ['id' => $this->editingId],
@@ -89,6 +90,7 @@ class Index extends Component
         );
 
         $this->resetForm();
+        $this->dispatch('toast', message: $message);
     }
 
     public function addFieldOfType(string $type): void

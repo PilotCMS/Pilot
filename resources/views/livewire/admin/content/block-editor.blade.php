@@ -57,20 +57,11 @@
                     class="w-full min-h-[80px] p-3 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none shadow-sm transition-all"
                 >{{ $fieldValue }}</textarea>
             @elseif($field['type'] === 'richtext')
-                <div class="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white focus-within:ring-1 focus-within:ring-teal-500 focus-within:border-teal-500 transition-all">
-                    <div class="flex items-center gap-1 p-1.5 border-b border-slate-100 bg-slate-50">
-                        <button type="button" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="ph-bold ph-text-b"></i></button>
-                        <button type="button" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="ph-bold ph-text-italic"></i></button>
-                        <div class="w-px h-4 bg-slate-300 mx-1"></div>
-                        <button type="button" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="ph-bold ph-link"></i></button>
-                    </div>
-                    <textarea rows="{{ $field['rows'] ?? 6 }}"
-                        placeholder="{{ $field['placeholder'] ?? '' }}"
-                        wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                        class="w-full min-h-[100px] p-3 text-sm text-slate-600 outline-none resize-none"
-                        spellcheck="false"
-                    >{{ $fieldValue }}</textarea>
-                </div>
+                @include('livewire.admin.content.partials.richtext-editor', [
+                    'field' => $field,
+                    'value' => $fieldValue,
+                    'fieldKey' => $field['key'],
+                ])
             @elseif($field['type'] === 'number')
                 <input type="number"
                     value="{{ $fieldValue !== '' ? $fieldValue : ($field['default'] ?? 0) }}"
@@ -156,7 +147,15 @@
                                                 <span class="text-[10px] text-slate-400 bg-white px-1.5 py-0.5 rounded font-mono">{{ $subFieldType }}</span>
                                             </div>
 
-                                            @if($subFieldType === 'textarea' || $subFieldType === 'richtext')
+                                            @if($subFieldType === 'richtext')
+                                                @include('livewire.admin.content.partials.richtext-editor', [
+                                                    'field' => $subField,
+                                                    'value' => $subFieldValue,
+                                                    'fieldKey' => $field['key'],
+                                                    'repeaterIndex' => $idx,
+                                                    'subFieldKey' => $subField['key'],
+                                                ])
+                                            @elseif($subFieldType === 'textarea')
                                                 <textarea rows="{{ $subField['rows'] ?? ($subFieldType === 'richtext' ? 5 : 3) }}"
                                                     placeholder="{{ $subField['placeholder'] ?? '' }}"
                                                     wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"

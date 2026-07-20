@@ -57,6 +57,11 @@ class Edit extends Component
             'updated_by' => auth()->id(),
         ]);
 
+        session()->flash('toast', [
+            'message' => $this->status === 'published' ? 'Content saved and published' : 'Content saved',
+            'type' => 'success',
+        ]);
+
         return $this->redirect(route('admin.content.index'), navigate: true);
     }
 

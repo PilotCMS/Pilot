@@ -70,8 +70,8 @@
                         <div class="truncate text-sm font-semibold text-slate-800">{{ $this->selectedRevision->label ?? 'Revision' }}</div>
                         <div class="mt-0.5 text-xs text-slate-500">{{ $this->selectedRevision->created_at->format('M j, Y g:i A') }} · {{ $this->selectedRevision->user?->name ?? 'System' }}</div>
                         <div class="mt-1 inline-flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700">
-                            <i class="ph ph-eye"></i>
-                            Previewing snapshot
+                            <i class="ph ph-magnifying-glass"></i>
+                            Inspecting revision
                         </div>
                     </div>
                     <button type="button" wire:click="clearSelectedRevision" class="shrink-0 text-slate-400 hover:text-slate-600" title="Close revision details">
@@ -188,9 +188,9 @@
         @else
             <div class="flex min-h-80 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
                 <div>
-                    <i class="ph ph-clock-counter-clockwise text-3xl text-slate-300"></i>
+                    <i class="ph ph-stack text-3xl text-slate-300"></i>
                     <div class="mt-2 text-sm font-semibold text-slate-600">Select a revision</div>
-                    <div class="mt-1 text-xs text-slate-400">Inspect, compare, preview, or restore from history.</div>
+                    <div class="mt-1 text-xs text-slate-400">Inspect, compare, or restore from history.</div>
                 </div>
             </div>
         @endif

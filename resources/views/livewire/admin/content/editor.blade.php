@@ -8,6 +8,8 @@
         previewDevice: 'desktop',
         previewTargetOrigins: @js($this->previewTargetOrigins),
         previewFrameSrc: @js($this->previewFrameUrl),
+        pendingPreviewScroll: null,
+        pendingPreviewScrollBlockId: null,
         saveState: @entangle('saveState'),
         conflictMessage: @entangle('conflictMessage'),
         drawerOpen: @entangle('drawerOpen'),
@@ -95,7 +97,83 @@
                 return;
             }
 
+            this.pendingPreviewScrollBlockId = this.selectedBlockId ? Number(this.selectedBlockId) : null;
+            this.capturePreviewScroll();
             this.previewFrameSrc = url;
+        },
+        previewScrollPosition() {
+            const frame = this.$refs.previewFrame;
+
+            try {
+                const frameWindow = frame?.contentWindow;
+                const doc = frame?.contentDocument;
+
+                if (! frameWindow || ! doc) {
+                    return null;
+                }
+
+                return {
+                    x: frameWindow.scrollX ?? doc.documentElement?.scrollLeft ?? doc.body?.scrollLeft ?? 0,
+                    y: frameWindow.scrollY ?? doc.documentElement?.scrollTop ?? doc.body?.scrollTop ?? 0,
+                };
+            } catch (error) {
+                return null;
+            }
+        },
+        capturePreviewScroll() {
+            this.pendingPreviewScroll = this.previewScrollPosition();
+        },
+        scrollPreviewBlockIntoView(blockId = this.selectedBlockId) {
+            const targetBlockId = blockId ? Number(blockId) : null;
+
+            if (! targetBlockId) {
+                return false;
+            }
+
+            this.postToPreview({
+                type: 'pilot-preview-scroll-to-block',
+                blockId: targetBlockId,
+            });
+
+            try {
+                const doc = this.$refs.previewFrame?.contentDocument;
+                const block = doc?.querySelector(`[data-pilot-editable=block][data-pilot-block-id='${targetBlockId}']`);
+
+                if (! block) {
+                    return false;
+                }
+
+                block.scrollIntoView({ block: 'center', inline: 'nearest' });
+
+                return true;
+            } catch (error) {
+                return false;
+            }
+        },
+        restorePreviewScroll() {
+            const blockId = this.pendingPreviewScrollBlockId;
+
+            this.pendingPreviewScrollBlockId = null;
+
+            if (this.scrollPreviewBlockIntoView(blockId)) {
+                this.pendingPreviewScroll = null;
+
+                return;
+            }
+
+            const position = this.pendingPreviewScroll;
+
+            if (! position) {
+                return;
+            }
+
+            this.pendingPreviewScroll = null;
+
+            try {
+                this.$refs.previewFrame?.contentWindow?.scrollTo(position.x, position.y);
+            } catch (error) {
+                // Cross-origin preview targets cannot be scrolled directly.
+            }
         },
         saveLabel() {
             if (this.conflictMessage) {
@@ -125,15 +203,20 @@
 
                 this.selectedBlockId = payload?.blockId ? Number(payload.blockId) : null;
                 this.syncPreviewSelection();
+                this.scrollPreviewBlockIntoView();
             });
 
             this.$watch('selectedBlockId', () => {
                 this.$nextTick(() => {
                     this.syncPreviewSelection();
+                    this.scrollPreviewBlockIntoView();
                 });
             });
 
-            this.$nextTick(() => this.syncPreviewSelection());
+            this.$nextTick(() => {
+                this.syncPreviewSelection();
+                this.scrollPreviewBlockIntoView();
+            });
 
             window.addEventListener('message', (event) => {
                 const allowedOrigins = [window.location.origin, ...this.previewTargetOrigins];
@@ -144,6 +227,7 @@
 
                 if (event.data?.type === 'pilot-preview-ready') {
                     this.syncPreviewSelection();
+                    this.scrollPreviewBlockIntoView();
                 }
 
                 if (event.data?.type === 'pilot-preview-select-block' && event.data?.blockId) {
@@ -183,6 +267,11 @@
             });
 
             document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+                    e.preventDefault();
+                    this.blockLibraryOpen = true;
+                }
+
                 if ((e.metaKey || e.ctrlKey) && e.key === 's') {
                     e.preventDefault();
                     $wire.call('saveCheckpoint');
@@ -248,7 +337,7 @@
                 <i class="ph ph-arrow-counter-clockwise text-lg"></i>
             </button>
             <button type="button" wire:click="openRevisionModal" class="cms-iconbtn border border-default bg-card shadow-xs" title="Revisions" aria-label="Revisions">
-                <i class="ph ph-clock-counter-clockwise text-lg"></i>
+                <i class="ph ph-stack text-lg"></i>
             </button>
             <div class="min-w-[92px]">
                 <button
@@ -385,7 +474,7 @@
         <div x-show="canvasMode === 'preview'" x-cloak class="relative flex-1 min-h-0 overflow-hidden bg-sunken p-4">
             <iframe
                 x-ref="previewFrame"
-                x-on:load="syncPreviewSelection()"
+                x-on:load="restorePreviewScroll(); syncPreviewSelection()"
                 wire:ignore
                 name="pilot-cms-preview"
                 x-bind:src="previewFrameSrc"
@@ -398,7 +487,7 @@
                 <i class="ph-bold ph-plus text-teal-400"></i>
                 <span class="font-medium text-sm">Add Block</span>
                 <div class="w-px h-4 bg-slate-700"></div>
-                <span class="text-xs text-slate-400 font-mono">⌘K</span>
+                <span class="text-xs text-slate-400 font-mono">⌘B</span>
             </button>
         </div>
 
@@ -451,7 +540,7 @@
                 <i class="ph-bold ph-plus text-teal-400"></i>
                 <span class="font-medium text-sm">Add Block</span>
                 <div class="w-px h-4 bg-slate-700"></div>
-                <span class="text-xs text-slate-400 font-mono">⌘K</span>
+                <span class="text-xs text-slate-400 font-mono">⌘B</span>
             </button>
         </div>
         </div>
@@ -511,7 +600,12 @@
 
                 @if($hasSelectedBlock && $bt)
                     {{-- When a block is selected: show ONLY the block fields --}}
-                    <livewire:admin.content.block-editor :block="$sel" :block-type="$bt" :key="'block-editor-' . $selectedBlockId . '-' . $editorSyncVersion" />
+                    <livewire:admin.content.block-editor
+                        :block="$sel"
+                        :block-type="$bt"
+                        :expanded-repeater-items="$expandedRepeaterItemsByBlock[(int) $selectedBlockId] ?? []"
+                        :key="'block-editor-' . $selectedBlockId . '-' . $editorSyncVersion"
+                    />
                 @else
                     {{-- No block selected: show full page edit form --}}
                     <div class="space-y-7">

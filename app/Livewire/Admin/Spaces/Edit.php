@@ -91,6 +91,8 @@ class Edit extends Component
 
         $this->syncPreviewTargets();
 
+        session()->flash('toast', ['message' => 'Space saved', 'type' => 'success']);
+
         return $this->redirect(route('admin.spaces.index'), navigate: true);
     }
 

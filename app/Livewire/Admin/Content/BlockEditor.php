@@ -38,11 +38,12 @@ class BlockEditor extends Component
         return '/'.trim($content->slug, '/');
     }
 
-    public function mount($block, $blockType)
+    public function mount($block, $blockType, array $expandedRepeaterItems = [])
     {
         $this->block = $block;
         $this->blockType = $blockType;
         $this->data = $block['data'] ?? [];
+        $this->expandedRepeaterItems = $expandedRepeaterItems;
     }
 
     public function updateField($key, $value)
@@ -66,13 +67,20 @@ class BlockEditor extends Component
         }
         $items[] = $newItem;
         $this->data[$key] = $items;
-        $this->expandedRepeaterItems[$key][count($items) - 1] = true;
+        $this->expandedRepeaterItems[$key] = [count($items) - 1 => true];
+        $this->dispatchRepeaterExpansionUpdated($key);
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
     }
 
     public function toggleRepeaterItem(string $key, int $index): void
     {
-        $this->expandedRepeaterItems[$key][$index] = ! ($this->expandedRepeaterItems[$key][$index] ?? false);
+        if ($this->isRepeaterItemExpanded($key, $index)) {
+            $this->expandedRepeaterItems[$key] = [];
+        } else {
+            $this->expandedRepeaterItems[$key] = [$index => true];
+        }
+
+        $this->dispatchRepeaterExpansionUpdated($key);
     }
 
     public function isRepeaterItemExpanded(string $key, int $index): bool
@@ -91,6 +99,7 @@ class BlockEditor extends Component
             $expandedItems = $this->expandedRepeaterItems[$key];
             unset($expandedItems[$index]);
             $this->expandedRepeaterItems[$key] = array_values($expandedItems);
+            $this->dispatchRepeaterExpansionUpdated($key);
         }
 
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
@@ -135,6 +144,16 @@ class BlockEditor extends Component
         $items[$index][$objectKey] = $value;
         $this->data[$key] = $items;
         $this->dispatch('block-updated', $this->block['id'], $key, $items);
+    }
+
+    protected function dispatchRepeaterExpansionUpdated(string $key): void
+    {
+        $this->dispatch(
+            'repeater-expansion-updated',
+            blockId: $this->block['id'],
+            fieldKey: $key,
+            expandedItems: $this->expandedRepeaterItems[$key] ?? [],
+        );
     }
 
     public function render()

@@ -93,6 +93,8 @@ class Index extends Component
         // Ensure the assets directory exists on the public disk
         Storage::disk('public')->makeDirectory('assets');
 
+        $uploadCount = count($this->uploadFiles);
+
         foreach ($this->uploadFiles as $file) {
             $path = $file->store('assets', 'public');
 
@@ -125,6 +127,10 @@ class Index extends Component
 
         $this->uploadFiles = [];
         $this->showUploadModal = false;
+        session()->flash('toast', [
+            'message' => $uploadCount === 1 ? 'Asset uploaded' : "{$uploadCount} assets uploaded",
+            'type' => 'success',
+        ]);
 
         return $this->redirect(route('admin.assets.index'), navigate: true);
     }
@@ -193,6 +199,7 @@ class Index extends Component
         $asset->tags()->sync(collect($tags)->pluck('id'));
 
         $this->closeAssetDetail();
+        $this->dispatch('toast', message: 'Asset details saved');
     }
 
     public function setFocalPoint(float $x, float $y): void
@@ -213,6 +220,7 @@ class Index extends Component
 
         $this->newFolderName = '';
         $this->showNewFolderModal = false;
+        $this->dispatch('toast', message: 'Folder created');
     }
 
     public function deleteAsset($id)
@@ -232,6 +240,7 @@ class Index extends Component
 
         $asset->delete();
         $this->closeAssetDetail();
+        $this->dispatch('toast', message: 'Asset deleted');
     }
 
     public function selectFolder($folderId)

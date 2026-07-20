@@ -121,6 +121,7 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('inContextPanel: false', false)
         ->assertSee('postPreviewSelection', false)
         ->assertSee('syncPreviewSelection', false)
+        ->assertSee('pilot-preview-scroll-to-block', false)
         ->assertSee('window.setTimeout(() => this.postPreviewSelection(), 100)', false)
         ->assertDontSee('scrollSelectedBlockIntoView', false)
         ->assertSee('pilot-preview-sync-selected-block', false)

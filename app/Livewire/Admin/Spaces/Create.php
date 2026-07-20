@@ -38,6 +38,8 @@ class Create extends Component
             'is_default' => true,
         ]);
 
+        session()->flash('toast', ['message' => 'Space created', 'type' => 'success']);
+
         return $this->redirect(route('admin.spaces.index'), navigate: true);
     }
 

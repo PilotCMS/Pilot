@@ -225,6 +225,42 @@ it('updates a nested json object field in the cms block editor', function () {
         ->assertDispatched('block-updated');
 });
 
+it('renders rich text fields with the wysiwyg editor', function () {
+    $blockType = BlockType::create([
+        'key' => 'richtext',
+        'name' => 'Rich Text',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'richtext',
+                    'key' => 'content',
+                    'label' => 'Content',
+                    'placeholder' => 'Start writing...',
+                    'rows' => 7,
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    $block = [
+        'id' => 123,
+        'type' => 'richtext',
+        'data' => [
+            'content' => '<p>Already formatted</p>',
+        ],
+    ];
+
+    Livewire::test(BlockEditor::class, [
+        'block' => $block,
+        'blockType' => $blockType,
+    ])
+        ->assertSeeHtml('class="pilot-richtext')
+        ->assertSeeHtml('contenteditable="true"')
+        ->assertSeeHtml('pilotRichTextEditor')
+        ->assertSeeHtml('ph-bold ph-code');
+});
+
 it('expands schema repeater items and updates their nested fields', function () {
     $blockType = BlockType::create([
         'key' => 'gallery',
@@ -263,6 +299,10 @@ it('expands schema repeater items and updates their nested fields', function () 
                     'image' => '/storage/assets/first.jpg',
                     'caption' => ['en' => 'First image'],
                 ],
+                [
+                    'image' => '/storage/assets/second.jpg',
+                    'caption' => ['en' => 'Second image'],
+                ],
             ],
         ],
     ];
@@ -279,9 +319,24 @@ it('expands schema repeater items and updates their nested fields', function () 
         ->assertSee('Image URL')
         ->call('updateRepeaterField', 'images', 0, 'caption', 'Updated caption')
         ->assertSet('data.images.0.caption.en', 'Updated caption')
+        ->assertSet('expandedRepeaterItems.images.0', true)
         ->assertDispatched('block-updated')
+        ->call('toggleRepeaterItem', 'images', 1)
+        ->assertSet('expandedRepeaterItems.images.0', null)
+        ->assertSet('expandedRepeaterItems.images.1', true)
         ->call('toggleRepeaterItem', 'images', 0)
-        ->assertSet('expandedRepeaterItems.images.0', false);
+        ->assertSet('expandedRepeaterItems.images.1', null)
+        ->assertSet('expandedRepeaterItems.images.0', true)
+        ->call('toggleRepeaterItem', 'images', 0)
+        ->assertSet('expandedRepeaterItems.images.0', null);
+
+    Livewire::test(BlockEditor::class, [
+        'block' => $block,
+        'blockType' => $blockType,
+        'expandedRepeaterItems' => ['images' => [0 => true]],
+    ])
+        ->assertSet('expandedRepeaterItems.images.0', true)
+        ->assertSee('Image URL');
 });
 
 it('moves top level blocks with the compose editor arrow controls', function () {
@@ -442,7 +497,9 @@ it('shows the add block action on the preview panel', function () {
 
     Livewire::test(Editor::class, ['content' => $content])
         ->assertSee('x-show="canvasMode === \'preview\'"', false)
-        ->assertSee('Add Block');
+        ->assertSee('Add Block')
+        ->assertSee('⌘B')
+        ->assertSee("e.key.toLowerCase() === 'b'", false);
 });
 
 it('renders searchable block choices in the add block modal', function () {
@@ -775,6 +832,52 @@ it('creates a rollback checkpoint before restoring a revision', function () {
         ->and($rollbackRevision->snapshot['content']['name'])->toBe('Current draft')
         ->and($rollbackRevision->snapshot['blocks'][0]['data']['title'])->toBe('Current CTA')
         ->and(Activity::query()->where('action', 'restored revision')->where('subject_id', $content->id)->exists())->toBeTrue();
+});
+
+it('restores a revision created by another user', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $content = Content::factory()->create([
+        'name' => 'Original page',
+        'slug' => 'original-page',
+        'created_by' => $user->id,
+        'updated_by' => $otherUser->id,
+    ]);
+
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Other user hero'],
+    ]);
+
+    $revision = app(ContentLifecycle::class)->createRevision($content, 'Other user checkpoint', $otherUser->id);
+
+    $content->update(['name' => 'Current draft']);
+    $content->allBlocks()->delete();
+    Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'cta',
+        'data' => ['title' => 'Current CTA'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('selectRevision', $revision->id)
+        ->assertSet('selectedRevisionId', $revision->id)
+        ->call('restoreRevision', $revision->id)
+        ->assertHasNoErrors();
+
+    $rollbackRevision = ContentRevision::query()
+        ->where('content_id', $content->id)
+        ->where('revision_type', 'pre_restore')
+        ->where('source_revision_id', $revision->id)
+        ->firstOrFail();
+
+    expect($content->refresh()->name)->toBe('Original page')
+        ->and($content->updated_by)->toBe($user->id)
+        ->and($content->allBlocks()->first()->data['title'])->toBe('Other user hero')
+        ->and($rollbackRevision->user_id)->toBe($user->id)
+        ->and($rollbackRevision->source_revision_id)->toBe($revision->id);
 });
 
 it('shows a revision comparison before restore', function () {
@@ -1138,6 +1241,40 @@ it('creates deduped automatic checkpoints before risky operations', function () 
         ->assertHasNoErrors();
 
     expect(ContentRevision::query()->where('content_id', $content->id)->where('revision_type', 'auto')->count())->toBe(1);
+});
+
+it('deletes a container block with its nested block tree', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    $container = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'columns',
+        'position' => 0,
+    ]);
+    $child = Block::factory()->create([
+        'content_id' => $content->id,
+        'parent_block_id' => $container->id,
+        'position' => 0,
+    ]);
+    $grandchild = Block::factory()->create([
+        'content_id' => $content->id,
+        'parent_block_id' => $child->id,
+        'position' => 0,
+    ]);
+    $remainingBlock = Block::factory()->create([
+        'content_id' => $content->id,
+        'position' => 1,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('deleteBlock', $container->id)
+        ->assertHasNoErrors()
+        ->assertSet('selectedBlockId', $remainingBlock->id);
+
+    expect(Block::query()->whereKey([$container->id, $child->id, $grandchild->id])->exists())->toBeFalse()
+        ->and($remainingBlock->refresh()->position)->toBe(0)
+        ->and($content->refresh()->updated_by)->toBe($user->id);
 });
 
 it('prunes old automatic revisions by retention limit', function () {

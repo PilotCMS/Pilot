@@ -19,7 +19,7 @@
         </div>
     </header>
 
-    <div class="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="grid min-h-0 flex-1 grid-cols-1">
         <main class="min-w-0 overflow-y-auto">
             <div class="flex min-h-full flex-col gap-7 p-[var(--pad-view)]">
                 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -194,14 +194,5 @@
             </div>
         </main>
 
-        <aside class="cms-rail hidden xl:flex" aria-label="Details">
-            <div class="cms-rail-head">
-                <i class="ph ph-info text-tertiary" aria-hidden="true"></i>
-                <h2 class="cms-rail-title">Details</h2>
-            </div>
-            <div class="flex flex-1 items-center justify-center p-5 text-center text-sm text-tertiary">
-                Select an item or use this space for context.
-            </div>
-        </aside>
     </div>
 </div>

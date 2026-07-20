@@ -4,6 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-screen bg-white antialiased dark:bg-linear-to-b dark:from-neutral-950 dark:to-neutral-900">
+        <x-toast-region />
         <div class="bg-background flex min-h-svh flex-col items-center justify-center gap-8 p-6 md:p-12">
             <div class="flex w-full max-w-sm flex-col gap-4">
                 <a href="{{ route('home') }}" class="flex flex-col items-center gap-3 font-medium transition-opacity hover:opacity-80" wire:navigate>

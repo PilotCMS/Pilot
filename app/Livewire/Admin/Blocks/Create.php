@@ -126,6 +126,8 @@ class Create extends Component
             'schema' => $this->schema,
         ]);
 
+        session()->flash('toast', ['message' => 'Block type created', 'type' => 'success']);
+
         return $this->redirect(route('admin.blocks.index'), navigate: true);
     }
 

@@ -147,6 +147,8 @@ class Edit extends Component
             'schema' => $this->schema,
         ]);
 
+        session()->flash('toast', ['message' => 'Block type saved', 'type' => 'success']);
+
         return $this->redirect(route('admin.blocks.index'), navigate: true);
     }
 

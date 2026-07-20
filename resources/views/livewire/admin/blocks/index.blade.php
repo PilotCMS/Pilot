@@ -139,15 +139,6 @@
         </div>{{-- /max-w centered --}}
     </main>
 
-    {{-- Right aside: Details --}}
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Details">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0">
-            <h2 class="text-sm font-bold text-slate-800">Details</h2>
-        </div>
-        <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-500 flex items-center justify-center">
-            <p>Select a block type to edit.</p>
-        </div>
-    </aside>
     </div>
 
     {{-- New folder modal --}}
