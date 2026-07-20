@@ -187,6 +187,44 @@ it('stores focal point metadata when selecting an asset for a block field', func
     expect($block->data['image_focal_y'])->toBe(62.5);
 });
 
+it('keeps an external image url absolute when switching an image field', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'image',
+        'position' => 0,
+        'data' => ['image' => '/storage/assets/original.png'],
+    ]);
+
+    $externalUrl = 'https://images.example.com/replacement.jpg?width=1600';
+
+    $this->actingAs($user);
+
+    Livewire::test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->call('handleAssetSelected', [
+            'fieldKey' => 'image',
+            'asset' => ['url' => $externalUrl],
+        ]);
+
+    expect($block->refresh()->data['image'])->toBe($externalUrl);
+});
+
 it('updates a nested json object field in the cms block editor', function () {
     $blockType = BlockType::create([
         'key' => 'itinerary',

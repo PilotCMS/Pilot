@@ -107,6 +107,26 @@ class Asset extends Model
         }
 
         $parts = parse_url($url);
+        $urlHost = strtolower($parts['host'] ?? '');
+        $localHosts = ['localhost', '127.0.0.1', '::1'];
+
+        if (app()->bound('config')) {
+            $localHosts[] = parse_url((string) config('app.url'), PHP_URL_HOST);
+        }
+
+        if (app()->bound('request')) {
+            $localHosts[] = request()->getHost();
+        }
+
+        $localHosts = array_filter(array_map(
+            fn ($host) => strtolower((string) $host),
+            $localHosts,
+        ));
+
+        if ($urlHost === '' || ! in_array($urlHost, $localHosts, true)) {
+            return $url;
+        }
+
         $path = $parts['path'] ?? '/';
         $query = isset($parts['query']) ? '?'.$parts['query'] : '';
         $fragment = isset($parts['fragment']) ? '#'.$parts['fragment'] : '';
