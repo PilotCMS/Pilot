@@ -399,9 +399,9 @@
 
         <div class="flex justify-end gap-3">
             <flux:button type="button" wire:click="$set('showUploadModal', false)" variant="ghost">Cancel</flux:button>
-            <flux:button type="submit" variant="primary" wire:loading.attr="disabled">
-                <span wire:loading.remove>Upload</span>
-                <span wire:loading>Uploading...</span>
+            <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="uploadFiles,uploadAssets">
+                <span wire:loading.remove wire:target="uploadFiles,uploadAssets">Upload</span>
+                <span wire:loading wire:target="uploadFiles,uploadAssets">Uploading...</span>
             </flux:button>
         </div>
     </form>

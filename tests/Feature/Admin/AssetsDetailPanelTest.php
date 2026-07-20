@@ -166,6 +166,23 @@ it('extracts technical metadata when uploading assets', function () {
     Storage::disk('public')->assertExists($asset->path);
 });
 
+it('scopes upload modal loading state to file and submit requests', function () {
+    $user = User::factory()->create();
+
+    Space::create([
+        'name' => 'Website',
+        'slug' => 'website',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)
+        ->set('showUploadModal', true)
+        ->assertSeeHtml('wire:loading.attr="disabled" wire:target="uploadFiles,uploadAssets"')
+        ->assertSeeHtml('wire:loading.remove wire:target="uploadFiles,uploadAssets"')
+        ->assertSeeHtml('wire:loading wire:target="uploadFiles,uploadAssets"');
+});
+
 it('persists governance metadata from the asset detail panel', function () {
     $user = User::factory()->create();
     $asset = Asset::factory()->create([

@@ -1036,7 +1036,7 @@ it('opens revisions and checkpoint workflows in a modal', function () {
         ->call('openRevisionModal')
         ->assertSet('revisionModalOpen', true)
         ->assertSee('Checkpoint label')
-        ->assertSeeHtml('class="fixed right-4 top-4')
+        ->assertSeeHtml('class="absolute right-3 top-3')
         ->call('closeRevisionModal')
         ->assertSet('revisionModalOpen', false)
         ->call('openCheckpointModal')

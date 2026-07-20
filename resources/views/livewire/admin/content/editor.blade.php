@@ -924,11 +924,11 @@
             aria-labelledby="revision-modal-title"
         >
             <button type="button" wire:click="closeRevisionModal" class="absolute inset-0 h-full w-full bg-slate-500/25" aria-label="Close revisions"></button>
-            <button type="button" wire:click="closeRevisionModal" class="fixed right-4 top-4 z-[60] flex h-10 w-10 items-center justify-center rounded-md bg-white text-slate-500 shadow-lg ring-1 ring-slate-900/10 hover:bg-slate-50 hover:text-slate-700" title="Close" aria-label="Close revisions">
-                <i class="ph ph-x text-lg"></i>
-            </button>
             <div class="relative flex h-full w-full items-center justify-center p-4 sm:p-6">
-                <div class="flex h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-slate-900/5 sm:h-[calc(100vh-3rem)]">
+                <div class="relative flex h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-slate-900/5 sm:h-[calc(100vh-3rem)]">
+                    <button type="button" wire:click="closeRevisionModal" class="absolute right-3 top-3 z-[60] flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50 hover:text-slate-700" title="Close" aria-label="Close revisions">
+                        <i class="ph ph-x text-lg"></i>
+                    </button>
                     <div class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 pr-16">
                         <div>
                             <h2 id="revision-modal-title" class="text-base font-semibold text-slate-800">Revisions</h2>
