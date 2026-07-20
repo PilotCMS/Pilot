@@ -143,6 +143,70 @@ const showSessionToast = () => {
 document.addEventListener('DOMContentLoaded', showSessionToast);
 document.addEventListener('livewire:navigated', showSessionToast);
 
+let focusNavigationWasTab = false;
+
+const textInputTypes = new Set(['', 'password', 'search', 'tel', 'text', 'url']);
+
+const moveCaretToFieldEnd = (field) => {
+    if (field.matches?.('[contenteditable="true"]')) {
+        if (! field.textContent) {
+            return;
+        }
+
+        const range = document.createRange();
+        const selection = window.getSelection();
+
+        range.selectNodeContents(field);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        return;
+    }
+
+    if (field instanceof HTMLTextAreaElement) {
+        if (field.value === '') {
+            return;
+        }
+
+        field.setSelectionRange(field.value.length, field.value.length);
+
+        return;
+    }
+
+    if (! (field instanceof HTMLInputElement) || ! textInputTypes.has(field.type)) {
+        return;
+    }
+
+    if (field.value === '') {
+        return;
+    }
+
+    field.setSelectionRange(field.value.length, field.value.length);
+};
+
+document.addEventListener('keydown', (event) => {
+    focusNavigationWasTab = event.key === 'Tab';
+}, true);
+
+document.addEventListener('pointerdown', () => {
+    focusNavigationWasTab = false;
+}, true);
+
+document.addEventListener('focusin', (event) => {
+    if (! focusNavigationWasTab || ! event.target.closest?.('.cms-shell')) {
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        if (document.activeElement !== event.target) {
+            return;
+        }
+
+        moveCaretToFieldEnd(event.target);
+    });
+}, true);
+
 const registerPilotRichTextEditor = () => {
     window.Alpine.data('pilotRichTextEditor', (config) => ({
         html: config.value || '',
