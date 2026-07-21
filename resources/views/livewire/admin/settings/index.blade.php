@@ -1,17 +1,17 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900">CMS Settings</h1>
-            <p class="mt-0.5 text-xs text-slate-500">Configure public rendering, API access, and preview behavior</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">CMS Settings</h1>
+            <p class="cms-subtitle">Configure public rendering, API access, and preview behavior.</p>
         </div>
 
-        <div class="flex items-center gap-3">
-            <flux:button wire:click="resetToEnvironmentDefaults" wire:confirm="Reset CMS settings to environment defaults?" variant="ghost" size="sm">
+        <div class="cms-actions">
+            <button type="button" wire:click="resetToEnvironmentDefaults" wire:confirm="Reset CMS settings to environment defaults?" class="cms-btn cms-btn-secondary">
                 Reset
-            </flux:button>
-            <flux:button type="submit" form="cms-settings-form" variant="primary" size="sm">
+            </button>
+            <button type="submit" form="cms-settings-form" class="cms-btn cms-btn-primary">
                 Save settings
-            </flux:button>
+            </button>
         </div>
     </header>
 

@@ -1,8 +1,8 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Edit {{ ucfirst($content->type) }}</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Update content entry settings</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Edit {{ ucfirst($content->type) }}</h1>
+            <p class="cms-subtitle">Update content entry settings.</p>
         </div>
     </header>
 

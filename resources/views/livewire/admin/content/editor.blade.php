@@ -918,6 +918,7 @@
     @if($revisionModalOpen)
         <div
             wire:keydown.escape="closeRevisionModal"
+            x-on:keydown.escape.window="$wire.closeRevisionModal()"
             class="fixed inset-0 z-50"
             role="dialog"
             aria-modal="true"
@@ -926,8 +927,8 @@
             <button type="button" wire:click="closeRevisionModal" class="absolute inset-0 h-full w-full bg-slate-500/25" aria-label="Close revisions"></button>
             <div class="relative flex h-full w-full items-center justify-center p-4 sm:p-6">
                 <div class="relative flex h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl ring-1 ring-slate-900/5 sm:h-[calc(100vh-3rem)]">
-                    <button type="button" wire:click="closeRevisionModal" class="absolute right-3 top-3 z-[60] flex h-9 w-9 items-center justify-center rounded-md bg-white text-slate-500 shadow-sm ring-1 ring-slate-900/10 hover:bg-slate-50 hover:text-slate-700" title="Close" aria-label="Close revisions">
-                        <i class="ph ph-x text-lg"></i>
+                    <button type="button" wire:click="closeRevisionModal" class="fixed z-[60] -translate-y-1/2 rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] leading-[14px] text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700" style="top: 3rem; right: max(1rem, calc((100vw - 72rem) / 2 + 1rem));" title="Close" aria-label="Close revisions">
+                        esc
                     </button>
                     <div class="flex shrink-0 items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 pr-16">
                         <div>
@@ -944,91 +945,118 @@
     @endif
 
     {{-- Block Library Modal --}}
-    <div
-        x-cloak
-        x-show="blockLibraryOpen"
-        x-on:keydown.escape.window="blockLibraryOpen = false"
-        x-on:click.self="blockLibraryOpen = false"
-        class="fixed inset-0 z-50"
-    >
-        <div class="absolute inset-0 bg-slate-500/25" aria-hidden="true"></div>
-        <div class="relative h-full w-full overflow-y-auto p-4 sm:p-6 md:p-20">
-            <div
-                x-on:click.stop
-                x-data="{
-                    blockSearch: '',
-                    blockMatches(name, key, description) {
-                        const query = this.blockSearch.trim().toLowerCase();
+    <template x-teleport="body">
+        <div
+            x-cloak
+            x-show="blockLibraryOpen"
+            x-on:keydown.escape.window="blockLibraryOpen = false"
+            x-on:click.self="blockLibraryOpen = false"
+            class="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="block-library-title"
+            x-transition.opacity
+        >
+        <button type="button" class="absolute inset-0 cursor-default" aria-label="Close block library" x-on:click="blockLibraryOpen = false"></button>
+        <div
+            x-on:click.stop
+            x-data="{
+                blockSearch: '',
+                blockMatches(name, key, description) {
+                    const query = this.blockSearch.trim().toLowerCase();
 
-                        if (! query) {
-                            return true;
-                        }
+                    if (! query) {
+                        return true;
+                    }
 
-                        return [name, key, description].some((value) => String(value || '').toLowerCase().includes(query));
-                    },
-                    hasBlockMatches() {
-                        return Array.from(this.$refs.blockGrid?.querySelectorAll('[data-block-search-text]') || []).some((element) => {
-                            return ! this.blockSearch.trim() || element.dataset.blockSearchText.includes(this.blockSearch.trim().toLowerCase());
-                        });
-                    },
-                }"
-                x-effect="if (! blockLibraryOpen) blockSearch = ''"
-                class="mx-auto max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-900/5"
-            >
-                <div class="p-6">
-                    <h2 class="mb-1 text-lg font-bold text-slate-800">Add Block</h2>
-                    @if($addBlockPosition === 'inside' && $addBlockParentId)
-                        <p class="mb-4 text-sm text-slate-500">Choose a block to nest inside the selected container.</p>
-                    @else
-                        <p class="mb-4 text-sm text-slate-500">Choose a block to add to this page.</p>
-                    @endif
-                    @if($blockTypes->isEmpty())
-                    <p class="text-sm text-slate-500">You don't have any block types yet. Create one to start building pages.</p>
-                    <div class="mt-4">
-                        <a href="{{ route('admin.blocks.create') }}" wire:navigate class="inline-flex items-center gap-2 rounded-md bg-teal-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600">Create Block Type</a>
+                    return [name, key, description].some((value) => String(value || '').toLowerCase().includes(query));
+                },
+                hasBlockMatches() {
+                    return Array.from(this.$refs.blockGrid?.querySelectorAll('[data-block-search-text]') || []).some((element) => {
+                        return ! this.blockSearch.trim() || element.dataset.blockSearchText.includes(this.blockSearch.trim().toLowerCase());
+                    });
+                },
+            }"
+            x-effect="if (! blockLibraryOpen) blockSearch = ''"
+            x-transition.scale.origin.center.duration.150ms
+            class="relative z-10 flex h-[480px] max-h-[calc(100vh-2rem)] w-full max-w-[720px] flex-col overflow-hidden rounded-[14px] border border-slate-300 bg-white/95 shadow-[0_8px_16px_rgba(19,20,24,0.08),0_28px_64px_rgba(19,20,24,0.18)] ring-1 ring-slate-950/5 sm:max-h-[calc(100vh-3rem)]"
+            data-block-library
+        >
+            <h2 id="block-library-title" class="sr-only">Add a block</h2>
+
+            <div class="flex h-[54px] shrink-0 items-center gap-2.5 border-b border-slate-200 bg-white px-4">
+                <i class="ph ph-squares-four text-lg text-slate-500" aria-hidden="true"></i>
+                <input
+                    x-ref="blockSearch"
+                    type="search"
+                    x-model.debounce.100ms="blockSearch"
+                    placeholder="Add a block..."
+                    aria-label="Search blocks"
+                    class="h-full min-w-0 flex-1 border-0 bg-transparent px-0.5 py-0 text-[15px] font-normal text-slate-800 outline-none placeholder:text-slate-500 focus:ring-0"
+                />
+                <button type="button" x-on:click="blockLibraryOpen = false" class="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] leading-[14px] text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700">
+                    esc
+                </button>
+            </div>
+
+            <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-[14px]">
+                @if($addBlockPosition === 'inside' && $addBlockParentId)
+                    <p class="mb-4 text-sm text-slate-500">Choose a block to nest inside the selected container.</p>
+                @endif
+
+                @if($blockTypes->isEmpty())
+                    <div class="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+                        <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+                            <i class="ph ph-squares-four text-2xl"></i>
+                        </span>
+                        <p class="font-medium text-slate-800">You don't have any block types yet</p>
+                        <p class="mt-1 text-sm text-slate-500">Create one to start building pages.</p>
+                        <a href="{{ route('admin.blocks.create') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700">Create Block Type</a>
                     </div>
-                    @else
-                    <div class="relative mb-4">
-                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input
-                            type="search"
-                            x-model.debounce.100ms="blockSearch"
-                            placeholder="Search blocks"
-                            class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
-                        />
-                    </div>
-                    <div x-ref="blockGrid" class="grid grid-cols-2 gap-3">
+                @else
+                    <div x-ref="blockGrid" class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                         @foreach($blockTypes as $blockType)
                         @php
                             $blockDescription = $blockType->schema['description'] ?? '';
                             $blockSearchText = strtolower(trim($blockType->name.' '.$blockType->key.' '.$blockDescription));
+                            $blockIcon = match ($blockType->icon) {
+                                'rectangle-stack' => 'ph-layout',
+                                'document-text' => 'ph-text-align-left',
+                                'photo' => 'ph-image-square',
+                                'squares-2x2' => 'ph-grid-four',
+                                'arrow-right' => 'ph-cursor-click',
+                                'columns' => 'ph-columns',
+                                'squares-plus' => 'ph-squares-four',
+                                'map' => 'ph-map-trifold',
+                                'calendar' => 'ph-calendar-dots',
+                                default => 'ph-cube',
+                            };
                         @endphp
                         <button
                             type="button"
                             x-show="blockMatches(@js($blockType->name), @js($blockType->key), @js($blockDescription))"
                             wire:click="addBlock('{{ $blockType->key }}')"
                             data-block-search-text="{{ $blockSearchText }}"
-                            class="rounded-lg border border-slate-200 p-4 text-left transition-colors hover:bg-slate-50 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                            class="group rounded-[10px] border border-slate-300 bg-white p-[15px] text-left shadow-[0_1px_1px_rgba(19,20,24,0.06),0_2px_3px_rgba(19,20,24,0.05)] outline-none transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
                         >
-                            <div class="font-medium text-slate-800">{{ $blockType->name }}</div>
-                            <div class="mt-0.5 text-sm text-slate-500">{{ $blockDescription }}</div>
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-600 transition-colors group-hover:bg-teal-100">
+                                <i class="ph {{ $blockIcon }} text-lg" aria-hidden="true"></i>
+                            </span>
+                            <span class="mt-2.5 block text-[13px] font-medium leading-[18px] tracking-[-0.01em] text-slate-900">{{ $blockType->name }}</span>
+                            @if($blockDescription)
+                                <span class="mt-1 block text-xs leading-[17px] tracking-[-0.01em] text-slate-500">{{ $blockDescription }}</span>
+                            @endif
                         </button>
                         @endforeach
                     </div>
-                    <div x-show="! hasBlockMatches()" x-cloak class="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                    <div x-show="! hasBlockMatches()" x-cloak class="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
                         No blocks match your search.
                     </div>
-                    <div class="mt-6 border-t border-slate-200 pt-4">
-                        <a href="{{ route('admin.blocks.index') }}" class="text-sm text-teal-600 hover:underline" wire:navigate>Manage block types</a>
-                    </div>
-                    @endif
-                    <div class="mt-6 flex justify-end">
-                        <button type="button" x-on:click="blockLibraryOpen = false" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-                    </div>
-                </div>
+                @endif
+            </div>
             </div>
         </div>
-    </div>
+    </template>
 
     @livewire('admin.assets.asset-picker-modal')
 </div>

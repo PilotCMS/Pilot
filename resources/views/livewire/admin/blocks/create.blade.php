@@ -1,16 +1,16 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    {{-- Fixed header --}}
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Create Block Type</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Define a reusable block schema</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Create Block Type</h1>
+            <p class="cms-subtitle">Define a reusable block schema.</p>
         </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('admin.blocks.index') }}" wire:navigate class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+        <div class="cms-actions">
+            <a href="{{ route('admin.blocks.index') }}" wire:navigate class="cms-btn cms-btn-secondary">
                 Cancel
             </a>
-            <button type="submit" form="block-type-form" class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors">
-                <i class="ph ph-check"></i> Create Block Type
+            <button type="submit" form="block-type-form" class="cms-btn cms-btn-primary">
+                <i class="ph ph-check" aria-hidden="true"></i>
+                Create block type
             </button>
         </div>
     </header>

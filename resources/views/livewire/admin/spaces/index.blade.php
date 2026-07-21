@@ -1,12 +1,15 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Spaces</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Organize content, assets, and datasources by project or site</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Spaces</h1>
+            <p class="cms-subtitle">Organize content, assets, and datasources by project or site.</p>
         </div>
-        <a href="{{ route('admin.spaces.create') }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors">
-            <i class="ph ph-plus"></i> New Space
-        </a>
+        <div class="cms-actions">
+            <a href="{{ route('admin.spaces.create') }}" wire:navigate class="cms-btn cms-btn-primary">
+                <i class="ph ph-plus" aria-hidden="true"></i>
+                New space
+            </a>
+        </div>
     </header>
 
     <div class="flex flex-1 min-h-0">

@@ -326,26 +326,79 @@
         color: var(--text-primary);
     }
 
-    .cms-topbar {
-        height: var(--topbar-h);
+    .cms-global-topbar {
         display: flex;
+        height: var(--topbar-h);
+        flex: none;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-subtle);
+        padding-inline: 16px;
+        background: color-mix(in oklab, var(--surface-app) 82%, transparent);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .cms-breadcrumbs {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-tertiary);
+        font: var(--type-body-sm);
+    }
+
+    .cms-breadcrumbs a {
+        color: var(--text-tertiary);
+    }
+
+    .cms-breadcrumbs a:hover {
+        color: var(--text-secondary);
+        text-decoration: none;
+    }
+
+    .cms-breadcrumbs i {
+        flex: none;
+        color: var(--text-disabled);
+        font-size: 13px;
+    }
+
+    .cms-breadcrumbs span {
+        overflow: hidden;
+        color: var(--text-primary);
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .cms-global-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+    }
+
+    .cms-topbar {
+        display: flex;
+        min-height: 76px;
+        flex: none;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        border-bottom: 1px solid var(--border-subtle);
         background: var(--surface-app);
-        padding-inline: var(--pad-view);
+        padding: 22px var(--pad-view) 12px;
     }
 
     .cms-title {
-        font: var(--type-title);
+        font: var(--type-h2);
+        letter-spacing: var(--ls-tight);
         color: var(--text-primary);
     }
 
     .cms-subtitle {
-        margin-top: 2px;
-        font: var(--type-caption);
-        color: var(--text-tertiary);
+        margin-top: 3px;
+        font: var(--type-body-sm);
+        color: var(--text-secondary);
     }
 
     .cms-actions {
@@ -409,6 +462,11 @@
         color: var(--text-primary);
     }
 
+    .cms-iconbtn:focus-visible {
+        outline: none;
+        box-shadow: var(--ring);
+    }
+
     .cms-panel {
         overflow: hidden;
         border: 1px solid var(--border-default);
@@ -421,8 +479,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        border-bottom: 1px solid var(--border-subtle);
-        padding: 14px var(--pad-view);
+        padding: 14px 0;
         flex-wrap: wrap;
     }
 
@@ -656,6 +713,64 @@
         color: var(--accent-text);
         font: var(--type-2xs);
         font-weight: 600;
+    }
+
+}
+
+@media (max-width: 900px) {
+    .admin-app {
+        --admin-nav-width: var(--sidebar-w-mini) !important;
+    }
+
+    .admin-app > nav[aria-label="Main"] {
+        width: var(--sidebar-w-mini) !important;
+    }
+
+    .admin-app > nav[aria-label="Main"] > div:first-child {
+        padding-inline: 8px;
+    }
+
+    .admin-app > nav[aria-label="Main"] > div:first-child a {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    .admin-app > nav[aria-label="Main"] > div:first-child a > span:not(:first-child),
+    .admin-app > nav[aria-label="Main"] > div:first-child a > i,
+    .admin-app > nav[aria-label="Main"] > div:nth-child(2),
+    .admin-app > nav[aria-label="Main"] [class*="uppercase"],
+    .admin-app > nav[aria-label="Main"] > div:nth-child(3) a > span,
+    .admin-app > nav[aria-label="Main"] > div:last-child button > span:not(:first-child),
+    .admin-app > nav[aria-label="Main"] > div:last-child button > i {
+        display: none;
+    }
+
+    .admin-app > nav[aria-label="Main"] > div:nth-child(3) {
+        padding-inline: 8px;
+        padding-top: 4px;
+    }
+
+    .admin-app > nav[aria-label="Main"] > div:nth-child(3) a,
+    .admin-app > nav[aria-label="Main"] > div:last-child button {
+        justify-content: center;
+        padding-inline: 0;
+    }
+
+    .admin-app .cms-topbar {
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-app .cms-topbar {
+        min-height: 0;
+        flex-direction: column;
+        padding-block: 18px 12px;
+    }
+
+    .admin-app .cms-actions {
+        width: 100%;
+        overflow-x: auto;
     }
 }
 

@@ -1,16 +1,16 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    {{-- Fixed header --}}
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Edit Block Type</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Key: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{{ $blockType->key }}</code></p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Edit Block Type</h1>
+            <p class="cms-subtitle">Key: <code class="rounded-xs bg-sunken px-1.5 py-0.5 text-primary">{{ $blockType->key }}</code></p>
         </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('admin.blocks.index') }}" wire:navigate class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+        <div class="cms-actions">
+            <a href="{{ route('admin.blocks.index') }}" wire:navigate class="cms-btn cms-btn-secondary">
                 Cancel
             </a>
-            <button type="submit" form="block-type-form" class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors">
-                <i class="ph ph-check"></i> Save Changes
+            <button type="submit" form="block-type-form" class="cms-btn cms-btn-primary">
+                <i class="ph ph-check" aria-hidden="true"></i>
+                Save changes
             </button>
         </div>
     </header>

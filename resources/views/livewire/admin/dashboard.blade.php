@@ -21,7 +21,7 @@
 
     <div class="grid min-h-0 flex-1 grid-cols-1">
         <main class="min-w-0 overflow-y-auto">
-            <div class="flex min-h-full flex-col gap-7 p-[var(--pad-view)]">
+            <div class="flex min-h-full flex-col gap-7 px-[var(--pad-view)] pb-10 pt-1">
                 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
                     <div class="cms-panel p-4">
                         <div class="flex items-start justify-between gap-3">
@@ -61,7 +61,7 @@
                     </div>
                 </div>
 
-                <section class="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+                <section class="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,1fr)]">
                     <div class="cms-panel">
                         <div class="flex items-center justify-between gap-3 border-b border-subtle px-5 py-4">
                             <h2 class="text-sm font-semibold text-primary">Recent activity</h2>

@@ -21,48 +21,8 @@
 
     <div class="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
         <main class="min-w-0 overflow-y-auto">
-            <div class="flex min-h-full flex-col gap-6 p-[var(--pad-view)]">
-                @php $stats = $this->stats; @endphp
-                <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <div class="cms-panel p-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['total']) }}</div>
-                                <div class="cms-subtitle">Total stories</div>
-                            </div>
-                            <span class="cms-tile cms-tile-info"><i class="ph-fill ph-files" aria-hidden="true"></i></span>
-                        </div>
-                    </div>
-                    <div class="cms-panel p-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['published']) }}</div>
-                                <div class="cms-subtitle">Published</div>
-                            </div>
-                            <span class="cms-tile text-success bg-success-subtle"><i class="ph-fill ph-check-circle" aria-hidden="true"></i></span>
-                        </div>
-                    </div>
-                    <div class="cms-panel p-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ number_format($stats['drafts']) }}</div>
-                                <div class="cms-subtitle">Drafts</div>
-                            </div>
-                            <span class="cms-tile text-warning bg-warning-subtle"><i class="ph-fill ph-pencil-simple" aria-hidden="true"></i></span>
-                        </div>
-                    </div>
-                    <div class="cms-panel p-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-2xl font-semibold tabular-nums text-primary">{{ $stats['languages'] }}</div>
-                                <div class="cms-subtitle">Languages</div>
-                            </div>
-                            <span class="cms-tile cms-tile-accent"><i class="ph-fill ph-globe" aria-hidden="true"></i></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="cms-panel">
+            <div class="flex min-h-full flex-col gap-6 px-[var(--pad-view)] pb-10 pt-1">
+                <div>
                     <div class="cms-toolbar">
                         <label class="cms-input w-52">
                             <i class="ph ph-magnifying-glass text-tertiary" aria-hidden="true"></i>
@@ -92,7 +52,7 @@
                         </div>
                     </div>
 
-                    <div class="min-w-[720px]">
+                    <div class="cms-panel min-w-[720px]">
                         <div class="cms-table-head">
                             <div><input type="checkbox" class="rounded border-strong text-accent focus:ring-accent" disabled /></div>
                             <div>Name</div>

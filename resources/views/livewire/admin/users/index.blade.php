@@ -1,14 +1,15 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900">Users & Roles</h1>
-            <p class="mt-0.5 text-xs text-slate-500">Manage team members and permissions</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Users &amp; Roles</h1>
+            <p class="cms-subtitle">Manage team members and permissions.</p>
         </div>
-
-        <flux:button wire:click="openCreateUser" variant="primary" size="sm">
-            <flux:icon.plus class="size-4" />
-            New User
-        </flux:button>
+        <div class="cms-actions">
+            <button type="button" wire:click="openCreateUser" class="cms-btn cms-btn-primary">
+                <i class="ph ph-plus" aria-hidden="true"></i>
+                New user
+            </button>
+        </div>
     </header>
 
     <div class="flex min-h-0 flex-1">

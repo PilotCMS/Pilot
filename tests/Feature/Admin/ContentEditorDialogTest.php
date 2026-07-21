@@ -570,7 +570,9 @@ it('renders searchable block choices in the add block modal', function () {
 
     Livewire::test(Editor::class, ['content' => $content])
         ->set('blockLibraryOpen', true)
-        ->assertSee('Search blocks')
+        ->assertSee('Add a block...')
+        ->assertSee('data-block-library', false)
+        ->assertSee('ph-cube', false)
         ->assertSee('No blocks match your search.')
         ->assertSee('data-block-search-text="testimonial testimonial customer quote"', false);
 });
@@ -1076,7 +1078,12 @@ it('opens revisions and checkpoint workflows in a modal', function () {
         ->call('openRevisionModal')
         ->assertSet('revisionModalOpen', true)
         ->assertSee('Checkpoint label')
-        ->assertSeeHtml('class="absolute right-3 top-3')
+        ->assertSeeHtml('x-on:keydown.escape.window="$wire.closeRevisionModal()"')
+        ->assertSeeHtml('class="fixed z-[60]')
+        ->assertSeeHtml('-translate-y-1/2')
+        ->assertSeeHtml('top: 3rem;')
+        ->assertSeeHtml('right: max(1rem, calc((100vw - 72rem) / 2 + 1rem));')
+        ->assertSee('esc')
         ->call('closeRevisionModal')
         ->assertSet('revisionModalOpen', false)
         ->call('openCheckpointModal')

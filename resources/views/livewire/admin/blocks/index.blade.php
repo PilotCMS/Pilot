@@ -1,16 +1,17 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    {{-- Fixed header --}}
-    <header class="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-30 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Block Types</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Reusable content components for your pages</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Block Types</h1>
+            <p class="cms-subtitle">Reusable content components for your pages.</p>
         </div>
-        <div class="flex items-center gap-2">
-            <button type="button" wire:click="$set('showNewFolderModal', true)" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
-                <i class="ph ph-folder-plus"></i> New folder
+        <div class="cms-actions">
+            <button type="button" wire:click="$set('showNewFolderModal', true)" class="cms-btn cms-btn-secondary">
+                <i class="ph ph-folder-plus" aria-hidden="true"></i>
+                New folder
             </button>
-            <a href="{{ route('admin.blocks.create') }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-600 transition-colors">
-                <i class="ph ph-plus"></i> New Block Type
+            <a href="{{ route('admin.blocks.create') }}" wire:navigate class="cms-btn cms-btn-primary">
+                <i class="ph ph-plus" aria-hidden="true"></i>
+                New block type
             </a>
         </div>
     </header>

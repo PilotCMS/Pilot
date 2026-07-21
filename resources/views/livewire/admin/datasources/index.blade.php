@@ -1,15 +1,17 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900">Datasources</h1>
-            <p class="mt-0.5 text-xs text-slate-500">Manage reusable option lists for block fields</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Datasources</h1>
+            <p class="cms-subtitle">Manage reusable option lists for block fields.</p>
         </div>
 
         @can('manage datasources')
-            <flux:button wire:click="openCreateDatasource" variant="primary" size="sm">
-                <flux:icon.plus class="size-4" />
-                New Datasource
-            </flux:button>
+            <div class="cms-actions">
+                <button type="button" wire:click="openCreateDatasource" class="cms-btn cms-btn-primary">
+                    <i class="ph ph-plus" aria-hidden="true"></i>
+                    New datasource
+                </button>
+            </div>
         @endcan
     </header>
 

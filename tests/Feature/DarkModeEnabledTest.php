@@ -58,6 +58,17 @@ test('tailwind and runtime dark mode are enabled', function () {
         ->not->toContain("window.localStorage.getItem('flux.appearance') !== 'light'");
 });
 
+test('admin topbar theme control toggles and describes the target appearance', function () {
+    $this
+        ->actingAs(User::factory()->create())
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee("window.Flux.applyAppearance(dark ? 'light' : 'dark')", false)
+        ->assertSee("dark ? 'Switch to light mode' : 'Switch to dark mode'", false)
+        ->assertSee("dark ? 'Light mode' : 'Dark mode'", false)
+        ->assertSee('x-on:pilot-theme-changed.window', false);
+});
+
 test('legacy admin listing rows define dark mode dividers and hover states', function () {
     expect(File::get(resource_path('views/livewire/admin/blocks/index.blade.php')))
         ->toContain('dark:border-strong dark:bg-hover dark:text-tertiary')

@@ -1,13 +1,15 @@
 <div class="flex h-full min-w-0 flex-col bg-gray-50">
-    <header class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm" aria-label="Page header">
-        <div>
-            <h1 class="text-lg font-bold tracking-tight text-slate-900">Content Types</h1>
-            <p class="mt-0.5 text-xs text-slate-500">Define page models, fields, blocks, and URL behavior.</p>
+    <header class="cms-topbar" aria-label="Page header">
+        <div class="min-w-0">
+            <h1 class="cms-title">Content Types</h1>
+            <p class="cms-subtitle">Define page models, fields, blocks, and URL behavior.</p>
         </div>
-        <button type="button" wire:click="create" class="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-600">
-            <i class="ph ph-plus"></i>
-            New Content Type
-        </button>
+        <div class="cms-actions">
+            <button type="button" wire:click="create" class="cms-btn cms-btn-primary">
+                <i class="ph ph-plus" aria-hidden="true"></i>
+                New content type
+            </button>
+        </div>
     </header>
 
     <div class="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_var(--admin-rail-width)]">

@@ -65,6 +65,10 @@
             } else {
                 window.localStorage.setItem('flux.appearance', appearance);
             }
+
+            window.dispatchEvent(new CustomEvent('pilot-theme-changed', {
+                detail: { appearance, isDark },
+            }));
         },
     };
 
