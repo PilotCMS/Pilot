@@ -66,7 +66,7 @@ $pubCount = collect($listings)->where('status', 'Published')->count();
             @foreach ($listings as $l)
                 <x-jaunt.data.card hoverable>
                     <div class="w-full aspect-video" style="background: linear-gradient(135deg, {{ $l['hue'] }}, color-mix(in oklab, {{ $l['hue'] }} 55%, #000));"></div>
-                    <x-slot:header title="{{ $l['name'] }}" subtitle="{{ $l['cat'] }}" />
+                    <x-slot:header title="{{ $l['name'] }}" subtitle="{{ $l['cat'] }}"></x-slot:header>
                     <x-slot:action>
                         <x-jaunt.feedback.badge :variant="$l['sv']" dot>{{ $l['status'] }}</x-jaunt.feedback.badge>
                     </x-slot:action>

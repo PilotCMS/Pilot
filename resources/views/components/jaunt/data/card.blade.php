@@ -6,14 +6,14 @@
     slots on the same tag:
 
     <x-jaunt.data.card hoverable>
-        <x-slot:media src="{{ $photo }}" alt="Harbor at dusk" />
-        <x-slot:header title="Harbor Lighthouse" subtitle="Attraction · North coast" />
+        <x-slot:media src="{{ $photo }}" alt="Harbor at dusk"></x-slot:media>
+        <x-slot:header title="Harbor Lighthouse" subtitle="Attraction · North coast"></x-slot:header>
         <x-slot:action><x-jaunt.feedback.badge variant="success" dot>Published</x-jaunt.feedback.badge></x-slot:action>
         <x-slot:body>Body copy…</x-slot:body>
         <x-slot:footer>...</x-slot:footer>
     </x-jaunt.data.card>
 
-    `header` accepts `title`/`subtitle` as slot attributes (`<x-slot:header title="…" subtitle="…" />`);
+    `header` accepts `title`/`subtitle` as slot attributes (`<x-slot:header title="…" subtitle="…"></x-slot:header>`);
     `action` is a sibling slot (not nested inside header — Blade doesn't support
     nested named slots) rendered at the end of the header row.
 

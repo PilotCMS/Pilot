@@ -2,7 +2,7 @@
     <header class="cms-topbar" aria-label="Page header">
         <div class="min-w-0">
             <h1 class="cms-title">Edit Block Type</h1>
-            <p class="cms-subtitle">Key: <code class="rounded-xs bg-sunken px-1.5 py-0.5 text-primary">{{ $blockType->key }}</code></p>
+            <p class="cms-subtitle">Update the block schema and settings.</p>
         </div>
         <div class="cms-actions">
             <a href="{{ route('admin.blocks.index') }}" wire:navigate class="cms-btn cms-btn-secondary">
@@ -43,7 +43,7 @@
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-slate-100">
                         <h2 class="text-sm font-bold text-slate-800">Block Type</h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Name and options</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Name, key, and options</p>
                     </div>
                     <div class="p-5 space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -53,14 +53,31 @@
                                 <flux:error name="name" />
                             </flux:field>
                             <flux:field>
+                                <flux:label>Key</flux:label>
+                                <flux:input wire:model="key" />
+                                <flux:error name="key" />
+                                <flux:description>Unique identifier used by blocks and templates.</flux:description>
+                            </flux:field>
+                        </div>
+                        <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900" role="alert">
+                            <div class="flex gap-3">
+                                <i class="ph ph-warning text-lg shrink-0" aria-hidden="true"></i>
+                                <div>
+                                    <p class="text-sm font-semibold">Danger: changing the block key can cause errors.</p>
+                                    <p class="mt-1 text-xs leading-5">Existing block and content type relationships will update automatically, but templates, integrations, or custom code using the old key may break.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                            <flux:field>
                                 <flux:label>Icon</flux:label>
                                 <flux:input wire:model="icon" />
                                 <flux:error name="icon" />
                                 <flux:description>Icon name (Heroicons)</flux:description>
                             </flux:field>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <flux:checkbox wire:model="isGlobal" label="Available across all spaces" />
+                            <div class="flex items-center gap-2 pt-6">
+                                <flux:checkbox wire:model="isGlobal" label="Available across all spaces" />
+                            </div>
                         </div>
                     </div>
                 </div>

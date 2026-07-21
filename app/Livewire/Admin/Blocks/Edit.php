@@ -2,12 +2,18 @@
 
 namespace App\Livewire\Admin\Blocks;
 
+use App\Models\Block;
 use App\Models\BlockType;
+use App\Models\ContentType;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class Edit extends Component
 {
     public BlockType $blockType;
+
+    public $key = '';
 
     public $name = '';
 
@@ -22,6 +28,7 @@ class Edit extends Component
     public function mount(BlockType $blockType)
     {
         $this->blockType = $blockType;
+        $this->key = $blockType->key;
         $this->name = $blockType->name;
         $this->icon = $blockType->icon;
         $this->isGlobal = $blockType->is_global;
@@ -35,6 +42,12 @@ class Edit extends Component
     protected function rules()
     {
         return [
+            'key' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('block_types', 'key')->ignore($this->blockType->id),
+            ],
             'name' => 'required|string|max:255',
             'icon' => 'nullable|string|max:255',
             'isGlobal' => 'boolean',
@@ -140,12 +153,40 @@ class Edit extends Component
     {
         $this->validate();
 
-        $this->blockType->update([
-            'name' => $this->name,
-            'icon' => $this->icon,
-            'is_global' => $this->isGlobal,
-            'schema' => $this->schema,
-        ]);
+        DB::transaction(function (): void {
+            $originalKey = $this->blockType->key;
+
+            if ($this->key !== $originalKey) {
+                Block::query()
+                    ->where('type', $originalKey)
+                    ->update(['type' => $this->key]);
+
+                ContentType::query()
+                    ->whereNotNull('allowed_blocks')
+                    ->each(function (ContentType $contentType) use ($originalKey): void {
+                        $allowedBlocks = $contentType->allowed_blocks ?? [];
+
+                        if (! in_array($originalKey, $allowedBlocks, true)) {
+                            return;
+                        }
+
+                        $contentType->update([
+                            'allowed_blocks' => array_values(array_unique(array_map(
+                                fn ($blockKey) => $blockKey === $originalKey ? $this->key : $blockKey,
+                                $allowedBlocks,
+                            ))),
+                        ]);
+                    });
+            }
+
+            $this->blockType->update([
+                'key' => $this->key,
+                'name' => $this->name,
+                'icon' => $this->icon,
+                'is_global' => $this->isGlobal,
+                'schema' => $this->schema,
+            ]);
+        });
 
         session()->flash('toast', ['message' => 'Block type saved', 'type' => 'success']);
 
