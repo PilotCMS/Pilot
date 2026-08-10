@@ -1,22 +1,16 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Edit Space</h1>
-            <p class="cms-subtitle">Update workspace settings.</p>
-        </div>
-    </header>
+    <x-jaunt.shell.dynamic-header title="Edit Space" subtitle="Update workspace settings." top="0px" as="header" scroll-target="#space-edit-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
 
-    <main class="flex-1 min-w-0 overflow-y-auto">
+    <main id="space-edit-scroll" class="flex-1 min-w-0 overflow-y-auto">
         <div class="w-full p-6 md:p-8">
             <div class="max-w-2xl">
-                <div class="mb-8">
+                <div class="mb-6">
                     <a href="{{ route('admin.spaces.index') }}" class="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 mb-4 transition-colors" wire:navigate>
                         <flux:icon.arrow-left class="size-4" />
                         Back to Spaces
                     </a>
-                    <flux:heading>Edit Space</flux:heading>
                 </div>
 
                 <form wire:submit="save" class="space-y-6">
@@ -54,7 +48,7 @@
                         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
                             <div class="flex items-start gap-3">
                                 <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                                    <i class="ph ph-key"></i>
+                                    <x-jaunt.icon name="key" size="sm" />
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-semibold text-amber-950">Frontend preview secret</p>
@@ -84,11 +78,11 @@
                                         </flux:field>
 
                                         <div class="flex items-end gap-2">
-                                            <button type="button" wire:click="markDefaultPreviewTarget({{ $index }})" class="h-10 rounded-md border px-3 text-sm font-medium {{ ! empty($target['is_default']) ? 'border-teal-200 bg-teal-50 text-teal-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50' }}">
+                                            <button type="button" wire:click="markDefaultPreviewTarget({{ $index }})" class="h-10 rounded-md border px-3 text-sm font-medium {{ ! empty($target['is_default']) ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50' }}">
                                                 Default
                                             </button>
                                             <button type="button" wire:click="removePreviewTarget({{ $index }})" class="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-red-500" aria-label="Remove preview URL">
-                                                <i class="ph ph-trash"></i>
+                                                <x-jaunt.icon name="trash-2" size="sm" />
                                             </button>
                                         </div>
                                     </div>
@@ -107,8 +101,9 @@
                     <flux:button href="{{ route('admin.spaces.index') }}" wire:navigate variant="ghost">
                         Cancel
                     </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        Save Changes
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
+                        <span wire:loading.remove wire:target="save">Save Changes</span>
+                        <span wire:loading wire:target="save">Saving…</span>
                     </flux:button>
                 </div>
                 </form>

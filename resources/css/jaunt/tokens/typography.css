@@ -58,5 +58,11 @@
   --type-body-sm:   var(--fw-regular)  var(--text-sm)/var(--lh-normal) var(--font-sans);
   --type-label:     var(--fw-medium)   var(--text-sm)/var(--lh-snug) var(--font-sans);
   --type-caption:   var(--fw-regular)  var(--text-xs)/var(--lh-snug) var(--font-sans);
+  --type-2xs:       var(--fw-regular)  var(--text-2xs)/var(--lh-snug) var(--font-sans);
   --type-mono:      var(--fw-regular)  var(--text-sm)/var(--lh-normal) var(--font-mono);
+
+  /* Group/section label inside nav + list surfaces (sidebar groups, menu
+     labels, command-palette groups). Always paired with uppercase +
+     --ls-caps + --text-tertiary. One token so all four stay in sync. */
+  --type-group-label: var(--fw-medium) var(--text-2xs)/var(--lh-snug) var(--font-sans);
 }

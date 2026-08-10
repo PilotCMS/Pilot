@@ -46,7 +46,6 @@ class Create extends Component
         'contentTypeId' => 'nullable|exists:content_types,id',
         'name' => 'required|string|max:255',
         'slug' => 'required|string|max:255',
-        'status' => 'required|in:draft,published',
     ];
 
     public function updatedName($value)
@@ -68,15 +67,15 @@ class Create extends Component
             'type' => $this->type,
             'name' => $this->name,
             'slug' => $this->slug,
-            'status' => $this->status,
-            'workflow_status' => $this->status === 'published' ? 'published' : 'draft',
+            'status' => 'draft',
+            'workflow_status' => 'draft',
             'created_by' => auth()->id(),
             'updated_by' => auth()->id(),
-            'published_at' => $this->status === 'published' ? now() : null,
+            'published_at' => null,
         ]);
 
         session()->flash('toast', [
-            'message' => $content->status === 'published' ? 'Content created and published' : 'Content created',
+            'message' => 'Content created as a draft',
             'type' => 'success',
         ]);
 

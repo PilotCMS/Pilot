@@ -580,7 +580,7 @@
                         <tbody>
                             <tr>
                                 <td>PHP</td>
-                                <td>8.4 or newer; PHP 8.5 works for this repository</td>
+                                <td>8.4.1 or newer; PHP 8.5 works for this repository</td>
                                 <td>The project instructions identify PHP 8.5.2. Herd users can use the path to a supported PHP binary.</td>
                             </tr>
                             <tr>
@@ -595,8 +595,8 @@
                             </tr>
                             <tr>
                                 <td>Database</td>
-                                <td>SQLite, MySQL, MariaDB, or PostgreSQL</td>
-                                <td>SQLite is simplest locally; managed MySQL/PostgreSQL is typical for production.</td>
+                                <td>MySQL, MariaDB, PostgreSQL, or SQLite</td>
+                                <td>MySQL is the opinionated local default; SQLite remains available as an explicit opt-in.</td>
                             </tr>
                             <tr>
                                 <td>Web server</td>
@@ -692,19 +692,19 @@ php artisan key:generate</code></pre>
                         <li>
                             <h3>Configure the database</h3>
                             <p>
-                                For SQLite, create the database file and update <code>.env</code>. For MySQL or
-                                PostgreSQL, create the database in your server and set the corresponding credentials.
+                                Pilot defaults to MySQL. Start MySQL, create an empty <code>pilot</code> database, and
+                                adjust the standard Laravel credentials in <code>.env</code> when needed.
                             </p>
-                            <pre><code class="language-bash">touch database/database.sqlite</code></pre>
-                            <pre><code class="language-dotenv">DB_CONNECTION=sqlite
-DB_DATABASE=&lt;path-to-database&gt;/database.sqlite</code></pre>
-                            <p>A MySQL configuration uses the normal Laravel keys:</p>
                             <pre><code class="language-dotenv">DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=pilot
 DB_USERNAME=root
 DB_PASSWORD=</code></pre>
+                            <p>SQLite remains available as an explicit alternative:</p>
+                            <pre><code class="language-bash">touch database/database.sqlite</code></pre>
+                            <pre><code class="language-dotenv">DB_CONNECTION=sqlite
+DB_DATABASE=&lt;path-to-database&gt;/database.sqlite</code></pre>
                         </li>
 
                         <li>
@@ -713,7 +713,7 @@ DB_PASSWORD=</code></pre>
                                 The CMS application reads public rendering defaults from <code>config/cms.php</code>.
                                 Set the default space and home slug so the public routes can resolve the correct page.
                             </p>
-                            <pre><code class="language-dotenv">CMS_DEFAULT_SPACE=website
+                            <pre><code class="language-dotenv">CMS_DEFAULT_SPACE=main
 CMS_HOME_SLUG=home
 CMS_DELIVERY_SOURCE=mysql
 CMS_THEME=default</code></pre>
@@ -725,20 +725,16 @@ CMS_THEME=default</code></pre>
                         </li>
 
                         <li>
-                            <h3>Run migrations</h3>
-                            <p>Create the tables for users, roles, spaces, content, blocks, assets, datasources, settings, revisions, references, redirects, queues, cache, and tokens.</p>
-                            <pre><code class="language-bash">php artisan migrate</code></pre>
-                            <p>For a production or CI environment, use <code>--force</code>:</p>
-                            <pre><code class="language-bash">php artisan migrate --force</code></pre>
+                            <h3>Run the interactive installer</h3>
+                            <p>Create the schema with Laravel migrations, seed Pilot's roles and block types, and create the first administrator account.</p>
+                            <pre><code class="language-bash">php artisan pilot:install</code></pre>
+                            <p>The installer asks for the administrator's name, email address, and password. No default user credentials are seeded. In production, allow migrations with <code>--force</code>:</p>
+                            <pre><code class="language-bash">php artisan pilot:install --force</code></pre>
                         </li>
 
                         <li>
-                            <h3>Seed initial data</h3>
-                            <p>
-                                Seed roles, a default space, block types, and development users. The seeded users let
-                                you verify role-based access immediately after installation.
-                            </p>
-                            <pre><code class="language-bash">php artisan db:seed</code></pre>
+                            <h3>Verify the account and default space</h3>
+                            <p>The installer assigns the new account the Admin role and initializes the <code>main</code> space and starter content under that account.</p>
                         </li>
 
                         <li>
@@ -770,12 +766,13 @@ CMS_THEME=default</code></pre>
                     <h3>One-command setup</h3>
                     <p>
                         The root <code>composer.json</code> includes a <code>setup</code> script that installs PHP
-                        dependencies, creates <code>.env</code>, generates the app key, runs migrations, installs npm
-                        packages, and builds assets:
+                        dependencies, creates <code>.env</code>, generates the app key, runs the interactive Pilot
+                        installer, links public storage, installs npm packages, and builds assets. Create and configure
+                        the MySQL database first; the command will prompt for the administrator account:
                     </p>
                     <pre><code class="language-bash">composer run setup</code></pre>
                     <p>
-                        Use the manual steps instead when you need to choose a non-SQLite database, tune storage, or
+                        Use the manual steps instead when you need to choose a different database, tune storage, or
                         confirm each phase independently.
                     </p>
                 </section>
@@ -783,46 +780,10 @@ CMS_THEME=default</code></pre>
                 <section id="first-login">
                     <h2>First Login</h2>
                     <p>
-                        After seeding, open the CMS dashboard and sign in with one of the seeded users. The admin user
-                        can reach every screen, including users and settings.
+                        Open the CMS dashboard and sign in with the administrator account created by
+                        <code>php artisan pilot:install</code>. No default user accounts or passwords are installed.
+                        Create additional Editor, Author, and Viewer accounts from user management as needed.
                     </p>
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Role</th>
-                                <th>Email</th>
-                                <th>Password</th>
-                                <th>Use for</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Admin</td>
-                                <td><code>admin@pilot.com</code></td>
-                                <td><code>password</code></td>
-                                <td>Full CMS administration and installation verification.</td>
-                            </tr>
-                            <tr>
-                                <td>Editor</td>
-                                <td><code>editor@pilot.com</code></td>
-                                <td><code>password</code></td>
-                                <td>Content and editorial workflow testing.</td>
-                            </tr>
-                            <tr>
-                                <td>Author</td>
-                                <td><code>author@pilot.com</code></td>
-                                <td><code>password</code></td>
-                                <td>Author-level publishing flow checks.</td>
-                            </tr>
-                            <tr>
-                                <td>Viewer</td>
-                                <td><code>viewer@pilot.com</code></td>
-                                <td><code>password</code></td>
-                                <td>Read-only access checks.</td>
-                            </tr>
-                        </tbody>
-                    </table>
 
                     <p>
                         The main admin dashboard is available at <code>/admin/dashboard</code>. Common sections include

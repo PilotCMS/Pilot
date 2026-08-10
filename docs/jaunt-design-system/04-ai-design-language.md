@@ -8,9 +8,9 @@ This is the single most important document in this system. Principle 4 of [00-ph
 
 Everything below is a consequence of that sentence. There is no dedicated "AI" workspace, no chat tab in the sidebar, no separate app. AI shows up exactly four ways, all built from the four primitives in the AI group of [03-component-library.md](./03-component-library.md), and this doc is a map from "the pattern the original brief asked for" to "the component that already implements it" — not a re-description of how those components work internally. Read their own header comments in `components/ai/*.blade.php` for that.
 
-## The signal: iris, and only iris
+## The signal: indigo, and only indigo
 
-`iris` is reserved exclusively for AI (see [01-tokens.md](./01-tokens.md) Color). Nothing a user authored is ever tinted iris; nothing AI-originated is ever tinted anything else. Paired with a single consistent glyph — Sparkles, always — this is the entire mechanism by which a user tells "this came from Jaunt itself" apart from "this came from the assistant" without reading a label. Every pattern below inherits this rule for free because every pattern below is built from `ai-*` tokens.
+`indigo` is reserved exclusively for AI (see [01-tokens.md](./01-tokens.md) Color). Nothing a user authored is ever tinted indigo; nothing AI-originated is ever tinted anything else. Paired with a single consistent glyph — Sparkles, always — this is the entire mechanism by which a user tells "this came from Jaunt itself" apart from "this came from the assistant" without reading a label. Every pattern below inherits this rule for free because every pattern below is built from `ai-*` tokens.
 
 ## Pattern → component map
 
@@ -36,7 +36,7 @@ A specific, actionable next step Jaunt is proposing ("Restore partner links to t
 Not a separate pattern — the guardrail baked into `jaunt.ai.ai-suggestion` itself. Every instance renders Accept / Edit / Dismiss and nothing AI-authored is ever committed without an explicit Accept click. There is no "auto-apply" mode anywhere in the system; see the component's own header comment for why that's treated as a hard rule, not a default that screens can opt out of.
 
 ### AI confidence
-How sure Jaunt is about a suggestion or insight, so a user can calibrate "trust and move on" vs. "read this closely." Implemented by **`jaunt.ai.confidence-badge`**, always passed into an `ai-suggestion`'s `confidence` slot (see the example in `components/ai/ai-suggestion.blade.php` and the AI rail below). Levels map to semantic status color — low = amber, high = green — **except medium, which stays iris**: a deliberate honesty-over-bravado choice, so "medium confidence" never accidentally reads as a calm, safe green.
+How sure Jaunt is about a suggestion or insight, so a user can calibrate "trust and move on" vs. "read this closely." Implemented by **`jaunt.ai.confidence-badge`**, always passed into an `ai-suggestion`'s `confidence` slot (see the example in `components/ai/ai-suggestion.blade.php` and the AI rail below). Levels map to semantic status color — low = yellow, high = green — **except medium, which stays indigo**: a deliberate honesty-over-bravado choice, so "medium confidence" never accidentally reads as a calm, safe green.
 
 ### Streaming responses
 The mechanics of AI "thinking" then "answering" token-by-token. Implemented by **`jaunt.ai.ai-streaming`**, `role="status" aria-live="polite"` so assistive tech hears the settled result once rather than every token (see the production note in the component's own header comment about swapping its demo typewriter for a real `wire:stream`/SSE source).

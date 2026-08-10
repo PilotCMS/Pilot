@@ -6,14 +6,17 @@ use App\Models\Asset;
 use App\Models\AssetFolder;
 use App\Models\AssetTag;
 use App\Models\Space;
+use App\Support\Cms\AssetThumbnailer;
 use App\Support\Cms\AssetUsageFinder;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
     public $spaceId = null;
 
@@ -37,6 +40,7 @@ class Index extends Component
 
     public string $search = '';
 
+    #[Url(as: 'type', except: 'all')]
     public string $typeFilter = 'all';
 
     // Edit form (for slide-over)
@@ -106,7 +110,7 @@ class Index extends Component
 
             [$width, $height] = $this->imageDimensions($file->getRealPath());
 
-            Asset::create([
+            $asset = Asset::create([
                 'space_id' => $this->spaceId,
                 'folder_id' => $this->folderId ?: null,
                 'disk' => 'public',
@@ -123,6 +127,8 @@ class Index extends Component
                     'client_mime' => $file->getClientMimeType(),
                 ],
             ]);
+
+            app(AssetThumbnailer::class)->generate($asset);
         }
 
         $this->uploadFiles = [];
@@ -235,7 +241,10 @@ class Index extends Component
         }
 
         if ($asset->hasConfiguredDisk()) {
-            Storage::disk($asset->disk)->delete($asset->path);
+            Storage::disk($asset->disk)->delete(array_filter([
+                $asset->path,
+                $asset->thumbnail_path,
+            ]));
         }
 
         $asset->delete();
@@ -246,6 +255,17 @@ class Index extends Component
     public function selectFolder($folderId)
     {
         $this->folderId = ($folderId === null || $folderId === 'null' || $folderId === '') ? null : $folderId;
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedTypeFilter(): void
+    {
+        $this->resetPage();
     }
 
     public function setSort($column)
@@ -256,6 +276,8 @@ class Index extends Component
             $this->sortBy = $column;
             $this->sortDir = 'desc';
         }
+
+        $this->resetPage();
     }
 
     public function render()
@@ -285,9 +307,9 @@ class Index extends Component
             ->when($this->typeFilter === 'expired', fn ($q) => $q->whereNotNull('expires_at')->where('expires_at', '<', now()));
 
         $assets = match ($this->sortBy) {
-            'filename' => $assetsQuery->orderBy('filename', $this->sortDir)->get(),
-            'size' => $assetsQuery->orderBy('size', $this->sortDir)->get(),
-            default => $assetsQuery->orderBy('created_at', $this->sortDir)->get(),
+            'filename' => $assetsQuery->orderBy('filename', $this->sortDir)->paginate(24),
+            'size' => $assetsQuery->orderBy('size', $this->sortDir)->paginate(24),
+            default => $assetsQuery->orderBy('created_at', $this->sortDir)->paginate(24),
         };
 
         $folders = AssetFolder::where('space_id', $this->spaceId)

@@ -30,7 +30,7 @@ $fieldId = $id ?? 'file-upload-' . Str::random(8);
             hover:border-[color:var(--accent-border)] hover:bg-hover
             focus-visible:outline-none focus-visible:shadow-ring',
     ]) }}
-    :class="drag ? 'border-accent bg-accent-subtle text-accent-text' : ''"
+    :class="drag ? 'border-focus bg-brand-subtle text-brand-text' : ''"
 >
     <span class="grid place-items-center w-10 h-10 rounded-full bg-card border-[color:var(--border-default)] border text-secondary">
         <x-jaunt.icon name="upload" size="sm" />

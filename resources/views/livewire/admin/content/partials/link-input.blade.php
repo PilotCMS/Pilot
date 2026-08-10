@@ -6,7 +6,7 @@
 @endphp
 
 <div class="relative">
-    <i class="ph ph-link absolute left-3 top-3 text-slate-400"></i>
+    <x-jaunt.icon name="link" size="sm" class="absolute left-3 top-3 text-slate-400" />
     <input
         type="text"
         inputmode="url"
@@ -18,7 +18,7 @@
         @else
             wire:change="updateField(@js($fieldKey), $event.target.value)"
         @endif
-        class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+        class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 shadow-sm outline-none transition-[border-color,box-shadow,background-color] duration-fast placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
     />
     <datalist id="{{ $listId }}">
         @foreach($contentChoices as $contentChoice)

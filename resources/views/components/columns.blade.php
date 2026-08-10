@@ -56,7 +56,7 @@
                                 data-pilot-component="{{ $childType }}"
                                 data-pilot-component-path="{{ $parentType }}/{{ $childType }}"
                             @endif
-                            class="rounded-lg border border-transparent transition-colors hover:border-teal-300 hover:bg-teal-50/30"
+                            class="rounded-lg border border-transparent transition-colors hover:border-blue-300 hover:bg-blue-50/30"
                         >
                             @if(view()->exists($childComponentView))
                                 <x-dynamic-component :component="$childComponentName" :block="$child" :data="$childData" :children="$childChildren" />

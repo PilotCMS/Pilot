@@ -305,24 +305,47 @@ class ContentLifecycle
     {
         ContentReference::where('content_id', $content->id)->delete();
 
-        $content->allBlocks()->get()->each(function (Block $block) use ($content): void {
-            $blockType = BlockType::query()->where('key', $block->type)->first();
+        $blocks = $content->allBlocks()->get();
+        $blockTypes = BlockType::query()
+            ->whereIn('key', $blocks->pluck('type')->unique())
+            ->get()
+            ->keyBy('key');
 
-            foreach ($this->extractReferenceValues($block->data ?? [], $blockType?->schema['fields'] ?? []) as $fieldKey => $targetIds) {
-                foreach ($targetIds as $targetId) {
-                    if ((int) $targetId === $content->id) {
-                        continue;
-                    }
-
-                    ContentReference::firstOrCreate([
-                        'content_id' => $content->id,
-                        'target_content_id' => (int) $targetId,
-                        'block_id' => $block->id,
-                        'field_key' => $fieldKey,
-                    ]);
-                }
-            }
+        $blocks->each(function (Block $block) use ($content, $blockTypes): void {
+            $this->storeBlockReferences($content, $block, $blockTypes->get($block->type));
         });
+    }
+
+    public function syncReferencesForBlock(Content $content, Block $block): void
+    {
+        ContentReference::query()
+            ->where('content_id', $content->id)
+            ->where('block_id', $block->id)
+            ->delete();
+
+        $this->storeBlockReferences(
+            $content,
+            $block,
+            BlockType::query()->where('key', $block->type)->first(),
+        );
+    }
+
+    protected function storeBlockReferences(Content $content, Block $block, ?BlockType $blockType): void
+    {
+        foreach ($this->extractReferenceValues($block->data ?? [], $blockType?->schema['fields'] ?? []) as $fieldKey => $targetIds) {
+            foreach ($targetIds as $targetId) {
+                if ((int) $targetId === $content->id) {
+                    continue;
+                }
+
+                ContentReference::firstOrCreate([
+                    'content_id' => $content->id,
+                    'target_content_id' => (int) $targetId,
+                    'block_id' => $block->id,
+                    'field_key' => $fieldKey,
+                ]);
+            }
+        }
     }
 
     /**

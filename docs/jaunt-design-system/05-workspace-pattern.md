@@ -8,7 +8,7 @@ This is the proof of principle 1 in [00-philosophy.md](./00-philosophy.md) ("One
 
 The shell ([02-app-shell.md](./02-app-shell.md)) owns sidebar, topbar, command palette, and the `view` region's gutter/ceiling — and nothing else inside `view`. Concretely:
 
-- **Gutter**: `--pad-view` (24px, `tokens/spacing.css`) — the left/right padding every workspace screen's head/toolbar/body rows use, so page edges line up identically across workspaces.
+- **Gutter**: `--pad-view` (28px, `tokens/spacing.css`) — the left/right padding every workspace screen's head/toolbar/body rows use, so page edges line up identically across workspaces.
 - **Ceiling**: `--width-wide` (1440px, `tokens/layout.css`) — the max content width for dashboards/tables; a workspace screen may choose not to apply it (e.g. a full-bleed kanban board that wants to use all available width), but when it does, it uses the same token every other workspace would.
 - **Everything else in `view` belongs to the workspace**, not the shell. The shell never imports a workspace screen's markup, and a workspace screen never touches the sidebar/topbar.
 

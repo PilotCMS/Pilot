@@ -72,7 +72,7 @@ $pills = $variant === 'pills';
                 transition-colors duration-instant ease-standard
                 focus-visible:outline-none focus-visible:shadow-ring focus-visible:rounded-sm
                 aria-selected:text-primary
-                {{ $pills ? 'aria-selected:bg-active' : '' }}"
+                {{ $pills ? 'aria-selected:bg-card aria-selected:shadow-[inset_0_0_0_1.5px_var(--border-selected)]' : '' }}"
         >
             @if (!empty($tab['icon']))
                 <x-jaunt.icon :name="$tab['icon']" size="sm" />
@@ -81,7 +81,7 @@ $pills = $variant === 'pills';
             @if (isset($tab['count']))
                 <span
                     class="font-mono text-2xs font-semibold px-1.5 py-px rounded-full bg-sunken text-tertiary u-tabular"
-                    :class="active === '{{ $tab['id'] }}' && 'bg-accent-subtle text-accent-text'"
+                    :class="active === '{{ $tab['id'] }}' && 'bg-selected text-primary'"
                 >{{ $tab['count'] }}</span>
             @endif
             @if (!$pills)

@@ -1,6 +1,6 @@
 # Pilot
 
-A Storyblok-like headless CMS built with Laravel 11, Livewire 3, Tailwind CSS, Alpine.js, Sanctum, and Lighthouse GraphQL.
+A Storyblok-like headless CMS built with Laravel 12, Livewire 4, Tailwind CSS, Alpine.js, Sanctum, and Lighthouse GraphQL.
 
 ## Features
 
@@ -17,55 +17,63 @@ A Storyblok-like headless CMS built with Laravel 11, Livewire 3, Tailwind CSS, A
 
 ## Requirements
 
-- PHP 8.2+
-- Composer
-- Node.js & NPM
-- SQLite (for local development) or MySQL/PostgreSQL
+- PHP 8.4.1+
+- Composer 2
+- A current Node.js LTS release and npm
+- MySQL 8+ (the local default), SQLite, or PostgreSQL
+
+Use the same supported PHP binary for Composer, Artisan, queues, and tests. If you use Herd, isolate the site to PHP 8.4 or newer before installing dependencies.
 
 ## Installation
 
-1. Clone the repository and install dependencies:
+Pilot installs like a conventional Laravel application. Clone the repository and install its dependencies:
 
 ```bash
+git clone https://github.com/WindfallInc/Pilot.git
+cd Pilot
 composer install
 npm install
 ```
 
-2. Copy the environment file and generate the application key:
+Create the Laravel environment file and application key:
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-3. Create the database (SQLite for local development):
+Create an empty MySQL database named `pilot`, then adjust the standard `DB_*` values in `.env` if your local credentials differ from the defaults:
 
-```bash
-touch database/database.sqlite
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=pilot
+DB_USERNAME=root
+DB_PASSWORD=
 ```
 
-4. Run migrations and seed the database:
+Run Pilot's interactive installer. It uses Laravel migrations for the schema and prompts for the first administrator's name, email address, and password; no default user accounts are created.
 
 ```bash
-php artisan migrate
-php artisan db:seed
-```
-
-5. Build frontend assets:
-
-```bash
+php artisan pilot:install
+php artisan storage:link
 npm run build
-# Or for development:
-npm run dev
 ```
 
-6. Start the development server:
+Start the development stack:
 
 ```bash
-php artisan serve
+composer run dev
 ```
 
-7. Set up Laravel Boost (for Cursor / Claude Code):
+This starts Laravel, the queue worker, Pail logs, and Vite together. Open the URL printed in the terminal, normally `http://127.0.0.1:8000`.
+
+For a prepared environment with its MySQL database already created, `composer run setup` runs the same steps and presents the administrator prompts as a convenience.
+
+### Laravel Boost (optional)
+
+Set up Laravel Boost for Cursor or Claude Code after installation:
 
 ```bash
 php artisan boost:update
@@ -73,14 +81,9 @@ php artisan boost:update
 
 Boost config lives in `boost.json`. Generated agent files (`.cursor/`, `.claude/`, `AGENTS.md`, etc.) are gitignored and recreated locally by that command. In Cursor, enable **laravel-boost** in MCP settings after running it.
 
-## Default Login
+## First Login
 
-After seeding, you can log in with:
-
-- **Admin**: admin@pilot.com / password
-- **Editor**: editor@pilot.com / password
-- **Author**: author@pilot.com / password
-- **Viewer**: viewer@pilot.com / password
+Sign in with the administrator account you created during `php artisan pilot:install`. Additional Editor, Author, and Viewer accounts can be created from the user management screen.
 
 ## Admin Interface
 

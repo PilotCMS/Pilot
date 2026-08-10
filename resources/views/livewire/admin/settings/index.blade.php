@@ -1,22 +1,20 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">CMS Settings</h1>
-            <p class="cms-subtitle">Configure public rendering, API access, and preview behavior.</p>
-        </div>
-
-        <div class="cms-actions">
+    <x-jaunt.shell.dynamic-header title="CMS Settings" subtitle="Configure public rendering, API access, and preview behavior." top="0px" as="header" scroll-target="#cms-settings-scroll" aria-label="Page header">
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
             <button type="button" wire:click="resetToEnvironmentDefaults" wire:confirm="Reset CMS settings to environment defaults?" class="cms-btn cms-btn-secondary">
                 Reset
             </button>
-            <button type="submit" form="cms-settings-form" class="cms-btn cms-btn-primary">
-                Save settings
+            <button type="submit" form="cms-settings-form" class="cms-btn cms-btn-primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">Save settings</span>
+                <span wire:loading wire:target="save">Saving…</span>
             </button>
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="flex min-h-0 flex-1">
-        <main class="min-w-0 flex-1 overflow-y-auto">
+        <main id="cms-settings-scroll" class="min-w-0 flex-1 overflow-y-auto">
             <div class="w-full space-y-8 p-6 md:p-8">
                 <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">

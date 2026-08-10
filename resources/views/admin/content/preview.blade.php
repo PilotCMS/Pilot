@@ -107,7 +107,7 @@
                         data-pilot-block-id="{{ $block->id }}"
                         data-pilot-component="{{ $block->type }}"
                         data-pilot-component-path="{{ $content->type }}/{{ $block->type }}"
-                        class="rounded-lg border border-transparent transition-colors hover:border-teal-300 hover:bg-teal-50/30"
+                        class="rounded-lg border border-transparent transition-colors hover:border-blue-300 hover:bg-blue-50/30"
                     >
                         <div class="pilot-preview-toolbar" aria-hidden="true">
                             <button type="button" data-pilot-action="move-up" title="Move up">↑</button>

@@ -120,7 +120,7 @@ $badgeVariantClasses = [
             this.$dispatch('sort', { key: col.key, dir: this.sortDir });
         },
     }"
-    {{ $attributes->merge(['class' => 'bg-card border border-[color:var(--border-default)] rounded-lg overflow-hidden']) }}
+    {{ $attributes->merge(['class' => 'bg-card outline outline-1 outline-[color:var(--border-subtle)] -outline-offset-1 rounded-xl shadow-sm overflow-hidden']) }}
 >
     @if ($hasBulkActions)
         <div x-show="selected.length > 0" x-cloak class="flex items-center gap-2 px-3.5 h-row border-b border-subtle bg-selected">

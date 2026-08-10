@@ -220,6 +220,7 @@ class Index extends Component
     protected function filteredContentQuery(): Builder
     {
         $query = Content::query()
+            ->with(['updater:id,name', 'creator:id,name'])
             ->where('space_id', $this->space->id);
 
         $search = trim($this->search);

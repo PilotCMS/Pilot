@@ -1,22 +1,19 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Datasources</h1>
-            <p class="cms-subtitle">Manage reusable option lists for block fields.</p>
-        </div>
-
+    <x-jaunt.shell.dynamic-header title="Datasources" subtitle="Manage reusable option lists for block fields." top="0px" as="header" scroll-target="#datasources-scroll" aria-label="Page header">
+        <x-slot:actions>
         @can('manage datasources')
-            <div class="cms-actions">
+            <div class="cms-actions pb-0.5">
                 <button type="button" wire:click="openCreateDatasource" class="cms-btn cms-btn-primary">
-                    <i class="ph ph-plus" aria-hidden="true"></i>
+                    <x-jaunt.icon name="plus" size="sm" />
                     New datasource
                 </button>
             </div>
         @endcan
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="flex min-h-0 flex-1">
-        <main class="min-w-0 flex-1 overflow-y-auto">
+        <main id="datasources-scroll" class="min-w-0 flex-1 overflow-y-auto">
             <div class="w-full space-y-8 p-6 md:p-8">
                 <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
                     <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -97,8 +94,8 @@
                                 <flux:table.row>
                                     <flux:table.cell colspan="5" class="py-16">
                                         <div class="flex flex-col items-center justify-center text-center">
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-teal-100">
-                                                <i class="ph ph-database text-2xl text-teal-600"></i>
+                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
+                                                <x-jaunt.icon name="database" size="lg" class="text-blue-600" />
                                             </div>
                                             <flux:heading size="sm" class="mt-4">No datasources found</flux:heading>
                                             <flux:text class="mt-2 max-w-sm text-sm text-slate-500">Create an option list for select fields, labels, statuses, themes, or reusable content choices.</flux:text>
@@ -238,16 +235,16 @@
                                                 @can('manage datasources')
                                                     <div class="flex shrink-0 items-center gap-1">
                                                         <button type="button" wire:click="moveEntryUp({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move up">
-                                                            <i class="ph ph-arrow-up text-sm"></i>
+                                                            <x-jaunt.icon name="arrow-up" size="xs" />
                                                         </button>
                                                         <button type="button" wire:click="moveEntryDown({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move down">
-                                                            <i class="ph ph-arrow-down text-sm"></i>
+                                                            <x-jaunt.icon name="arrow-down" size="xs" />
                                                         </button>
                                                         <button type="button" wire:click="editEntry({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Edit">
-                                                            <i class="ph ph-pencil-simple text-sm"></i>
+                                                            <x-jaunt.icon name="pencil" size="xs" />
                                                         </button>
                                                         <button type="button" wire:click="deleteEntry({{ $entry->id }})" wire:confirm="Delete this entry?" class="flex size-7 items-center justify-center rounded text-red-500 hover:bg-red-50" title="Delete">
-                                                            <i class="ph ph-trash text-sm"></i>
+                                                            <x-jaunt.icon name="trash-2" size="xs" />
                                                         </button>
                                                     </div>
                                                 @endcan
@@ -267,7 +264,7 @@
                     <div class="flex h-full items-center justify-center text-center">
                         <div>
                             <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                                <i class="ph ph-database text-xl text-slate-500"></i>
+                                <x-jaunt.icon name="database" size="lg" class="text-slate-500" />
                             </div>
                             <p class="mt-4 text-sm font-medium text-slate-800">Select a datasource</p>
                             <p class="mt-1 max-w-xs text-sm text-slate-500">Manage entries and copy the datasource slug for block schema fields.</p>

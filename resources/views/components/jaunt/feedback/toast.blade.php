@@ -58,7 +58,7 @@ $showIcon = $variant !== 'neutral';
             <div class="text-xs text-secondary">{{ $slot }}</div>
         @endif
         @if ($actionLabel)
-            <button type="button" class="self-start mt-1.5 text-xs font-semibold text-accent-text hover:underline">
+            <button type="button" class="self-start mt-1.5 text-xs font-semibold text-accent-text">
                 {{ $actionLabel }}
             </button>
         @endif

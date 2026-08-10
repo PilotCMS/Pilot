@@ -1,22 +1,20 @@
 <div class="flex h-full min-w-0 flex-col bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Content Types</h1>
-            <p class="cms-subtitle">Define page models, fields, blocks, and URL behavior.</p>
-        </div>
-        <div class="cms-actions">
+    <x-jaunt.shell.dynamic-header title="Content Types" subtitle="Define page models, fields, blocks, and URL behavior." top="0px" as="header" scroll-target="#content-types-scroll" aria-label="Page header">
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
             <button type="button" wire:click="create" class="cms-btn cms-btn-primary">
-                <i class="ph ph-plus" aria-hidden="true"></i>
+                <x-jaunt.icon name="plus" size="sm" />
                 New content type
             </button>
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_var(--admin-rail-width)]">
-        <main class="min-w-0 overflow-y-auto p-6">
+        <main id="content-types-scroll" class="min-w-0 overflow-y-auto p-6">
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @forelse($contentTypes as $contentType)
-                    <button type="button" wire:click="edit({{ $contentType->id }})" class="rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm transition-colors hover:border-teal-300 hover:bg-teal-50/30">
+                    <button type="button" wire:click="edit({{ $contentType->id }})" class="rounded-lg border border-slate-200 bg-white p-5 text-left shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50/30">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h2 class="font-semibold text-slate-900">{{ $contentType->name }}</h2>
@@ -83,14 +81,14 @@
                         </div>
 
                         @foreach($schema['fields'] ?? [] as $index => $field)
-                            <div wire:click="selectField({{ $index }})" class="rounded-lg border p-3 {{ $selectedFieldIndex === $index ? 'border-teal-500 bg-teal-50/50' : 'border-slate-200' }}">
+                            <div wire:click="selectField({{ $index }})" class="rounded-lg border p-3 {{ $selectedFieldIndex === $index ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200' }}">
                                 <div class="flex items-center justify-between gap-2">
                                     <div class="min-w-0">
                                         <div class="truncate text-sm font-medium text-slate-800">{{ $field['label'] ?: 'Untitled field' }}</div>
                                         <div class="text-xs text-slate-500">{{ $field['type'] }} · {{ $field['key'] ?: 'key' }}</div>
                                     </div>
                                     <button type="button" wire:click.stop="removeField({{ $index }})" class="text-slate-400 hover:text-red-500">
-                                        <i class="ph ph-trash"></i>
+                                        <x-jaunt.icon name="trash-2" size="sm" />
                                     </button>
                                 </div>
                             </div>
@@ -123,7 +121,7 @@
                         <div class="grid grid-cols-1 gap-2">
                             @foreach($blockTypes as $blockType)
                                 <label class="flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                                    <input type="checkbox" wire:model="allowedBlocks" value="{{ $blockType->key }}" class="rounded border-slate-300 text-teal-500 focus:ring-teal-500">
+                                    <input type="checkbox" wire:model="allowedBlocks" value="{{ $blockType->key }}" class="rounded border-slate-300 text-blue-500 focus:ring-blue-500">
                                     <span>{{ $blockType->name }}</span>
                                 </label>
                             @endforeach

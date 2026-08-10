@@ -5,11 +5,11 @@
 
 :root {
   --radius-none: 0;
-  --radius-xs:   4px;    /* tags, kbd, small chips */
-  --radius-sm:   6px;    /* inputs, buttons, menu items */
-  --radius-md:   8px;    /* dropdowns, small cards */
-  --radius-lg:   10px;   /* cards, panels */
-  --radius-xl:   14px;   /* dialogs, large surfaces */
-  --radius-2xl:  20px;   /* marketing blocks */
+  --radius-xs:   6px;    /* tags, kbd, small chips */
+  --radius-sm:   8px;    /* inputs, buttons, menu items */
+  --radius-md:   10px;   /* dropdowns, segmented controls */
+  --radius-lg:   12px;   /* small cards, popovers */
+  --radius-xl:   16px;   /* THE card radius (rounded-2xl) */
+  --radius-2xl:  24px;   /* dialogs, marketing blocks */
   --radius-full: 999px;  /* pills, avatars, switches */
 }

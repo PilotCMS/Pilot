@@ -16,3 +16,17 @@ it('keeps an externally hosted asset url absolute', function () {
     expect(Asset::toRelativeUrl('https://images.example.com/photo.jpg?width=1200#hero'))
         ->toBe('https://images.example.com/photo.jpg?width=1200#hero');
 });
+
+it('requests bounded thumbnails from supported external image providers', function () {
+    $asset = new Asset([
+        'disk' => 'stock',
+        'path' => 'https://images.unsplash.com/photo-example?auto=format&fit=crop&w=2200&q=85',
+        'mime' => 'image/jpeg',
+    ]);
+
+    expect($asset->thumbnailUrl())
+        ->toStartWith('https://images.unsplash.com/photo-example?')
+        ->toContain('w=640')
+        ->toContain('h=480')
+        ->toContain('q=78');
+});

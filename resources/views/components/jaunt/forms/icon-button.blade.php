@@ -1,21 +1,25 @@
 {{-- jaunt.forms.icon-button — square, icon-only control. Always pass a label. --}}
 @props([
     'label',
-    'size' => 'md', // sm(26) md(32) lg(40)
+    'size' => 'md', // sm(30) md(36) lg(44)
     'solid' => false,
     'active' => false,
 ])
 
 @php
-$sizes = ['sm' => 'w-control-sm h-control-sm', 'md' => 'w-control h-control', 'lg' => 'w-control-lg h-control-lg'];
-$solidCls = $solid ? 'bg-card border-[color:var(--border-default)] shadow-xs' : '';
+$sizes = [
+    'sm' => 'w-control-sm h-control-sm [&_svg]:size-[15px]',
+    'md' => 'w-control h-control [&_svg]:size-icon-md',
+    'lg' => 'w-control-lg h-control-lg [&_svg]:size-icon-lg',
+];
+$solidCls = $solid ? 'bg-card shadow-xs' : '';
 $activeCls = $active ? 'bg-accent-subtle text-accent-text' : '';
 @endphp
 
 <button
     {{ $attributes->merge([
-        'class' => "inline-flex items-center justify-center rounded-sm border border-transparent
-            text-secondary transition-colors duration-instant ease-standard
+        'class' => "inline-flex items-center justify-center rounded-full cursor-pointer
+            text-secondary transition-[color,background-color,box-shadow,transform] duration-instant ease-standard
             enabled:hover:bg-hover enabled:hover:text-primary
             enabled:active:bg-active enabled:active:scale-[0.94]
             focus-visible:outline-none focus-visible:shadow-ring

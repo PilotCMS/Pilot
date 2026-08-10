@@ -1,31 +1,39 @@
-<div class="cms-shell flex h-full w-full min-w-0 flex-col">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Content</h1>
-            <p class="cms-subtitle">Pages, folders and global content for your site.</p>
-        </div>
-
-        <div class="cms-actions">
+<div x-data="{ activityOpen: false }" class="cms-shell relative flex h-full w-full min-w-0 flex-col">
+    <x-jaunt.shell.dynamic-header
+        title="Content"
+        subtitle="Pages, folders and global content for your site."
+        top="0px"
+        as="header"
+        scroll-target="#content-list-scroll"
+        aria-label="Page header"
+    >
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
+            <button type="button" x-on:click="activityOpen = true" class="cms-btn cms-btn-secondary" aria-haspopup="dialog" x-bind:aria-expanded="activityOpen">
+                <x-jaunt.icon name="activity" size="sm" />
+                Activity
+            </button>
             @can('create content')
                 <a href="{{ route('admin.content.create', ['type' => 'folder', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="cms-btn cms-btn-secondary">
-                    <i class="ph ph-folder-plus" aria-hidden="true"></i>
+                    <x-jaunt.icon name="folder-plus" size="sm" />
                     New folder
                 </a>
                 <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $selectedFolderId]) }}" wire:navigate class="cms-btn cms-btn-primary">
-                    <i class="ph ph-plus" aria-hidden="true"></i>
+                    <x-jaunt.icon name="plus" size="sm" />
                     New page
                 </a>
             @endcan
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
-    <div class="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <main class="min-w-0 overflow-y-auto">
+    <div class="grid min-h-0 flex-1 grid-cols-1">
+        <main id="content-list-scroll" class="min-w-0 overflow-y-auto">
             <div class="flex min-h-full flex-col gap-6 px-[var(--pad-view)] pb-10 pt-1">
                 <div>
                     <div class="cms-toolbar">
                         <label class="cms-input w-52">
-                            <i class="ph ph-magnifying-glass text-tertiary" aria-hidden="true"></i>
+                            <x-jaunt.icon name="search" size="sm" class="text-tertiary" />
                             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search content" />
                         </label>
 
@@ -47,14 +55,13 @@
                                     <option value="created_at">Created</option>
                                     <option value="status">Status</option>
                                 </select>
-                                <i class="ph ph-caret-down pointer-events-none absolute right-2 top-1.5 text-tertiary" aria-hidden="true"></i>
+                                <x-jaunt.icon name="chevron-down" size="sm" class="pointer-events-none absolute right-2 top-1.5 text-tertiary" />
                             </div>
                         </div>
                     </div>
 
                     <div class="cms-panel min-w-[720px]">
-                        <div class="cms-table-head">
-                            <div><input type="checkbox" class="rounded border-strong text-accent focus:ring-accent" disabled /></div>
+                        <div class="cms-table-head cms-content-table-grid">
                             <div>Name</div>
                             <div>Type</div>
                             <div>Updated</div>
@@ -63,23 +70,21 @@
 
                         @forelse($this->contentTree as $row)
                             @php $content = $row->content; $depth = $row->depth; @endphp
-                            <div class="cms-table-row group" wire:key="content-{{ $content->id }}">
-                                <div><input type="checkbox" class="rounded border-strong text-accent focus:ring-accent" /></div>
-
+                            <div class="cms-table-row cms-content-table-grid group" wire:key="content-{{ $content->id }}">
                                 <div class="flex min-w-0 items-center gap-2" style="padding-left: {{ $depth * 20 }}px;">
                                     @if($content->isFolder())
                                         <button type="button" wire:click="toggleFolder({{ $content->id }})" class="cms-iconbtn !h-5 !w-5" aria-label="{{ $this->isFolderExpanded($content->id) ? 'Collapse' : 'Expand' }}">
-                                            <i class="ph {{ $this->isFolderExpanded($content->id) ? 'ph-caret-down' : 'ph-caret-right' }} text-xs" aria-hidden="true"></i>
+                                            <x-jaunt.icon :name="$this->isFolderExpanded($content->id) ? 'chevron-down' : 'chevron-right'" size="xs" />
                                         </button>
-                                        <span class="cms-tile cms-tile-info"><i class="ph-fill ph-folder" aria-hidden="true"></i></span>
+                                        <span class="cms-tile cms-tile-info"><x-jaunt.icon name="folder" size="sm" /></span>
                                     @else
                                         <span class="w-5 shrink-0" aria-hidden="true"></span>
-                                        <span class="cms-tile"><i class="ph ph-file-text" aria-hidden="true"></i></span>
+                                        <span class="cms-tile"><x-jaunt.icon name="file-text" size="sm" /></span>
                                     @endif
 
                                     <div class="min-w-0 flex-1">
                                         @if($content->isFolder())
-                                            <span class="block truncate text-sm font-medium text-primary">{{ $content->name }}</span>
+                                            <button type="button" wire:click="toggleFolder({{ $content->id }})" class="block w-full truncate text-left text-sm font-medium text-primary hover:text-accent-text">{{ $content->name }}</button>
                                         @else
                                             <a href="{{ route('admin.content.editor', $content) }}" wire:navigate class="block truncate text-sm font-medium text-primary hover:text-accent-text">{{ $content->name }}</a>
                                         @endif
@@ -119,7 +124,7 @@
                             </div>
                         @empty
                             <div class="flex flex-col items-center justify-center px-4 py-20 text-center">
-                                <div class="cms-tile !h-14 !w-14 !rounded-lg"><i class="ph ph-folder-open text-2xl" aria-hidden="true"></i></div>
+                                <div class="cms-tile !h-14 !w-14 !rounded-lg"><x-jaunt.icon name="folder-open" size="lg" /></div>
                                 <p class="mt-4 text-sm font-medium text-primary">No content found</p>
                                 <p class="cms-subtitle">Get started by creating a folder or page.</p>
                             </div>
@@ -128,16 +133,32 @@
                 </div>
 
                 <div class="flex items-center justify-center gap-2 text-2xs text-tertiary">
-                    <i class="ph ph-info" aria-hidden="true"></i>
+                    <x-jaunt.icon name="info" size="sm" />
                     Drag folders to reorder your content structure.
                 </div>
             </div>
         </main>
 
-        <aside class="cms-rail hidden xl:flex" aria-label="Space Activity">
+        <div x-show="activityOpen" x-cloak x-transition.opacity class="absolute inset-0 z-40 bg-black/20" x-on:click="activityOpen = false" aria-hidden="true"></div>
+        <aside
+            x-show="activityOpen"
+            x-cloak
+            x-transition:enter="transition duration-base ease-standard"
+            x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition duration-fast ease-standard"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="translate-x-full"
+            x-on:keydown.escape.window="activityOpen = false"
+            class="cms-rail absolute inset-y-0 right-0 z-50 flex w-80 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Space activity"
+        >
             <div class="cms-rail-head">
-                <i class="ph ph-activity text-tertiary" aria-hidden="true"></i>
+                <x-jaunt.icon name="activity" size="sm" class="text-tertiary" />
                 <h2 class="cms-rail-title">Space activity</h2>
+                <button type="button" x-on:click="activityOpen = false" class="cms-iconbtn ml-auto" aria-label="Close activity"><x-jaunt.icon name="x" size="sm" /></button>
             </div>
             <div class="min-h-0 flex-1 overflow-y-auto">
                 @forelse($this->recentActivity as $activity)
@@ -162,7 +183,7 @@
                                         }
                                     @endphp
                                     @if($subjectRoute)
-                                        <a href="{{ $subjectRoute }}" wire:navigate class="font-medium text-accent-text hover:underline">{{ $subjectName }}</a>.
+                                        <a href="{{ $subjectRoute }}" wire:navigate class="font-medium text-accent-text">{{ $subjectName }}</a>.
                                     @else
                                         <span class="font-medium text-accent-text">{{ $subjectName }}</span>.
                                     @endif
@@ -173,7 +194,7 @@
                     </div>
                 @empty
                     <div class="p-8 text-center">
-                        <i class="ph ph-clock-counter-clockwise text-2xl text-tertiary" aria-hidden="true"></i>
+                        <x-jaunt.icon name="history" size="lg" class="text-tertiary" />
                         <p class="mt-2 text-xs text-tertiary">No recent activity</p>
                     </div>
                 @endforelse

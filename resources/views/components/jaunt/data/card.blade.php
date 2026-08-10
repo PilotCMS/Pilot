@@ -36,18 +36,18 @@ $hasBody = isset($body);
 $hasFooter = isset($footer);
 $hasStructure = $hasMedia || $hasHeader || $hasBody || $hasFooter;
 
-$base = 'bg-card border border-[color:var(--border-default)] rounded-lg shadow-xs overflow-hidden '
-    . 'transition-[box-shadow,border-color,transform] duration-fast ease-standard';
+$base = 'bg-card outline outline-1 outline-[color:var(--border-subtle)] -outline-offset-1 rounded-xl shadow-sm overflow-hidden '
+    . 'transition-[box-shadow,outline-color,transform] duration-fast ease-standard';
 
 $hoverCls = $hoverable || $clickable
-    ? 'hover:border-strong hover:shadow-md'
+    ? 'hover:shadow-md'
     : '';
 
 $clickableCls = $clickable
     ? 'cursor-pointer text-left w-full block font-inherit text-inherit hover:-translate-y-px focus-visible:outline-none focus-visible:shadow-ring'
     : '';
 
-$selectedCls = $selected ? 'border-accent shadow-[0_0_0_1px_var(--accent)]' : '';
+$selectedCls = $selected ? 'outline-[1.5px] outline-[color:var(--border-selected)]' : '';
 @endphp
 
 <{{ $tag }}

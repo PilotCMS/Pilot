@@ -38,17 +38,19 @@
         {{-- Assets grid/list --}}
         <div class="flex-1 overflow-y-auto max-h-[400px]">
             @if($viewMode === 'grid')
-            <div class="grid grid-cols-4 gap-3">
+            <div class="grid grid-cols-3 gap-3">
                 @foreach($assets as $asset)
-                    <button wire:click="selectAsset({{ $asset->id }})" class="group text-left rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 hover:ring-2 hover:ring-primary-500 transition-all">
+                    <button type="button" wire:click="selectAsset({{ $asset->id }})" class="group overflow-hidden rounded-xl bg-card text-left shadow-xs outline outline-1 -outline-offset-1 outline-[color:var(--border-subtle)] transition-[box-shadow,transform] duration-fast ease-standard hover:-translate-y-px hover:shadow-md focus-visible:outline-none focus-visible:shadow-ring" aria-label="Select {{ $asset->displayName() }}">
                         @if($asset->isImage())
-                            <img src="{{ $asset->relativeUrl() }}" alt="{{ $asset->displayName() }}" class="w-full aspect-square object-cover" loading="lazy" />
+                            <img src="{{ $asset->thumbnailRelativeUrl() }}" alt="{{ $asset->displayName() }}" class="aspect-[4/3] w-full object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.015]" loading="lazy" />
                         @else
-                            <div class="w-full aspect-square bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                                <flux:icon.document class="size-12 text-muted-foreground" />
+                            <div class="flex aspect-[4/3] w-full items-center justify-center bg-sunken text-tertiary">
+                                <span class="grid size-11 place-items-center rounded-lg border border-subtle bg-card shadow-xs">
+                                    <flux:icon.document class="size-6" />
+                                </span>
                             </div>
                         @endif
-                        <div class="p-2 truncate text-xs text-muted-foreground">{{ $asset->displayName() }}</div>
+                        <div class="truncate px-2.5 py-2.5 text-xs font-medium text-primary" title="{{ $asset->displayName() }}">{{ $asset->displayName() }}</div>
                     </button>
                 @endforeach
             </div>
@@ -57,7 +59,7 @@
                 @foreach($assets as $asset)
                     <button wire:click="selectAsset({{ $asset->id }})" class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left">
                         @if($asset->isImage())
-                            <img src="{{ $asset->relativeUrl() }}" alt="" class="w-12 h-12 object-cover rounded" />
+                            <img src="{{ $asset->thumbnailRelativeUrl() }}" alt="" class="w-12 h-12 object-cover rounded" loading="lazy" />
                         @else
                             <div class="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-center">
                                 <flux:icon.document class="size-6 text-muted-foreground" />

@@ -15,8 +15,14 @@ use Illuminate\Database\Seeder;
 
 class SpaceSeeder extends Seeder
 {
-    public function run(): void
+    public function run(?User $admin = null): void
     {
+        $admin ??= User::role('Admin')->oldest()->first();
+
+        if ($admin === null) {
+            throw new \RuntimeException('Create an administrator with php artisan pilot:install before seeding a space.');
+        }
+
         $space = Space::firstOrCreate(
             ['slug' => 'main'],
             ['name' => 'Main Space']
@@ -32,19 +38,6 @@ class SpaceSeeder extends Seeder
             ['space_id' => $space->id, 'code' => 'es'],
             ['name' => 'Spanish', 'is_default' => false]
         );
-
-        // Get or create admin user
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@pilot.com'],
-            [
-                'name' => 'Admin User',
-                'password' => bcrypt('password'),
-            ]
-        );
-
-        if (! $admin->hasRole('Admin')) {
-            $admin->assignRole('Admin');
-        }
 
         // Create folders
         $homeFolder = Content::firstOrCreate(

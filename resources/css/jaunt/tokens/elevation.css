@@ -7,14 +7,14 @@
 
 :root {
   /* Light — layered, tight, cool-tinted */
-  --shadow-xs: 0 1px 2px rgba(19, 20, 24, 0.06);
-  --shadow-sm: 0 1px 2px rgba(19, 20, 24, 0.06), 0 2px 6px rgba(19, 20, 24, 0.05);
-  --shadow-md: 0 2px 4px rgba(19, 20, 24, 0.06), 0 6px 16px rgba(19, 20, 24, 0.08);
-  --shadow-lg: 0 4px 8px rgba(19, 20, 24, 0.07), 0 16px 40px rgba(19, 20, 24, 0.12);
-  --shadow-xl: 0 8px 16px rgba(19, 20, 24, 0.08), 0 28px 64px rgba(19, 20, 24, 0.18);
+  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.06);
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.08), 0 4px 10px rgba(28, 25, 23, 0.05);
+  --shadow-md: 0 2px 4px rgba(28, 25, 23, 0.09), 0 10px 24px rgba(28, 25, 23, 0.07);
+  --shadow-lg: 0 4px 8px rgba(28, 25, 23, 0.10), 0 24px 44px rgba(28, 25, 23, 0.10);
+  --shadow-xl: 0 6px 12px rgba(28, 25, 23, 0.12), 0 36px 64px rgba(28, 25, 23, 0.14);
 
   /* Inner well (inputs, tracks) */
-  --shadow-inset: inset 0 1px 2px rgba(19, 20, 24, 0.05);
+  --shadow-inset: inset 0 1px 2px rgba(28, 25, 23, 0.05);
 }
 
 [data-theme="dark"] {

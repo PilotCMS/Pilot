@@ -46,7 +46,7 @@ $headIconCls = $variant === 'danger'
 >
     <div
         role="dialog" aria-modal="true" aria-label="{{ $title }}"
-        class="relative z-dialog w-full {{ $sizes }} max-h-[calc(100vh-48px)] overflow-auto bg-raised border-[color:var(--border-default)] border shadow-xl rounded-xl"
+        class="relative z-dialog w-full {{ $sizes }} max-h-[calc(100vh-48px)] overflow-auto bg-raised border-[color:var(--border-default)] border shadow-xl rounded-2xl"
         x-transition:enter="transition ease-out duration-slow"
         x-transition:enter-start="opacity-0 translate-y-2 scale-[0.98]"
         x-transition:enter-end="opacity-100 translate-y-0 scale-100"

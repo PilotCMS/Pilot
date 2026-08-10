@@ -1,3 +1,4 @@
+<div class="cms-shell h-screen w-full relative overflow-hidden selection:bg-accent-subtle selection:text-accent-text">
 <div
     x-data="{
         rightPanelTab: @entangle('rightPanelTab'),
@@ -8,12 +9,48 @@
         previewDevice: 'desktop',
         previewTargetOrigins: @js($this->previewTargetOrigins),
         previewFrameSrc: @js($this->previewFrameUrl),
+        previewRefreshTimer: null,
+        pendingPreviewUrl: null,
         pendingPreviewScroll: null,
         pendingPreviewScrollBlockId: null,
         saveState: @entangle('saveState'),
         conflictMessage: @entangle('conflictMessage'),
-        drawerOpen: @entangle('drawerOpen'),
-        leftSidebarCollapsed: @entangle('leftSidebarCollapsed'),
+        drawerOpen: @entangle('drawerOpen').live,
+        leftSidebarCollapsed: @entangle('leftSidebarCollapsed').live,
+        compactWorkspace: false,
+        get inspectorOpen() {
+            return this.drawerOpen;
+        },
+        set inspectorOpen(value) {
+            this.drawerOpen = value;
+        },
+        get leftCollapsed() {
+            return this.leftSidebarCollapsed;
+        },
+        set leftCollapsed(value) {
+            this.leftSidebarCollapsed = value;
+        },
+        applyWorkspaceWidth() {
+            this.compactWorkspace = window.matchMedia('(max-width: 1499px)').matches;
+
+            if (this.compactWorkspace && this.drawerOpen && ! this.leftSidebarCollapsed) {
+                this.leftSidebarCollapsed = true;
+            }
+        },
+        openPages() {
+            this.leftSidebarCollapsed = false;
+
+            if (this.compactWorkspace) {
+                this.drawerOpen = false;
+            }
+        },
+        openInspector() {
+            this.drawerOpen = true;
+
+            if (this.compactWorkspace) {
+                this.leftSidebarCollapsed = true;
+            }
+        },
         previewWidth() {
             const desktopWidth = ! this.drawerOpen && this.leftSidebarCollapsed
                 ? 'min(100%, 1600px)'
@@ -101,6 +138,23 @@
             this.capturePreviewScroll();
             this.previewFrameSrc = url;
         },
+        queuePreviewFrameRefresh(url) {
+            if (! url) {
+                return;
+            }
+
+            this.pendingPreviewUrl = url;
+            clearTimeout(this.previewRefreshTimer);
+
+            if (this.canvasMode !== 'preview') {
+                return;
+            }
+
+            this.previewRefreshTimer = setTimeout(() => {
+                this.refreshPreviewFrame(this.pendingPreviewUrl);
+                this.pendingPreviewUrl = null;
+            }, 700);
+        },
         previewScrollPosition() {
             const frame = this.$refs.previewFrame;
 
@@ -187,6 +241,9 @@
             return this.savedJustNow ? 'Saved just now' : 'Saved';
         },
         init() {
+            this.applyWorkspaceWidth();
+            window.addEventListener('resize', () => this.applyWorkspaceWidth());
+
             $wire.on('saved', () => {
                 this.savedJustNow = true;
                 setTimeout(() => { this.savedJustNow = false; }, 2000);
@@ -195,7 +252,7 @@
             $wire.on('preview-frame-refresh', (event) => {
                 const payload = Array.isArray(event) ? event[0] : event;
 
-                this.refreshPreviewFrame(payload?.url);
+                this.queuePreviewFrameRefresh(payload?.url);
             });
 
             $wire.on('preview-selection-sync', (event) => {
@@ -207,10 +264,20 @@
             });
 
             this.$watch('selectedBlockId', () => {
+                if (this.selectedBlockId) {
+                    this.openInspector();
+                }
+
                 this.$nextTick(() => {
                     this.syncPreviewSelection();
                     this.scrollPreviewBlockIntoView();
                 });
+            });
+
+            this.$watch('canvasMode', (mode) => {
+                if (mode === 'preview' && this.pendingPreviewUrl) {
+                    this.queuePreviewFrameRefresh(this.pendingPreviewUrl);
+                }
             });
 
             this.$nextTick(() => {
@@ -279,67 +346,87 @@
             });
         }
     }"
-    class="cms-shell h-screen w-full relative overflow-hidden selection:bg-accent-subtle selection:text-accent-text"
+    class="contents"
 >
     <livewire:admin.content.content-sync-poller
         :content-id="$content->id"
         :key="'content-sync-poller-' . $content->id"
     />
 
-    {{-- Fixed header: top 0, left 70px (after nav), right 500px (before aside when open) --}}
-    <header class="fixed top-0 flex h-topbar items-center justify-between gap-4 border-b border-subtle bg-app px-[var(--pad-view)] z-30 transition-[right]" aria-label="Editor toolbar" style="left: var(--admin-nav-width); right: 0;">
-        <div class="flex items-center gap-3">
-            <nav class="flex items-center text-sm text-tertiary" aria-label="Breadcrumb">
-                <a href="{{ route('admin.content.index') }}" class="cursor-pointer transition-colors hover:text-secondary" wire:navigate>{{ $content->space?->name ?? 'Space' }}</a>
-                <i class="ph ph-caret-right mx-2 text-xs text-disabled" aria-hidden="true"></i>
-                @foreach($this->breadcrumbs as $crumb)
-                    <a href="{{ route('admin.content.index', ['folder' => $crumb->id]) }}" wire:navigate class="truncate max-w-[100px] transition-colors hover:text-secondary">{{ $crumb->name }}</a>
-                    <i class="ph ph-caret-right mx-2 text-xs text-disabled" aria-hidden="true"></i>
-                @endforeach
-                <span class="rounded-sm bg-active px-2 py-1 font-semibold text-primary">{{ $content->name }}</span>
-            </nav>
-            <div class="h-4 w-px bg-strong mx-1" aria-hidden="true"></div>
-            @if($content->status === 'draft')
-                <div class="cms-badge cms-badge-warning">
-                    <div class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>
-                    <span class="text-xs font-semibold">Unpublished Changes</span>
+    <header class="cms-editor-toolbar fixed top-0 z-[45] flex h-topbar items-center gap-3 border-b border-subtle bg-app px-3 transition-[right]" aria-label="Editor toolbar" style="left: var(--admin-nav-width); right: 0;">
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+            <a href="{{ route('admin.content.index') }}" wire:navigate class="cms-iconbtn text-tertiary hover:bg-hover hover:text-primary" title="Back to content" aria-label="Back to content">
+                <x-jaunt.icon name="arrow-left" size="sm" />
+            </a>
+            <div class="min-w-0">
+                <div class="truncate text-sm font-semibold text-primary">{{ $content->name }}</div>
+                <div class="flex items-center gap-1.5 text-2xs text-tertiary">
+                    <span>{{ $content->space?->name ?? 'Space' }}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{{ $content->status === 'draft' ? 'Unpublished changes' : 'Published' }}</span>
                 </div>
-            @else
-                <div class="cms-badge cms-badge-success">
-                    <div class="w-1.5 h-1.5 rounded-full bg-current"></div>
-                    <span class="text-xs font-semibold">Published</span>
-                </div>
-            @endif
+            </div>
         </div>
 
-        <div class="cms-seg absolute left-1/2 -translate-x-1/2">
-            <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:data-active="previewDevice === 'desktop' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Desktop"><i class="ph ph-desktop text-lg"></i></button>
-            <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:data-active="previewDevice === 'tablet' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Tablet"><i class="ph ph-device-tablet text-lg"></i></button>
-            <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:data-active="previewDevice === 'mobile' ? 'true' : 'false'" class="cms-seg-btn !w-9 !px-0" title="Mobile"><i class="ph ph-device-mobile text-lg"></i></button>
+        <div class="flex shrink-0 items-center gap-2">
+            <div class="cms-seg" aria-label="Editor view">
+                <button type="button" x-on:click="canvasMode = 'compose'" x-bind:data-active="canvasMode === 'compose' ? 'true' : 'false'" class="cms-seg-btn">Compose</button>
+                <button type="button" x-on:click="canvasMode = 'preview'" x-bind:data-active="canvasMode === 'preview' ? 'true' : 'false'" class="cms-seg-btn">Preview</button>
+            </div>
+            <div x-show="canvasMode === 'preview'" class="cms-seg hidden lg:flex" aria-label="Preview device">
+                <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:data-active="previewDevice === 'desktop' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Desktop"><x-jaunt.icon name="monitor" size="sm" /></button>
+                <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:data-active="previewDevice === 'tablet' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Tablet"><x-jaunt.icon name="tablet" size="sm" /></button>
+                <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:data-active="previewDevice === 'mobile' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Mobile"><x-jaunt.icon name="smartphone" size="sm" /></button>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <div class="text-xs font-medium flex items-center gap-1.5 mr-2" x-bind:class="conflictMessage ? 'text-amber-600' : saveState === 'saving' ? 'text-slate-500' : 'text-slate-400'">
-                <i class="ph" x-bind:class="conflictMessage ? 'ph-warning-circle' : saveState === 'saving' ? 'ph-spinner-gap animate-spin' : 'ph-check-circle'"></i>
+        <div class="flex min-w-0 flex-1 items-center justify-end gap-2">
+            <div class="hidden items-center gap-1.5 text-xs font-medium text-tertiary xl:flex" x-bind:class="conflictMessage ? 'text-warning' : ''">
+                <span x-show="conflictMessage"><x-jaunt.icon name="circle-alert" size="sm" /></span>
+                <span x-show="! conflictMessage && saveState === 'saving'"><x-jaunt.icon name="loader-circle" size="sm" class="animate-spin" /></span>
+                <span x-show="! conflictMessage && saveState !== 'saving'"><x-jaunt.icon name="circle-check" size="sm" /></span>
                 <span x-text="saveLabel()">Saved</span>
             </div>
-            @if($this->publishedRevisionComparison)
-                <button type="button" wire:click="selectPublishedRevision" class="hidden items-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold shadow-sm transition-colors 2xl:inline-flex {{ $this->publishedRevisionComparison['has_changes'] ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' }}">
-                    <i class="ph {{ $this->publishedRevisionComparison['has_changes'] ? 'ph-git-diff' : 'ph-check-circle' }}"></i>
-                    @if($this->publishedRevisionComparison['has_changes'])
-                        Since publish: {{ count($this->publishedRevisionComparison['content_changes']) }} fields, {{ count($this->publishedRevisionComparison['block_changes']) }} blocks
-                    @else
-                        Matches published
-                    @endif
+            <div class="relative hidden 2xl:block">
+                <select wire:model.live="selectedPreviewTargetId" class="cms-select min-w-28" aria-label="Preview target">
+                    <option value="">Internal</option>
+                    @foreach($this->previewTargets as $previewTarget)
+                        <option value="{{ $previewTarget->id }}">{{ $previewTarget->name }}</option>
+                    @endforeach
+                </select>
+                <x-jaunt.icon name="chevron-down" size="sm" class="pointer-events-none absolute right-2 top-1.5 text-tertiary" />
+            </div>
+            <a href="{{ $this->previewUrl }}" target="_blank" rel="noopener noreferrer" class="cms-iconbtn border border-default bg-card shadow-xs" title="Open preview" aria-label="Open preview">
+                <x-jaunt.icon name="eye" size="sm" />
+            </a>
+            <button type="button" wire:click="undoLastChange" @disabled(! $this->undoRevision) class="cms-iconbtn hidden border border-default bg-card shadow-xs disabled:cursor-not-allowed disabled:opacity-45 lg:inline-flex" title="{{ $this->undoRevision ? 'Undo last change' : 'Nothing to undo' }}" aria-label="Undo last change">
+                <x-jaunt.icon name="undo-2" size="md" />
+            </button>
+            @php
+                $revisionTooltip = 'Revisions';
+
+                if ($this->publishedRevisionComparison) {
+                    $publishedBlockChanges = count($this->publishedRevisionComparison['block_changes']);
+                    $publishedFieldChanges = count($this->publishedRevisionComparison['content_changes']);
+                    $revisionTooltip = $this->publishedRevisionComparison['has_changes']
+                        ? 'Since publish: '.$publishedBlockChanges.' '.Str::plural('block', $publishedBlockChanges).', '.$publishedFieldChanges.' '.Str::plural('field', $publishedFieldChanges)
+                        : 'Matches published';
+                }
+            @endphp
+            <div class="hidden lg:block">
+                <x-jaunt.feedback.tooltip :label="$revisionTooltip" side="bottom-end" id="since-publish-tooltip">
+                <button
+                    type="button"
+                    wire:click="openRevisionModal"
+                    class="cms-iconbtn border border-default bg-card shadow-xs"
+                    aria-label="Revisions"
+                    @if($this->publishedRevisionComparison) aria-describedby="since-publish-tooltip" @endif
+                >
+                    <x-jaunt.icon name="layers-3" size="md" />
                 </button>
-            @endif
-            <button type="button" wire:click="undoLastChange" @disabled(! $this->undoRevision) class="cms-iconbtn border border-default bg-card shadow-xs disabled:cursor-not-allowed disabled:opacity-45" title="{{ $this->undoRevision ? 'Undo last change' : 'Nothing to undo' }}" aria-label="Undo last change">
-                <i class="ph ph-arrow-counter-clockwise text-lg"></i>
-            </button>
-            <button type="button" wire:click="openRevisionModal" class="cms-iconbtn border border-default bg-card shadow-xs" title="Revisions" aria-label="Revisions">
-                <i class="ph ph-stack text-lg"></i>
-            </button>
-            <div class="min-w-[92px]">
+                </x-jaunt.feedback.tooltip>
+            </div>
+            <div class="min-w-[84px]">
                 <button
                     type="button"
                     wire:click="openCheckpointModal"
@@ -363,114 +450,70 @@
         </div>
     </header>
 
-    {{-- Content area: below fixed header (pt-16), with right padding when aside is open --}}
-    <div class="flex pt-16 h-screen min-w-0" style="margin-right: {{ $drawerOpen ? 'var(--admin-rail-width)' : '3rem' }};">
-    {{-- Left: Content Tree (Variant: w-72) --}}
-    <aside class="{{ $leftSidebarCollapsed ? 'w-12' : 'w-72' }} bg-app border-r border-subtle flex flex-col shrink-0 z-40 hidden xl:flex" aria-label="Content tree">
-        <div class="shrink-0 border-b border-subtle bg-app px-4 py-2 flex items-center {{ $leftSidebarCollapsed ? 'justify-center' : 'justify-between' }}">
-            @if($leftSidebarCollapsed)
-                <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Expand content panel" aria-label="Expand content panel"><i class="ph ph-sidebar-simple"></i></button>
-            @else
-            <div class="flex items-center gap-2">
-                <span class="font-semibold text-primary">Content</span>
-            </div>
-            <div class="flex items-center gap-1">
-                <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="New page"><i class="ph ph-plus-circle text-xl"></i></a>
-                <button type="button" wire:click="toggleLeftSidebar" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Collapse content panel" aria-label="Collapse content panel"><i class="ph ph-sidebar-simple"></i></button>
-            </div>
-            @endif
+    <div class="contents">
+    {{-- Content area: begins exactly below the fixed editor toolbar. --}}
+    <div class="cms-editor-body absolute inset-x-0 top-[var(--topbar-h)] bottom-0 flex min-w-0 transition-[margin] duration-base ease-standard" x-bind:style="{ marginRight: inspectorOpen ? 'var(--admin-rail-width)' : '44px' }">
+    {{-- Left: Content Tree — Figma node 3:797 --}}
+    <aside
+        id="content-tree"
+        class="cms-editor-tree bg-app border-r border-subtle flex flex-col shrink-0 z-40 hidden xl:flex overflow-hidden transition-[width] duration-base ease-standard"
+        x-bind:style="{ width: leftCollapsed ? '44px' : '263px' }"
+        aria-label="Content tree"
+    >
+        <div x-cloak x-show="leftCollapsed" class="flex h-full w-11 flex-col items-center gap-2 py-2">
+            <button type="button" x-on:click="openPages()" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Expand pages" aria-label="Expand pages" aria-expanded="false" aria-controls="content-tree">
+                <x-jaunt.icon name="panel-left-open" size="sm" class="pointer-events-none" />
+            </button>
+            <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary [writing-mode:vertical-rl] rotate-180">Pages</span>
         </div>
-        @if(!$leftSidebarCollapsed)
-        <div class="p-4 shrink-0">
-            <div class="relative group">
-                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors pointer-events-none"></i>
-                <input type="text" placeholder="Search content..." class="w-full bg-slate-50 text-sm py-2 pl-9 pr-4 rounded-md border border-slate-200 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all placeholder-slate-400" />
+        <div x-cloak x-show="! leftCollapsed" class="flex h-full min-h-0 w-[263px] flex-col">
+        <div class="flex h-[46px] shrink-0 items-center justify-between border-b border-subtle bg-card pl-3 pr-2">
+            <span class="text-[13px] font-medium leading-[17.55px] tracking-[-0.154px] text-primary">Pages</span>
+            <div class="flex items-center gap-0.5">
+                <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="cms-iconbtn !h-[30px] !w-[30px] text-tertiary hover:bg-hover hover:text-primary" title="New page" aria-label="New page"><x-jaunt.icon name="plus" size="sm" /></a>
+                <button type="button" x-on:click="leftCollapsed = true" class="cms-iconbtn !h-[30px] !w-[30px] text-tertiary hover:bg-hover hover:text-primary" title="Collapse pages" aria-label="Collapse pages" aria-expanded="true" aria-controls="content-tree"><x-jaunt.icon name="panel-left-close" size="sm" class="pointer-events-none" /></button>
             </div>
         </div>
-        <div class="flex-1 overflow-y-auto px-3 pb-4 space-y-0.5 min-h-0">
+        <div class="min-h-0 flex-1 overflow-y-auto p-2">
             @foreach($this->contentTree as $item)
                 @if($item->isFolder())
-                    <div class="mb-1">
-                        <a href="{{ route('admin.content.index', ['folder' => $item->id]) }}" wire:navigate class="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 rounded-md group">
-                            <i class="ph ph-caret-down text-xs"></i>
-                            <i class="ph ph-globe text-slate-400 group-hover:text-teal-500"></i>
-                            <span class="font-medium">{{ $item->name }}</span>
+                    <div>
+                        <a href="{{ route('admin.content.index', ['folder' => $item->id]) }}" wire:navigate class="group flex h-8 w-full items-center gap-2 rounded-sm px-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] text-secondary transition-colors duration-fast hover:bg-hover hover:text-primary">
+                            <x-jaunt.icon name="folder" size="sm" class="!h-[15px] !w-[15px] shrink-0 text-tertiary group-hover:text-secondary" />
+                            <span class="min-w-0 flex-1 truncate">{{ $item->name }}</span>
                         </a>
-                        <div class="ml-4 pl-3 border-l border-slate-100 space-y-0.5 mt-1">
+                        <div>
                             @foreach($item->children ?? [] as $child)
-                                <a href="{{ route('admin.content.editor', $child) }}" wire:navigate class="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition {{ $child->id === $content->id ? 'bg-teal-50 text-teal-700 border border-teal-100 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 group' }}">
-                                    <div class="flex items-center gap-2">
-                                        <i class="ph {{ $child->id === $content->id ? 'ph-fill ph-house' : 'ph-article text-slate-400 group-hover:text-slate-600' }}"></i>
-                                        <span class="text-sm {{ $child->id === $content->id ? 'font-semibold' : '' }}">{{ $child->name }}</span>
-                                    </div>
+                                <a href="{{ route('admin.content.editor', $child) }}" wire:navigate class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm pl-[23px] pr-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $child->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}">
+                                    <x-jaunt.icon name="file-text" size="sm" class="!h-[15px] !w-[15px] shrink-0 {{ $child->id === $content->id ? 'text-primary' : 'text-tertiary group-hover:text-secondary' }}" />
+                                    <span class="min-w-0 flex-1 truncate">{{ $child->name }}</span>
                                     @if($child->status === 'published')
-                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                        <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-success" aria-label="Published"></span>
                                     @else
-                                        <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-strong" aria-label="Draft"></span>
                                     @endif
                                 </a>
                             @endforeach
                         </div>
                     </div>
                 @else
-                    <a href="{{ route('admin.content.editor', $item) }}" wire:navigate class="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition {{ $item->id === $content->id ? 'bg-teal-50 text-teal-700 border border-teal-100 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 group' }}">
-                        <div class="flex items-center gap-2">
-                            <i class="ph {{ $item->id === $content->id ? 'ph-fill ph-house' : 'ph-article text-slate-400 group-hover:text-slate-600' }}"></i>
-                            <span class="text-sm {{ $item->id === $content->id ? 'font-semibold' : '' }}">{{ $item->name }}</span>
-                        </div>
+                    <a href="{{ route('admin.content.editor', $item) }}" wire:navigate class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm px-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $item->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}">
+                        <x-jaunt.icon name="file-text" size="sm" class="!h-[15px] !w-[15px] shrink-0 {{ $item->id === $content->id ? 'text-primary' : 'text-tertiary group-hover:text-secondary' }}" />
+                        <span class="min-w-0 flex-1 truncate">{{ $item->name }}</span>
                         @if($item->status === 'published')
-                            <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                            <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-success" aria-label="Published"></span>
                         @else
-                            <div class="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                            <span class="h-[7px] w-[7px] shrink-0 rounded-full bg-strong" aria-label="Draft"></span>
                         @endif
                     </a>
                 @endif
             @endforeach
         </div>
-        <div class="p-4 border-t border-slate-200 bg-slate-50 shrink-0">
-            <div class="flex justify-between text-xs mb-1">
-                <span class="font-medium text-slate-600">Storage</span>
-                <span class="text-slate-500">75%</span>
-            </div>
-            <div class="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                <div class="h-full bg-teal-500 w-3/4 rounded-full"></div>
-            </div>
         </div>
-        @endif
     </aside>
 
     {{-- Center: Canvas only (header is fixed above) --}}
     <main class="flex-1 min-w-0 flex flex-col bg-sunken relative" role="main" aria-label="Page canvas">
-        <div class="shrink-0 border-b border-subtle bg-app px-4 py-2">
-            <div class="flex items-center justify-between gap-3">
-                <div class="cms-seg">
-                    <button type="button" x-on:click="canvasMode = 'compose'" x-bind:data-active="canvasMode === 'compose' ? 'true' : 'false'" class="cms-seg-btn">
-                        Compose
-                    </button>
-                    <button type="button" x-on:click="canvasMode = 'preview'" x-bind:data-active="canvasMode === 'preview' ? 'true' : 'false'" class="cms-seg-btn">
-                        Preview
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <div class="relative">
-                        <select wire:model.live="selectedPreviewTargetId" class="cms-select min-w-32">
-                            <option value="">Internal</option>
-                            @foreach($this->previewTargets as $previewTarget)
-                                <option value="{{ $previewTarget->id }}">{{ $previewTarget->name }}</option>
-                            @endforeach
-                        </select>
-                        <i class="ph ph-caret-down pointer-events-none absolute right-2.5 top-1.5 text-tertiary"></i>
-                    </div>
-
-                    <a href="{{ $this->previewUrl }}" target="_blank" rel="noopener noreferrer" class="cms-btn cms-btn-secondary !h-control-sm">
-                        <i class="ph ph-eye" aria-hidden="true"></i>
-                        View preview
-                    </a>
-                </div>
-            </div>
-        </div>
-
         <div x-show="canvasMode === 'preview'" x-cloak class="relative flex-1 min-h-0 overflow-hidden bg-sunken p-4">
             <iframe
                 x-ref="previewFrame"
@@ -484,10 +527,10 @@
             ></iframe>
 
             <button type="button" wire:click="$set('blockLibraryOpen', true)" class="absolute bottom-8 left-1/2 z-50 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer border border-slate-700/50 hover:bg-black">
-                <i class="ph-bold ph-plus text-teal-400"></i>
-                <span class="font-medium text-sm">Add Block</span>
-                <div class="w-px h-4 bg-slate-700"></div>
-                <span class="text-xs text-slate-400 font-mono">⌘B</span>
+                <x-jaunt.icon name="plus" size="sm" class="text-white" />
+                <span class="text-sm font-medium text-white">Add Block</span>
+                <div class="h-4 w-px bg-white/30"></div>
+                <span class="font-mono text-xs text-white">⌘B</span>
             </button>
         </div>
 
@@ -507,12 +550,12 @@
 
                     @if(empty($blocks))
                         <div
-                            class="text-center py-24 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:bg-teal-50/30 transition-colors"
+                            class="text-center py-24 text-slate-500 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-colors"
                             wire:click="$set('blockLibraryOpen', true)"
                             role="button"
                             tabindex="0"
                         >
-                            <i class="ph ph-plus-circle text-6xl mx-auto mb-6 text-slate-300"></i>
+                            <x-jaunt.icon name="circle-plus" size="lg" class="mx-auto mb-6 text-slate-300" />
                             <p class="font-medium text-lg text-slate-700">No blocks yet</p>
                             <p class="text-sm mt-1">Click to add your first block</p>
                         </div>
@@ -526,8 +569,8 @@
                             ])
                         @endforeach
                         <div class="flex justify-center py-4">
-                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-slate-300 text-slate-500 hover:border-teal-500 hover:text-teal-600 transition-colors text-sm">
-                                <i class="ph ph-plus"></i>
+                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 transition-colors text-sm">
+                                <x-jaunt.icon name="plus" size="sm" />
                                 Add block
                             </button>
                         </div>
@@ -537,15 +580,15 @@
 
             {{-- Floating Add Block button --}}
             <button type="button" wire:click="$set('blockLibraryOpen', true)" class="absolute bottom-8 z-50 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer border border-slate-700/50 hover:bg-black">
-                <i class="ph-bold ph-plus text-teal-400"></i>
-                <span class="font-medium text-sm">Add Block</span>
-                <div class="w-px h-4 bg-slate-700"></div>
-                <span class="text-xs text-slate-400 font-mono">⌘B</span>
+                <x-jaunt.icon name="plus" size="sm" class="text-white" />
+                <span class="text-sm font-medium text-white">Add Block</span>
+                <div class="h-4 w-px bg-white/30"></div>
+                <span class="font-mono text-xs text-white">⌘B</span>
             </button>
         </div>
         </div>
     </main>
-    </div>{{-- /content area (pt-16, pr-[500px] when drawer open) --}}
+    </div>{{-- /content area --}}
 
     {{-- Right: Edit Panel — fixed top 0, bottom 0, right 0, 500px, 100% view height --}}
     @php
@@ -554,46 +597,60 @@
         $sel = $hasSelectedBlock ? $this->selectedBlock : null;
         $bt = $sel ? ($blockTypes[$sel['type']] ?? null) : null;
     @endphp
-    <aside class="fixed top-16 bottom-0 right-0 bg-white border-l border-slate-200 flex flex-col z-40 {{ $drawerOpen ? 'shadow-xl' : 'shadow-lg' }}" aria-label="Edit panel" style="width: {{ $drawerOpen ? 'var(--admin-rail-width)' : '3rem' }};">
+    <aside
+        id="content-inspector"
+        x-bind:class="{
+            'is-richtext-expanded': $store.pilotRichTextWorkspace?.expanded ?? false,
+            'shadow-xl': inspectorOpen,
+            'shadow-none': ! inspectorOpen,
+        }"
+        x-bind:style="{ width: inspectorOpen ? 'var(--admin-rail-width)' : '44px' }"
+        class="cms-editor-inspector fixed top-[var(--topbar-h)] bottom-0 right-0 flex flex-col overflow-hidden border-l border-subtle bg-card transition-[width,box-shadow] duration-base ease-standard z-40"
+        aria-label="Edit panel"
+    >
+        <div x-cloak x-show="! inspectorOpen" class="flex h-full w-11 flex-col items-center gap-2 py-2">
+            <button type="button" x-on:click="openInspector()" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Expand inspector" aria-label="Expand inspector" aria-expanded="false" aria-controls="content-inspector">
+                <x-jaunt.icon name="panel-right-open" size="sm" class="pointer-events-none" />
+            </button>
+            <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary [writing-mode:vertical-rl] rotate-180">Inspector</span>
+        </div>
+        <div x-cloak x-show="inspectorOpen" class="flex h-full min-h-0 flex-col">
         {{-- Header: breadcrumb nav (Page > Block Name) with actions --}}
-        <div class="shrink-0 border-b border-slate-200 bg-white px-4 py-2 flex items-center {{ $drawerOpen ? 'justify-between' : 'justify-center' }}">
-            @if($drawerOpen)
+        <div class="flex shrink-0 items-center justify-between border-b border-subtle bg-card px-4 py-2">
             <div class="flex items-center gap-1.5 min-w-0">
                 {{-- "Page" is always the root, clickable to deselect block --}}
-                <button type="button" wire:click="$set('selectedBlockId', null)" class="flex items-center gap-1.5 {{ $hasSelectedBlock ? 'text-slate-400 hover:text-teal-600' : 'text-slate-800' }} transition-colors shrink-0">
-                    <span class="w-6 h-6 rounded bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-bold border border-teal-100">P</span>
+                <button type="button" wire:click="$set('selectedBlockId', null)" class="flex items-center gap-1.5 {{ $hasSelectedBlock ? 'text-slate-400 hover:text-blue-600' : 'text-slate-800' }} transition-colors shrink-0">
+                    <span class="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold border border-blue-100">P</span>
                     <span class="text-sm {{ $hasSelectedBlock ? 'font-medium' : 'font-bold' }}">Page</span>
                 </button>
                 @if($hasSelectedBlock)
-                    <i class="ph ph-caret-right text-xs text-slate-300 shrink-0 mx-0.5"></i>
+                    <x-jaunt.icon name="chevron-right" size="xs" class="text-slate-300 shrink-0 mx-0.5" />
                     <div class="flex items-center gap-1.5 min-w-0">
-                        <span class="w-6 h-6 rounded bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-bold border border-teal-100 shrink-0">{{ $bt ? strtoupper(mb_substr($bt->name, 0, 1)) : 'B' }}</span>
+                        <span class="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold border border-blue-100 shrink-0">{{ $bt ? strtoupper(mb_substr($bt->name, 0, 1)) : 'B' }}</span>
                         <span class="font-bold text-slate-800 text-sm truncate">{{ $bt ? $bt->name : 'Block' }}</span>
                     </div>
                 @endif
             </div>
             <div class="flex gap-1 shrink-0">
                 @if($hasSelectedBlock)
-                <button type="button" wire:click="duplicateBlock({{ $selectedBlockId }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600" title="Duplicate"><i class="ph ph-copy"></i></button>
-                <button type="button" wire:click="deleteBlock({{ $selectedBlockId }})" wire:confirm="Delete this block?" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" title="Delete"><i class="ph ph-trash"></i></button>
+                <button type="button" wire:click="duplicateBlock({{ $selectedBlockId }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600" title="Duplicate"><x-jaunt.icon name="copy" size="sm" /></button>
+                <button type="button" wire:click="deleteBlock({{ $selectedBlockId }})" wire:confirm="Delete this block?" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" title="Delete"><x-jaunt.icon name="trash-2" size="sm" /></button>
                 @endif
-                <button type="button" wire:click="toggleDrawer" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-teal-600" title="Collapse inspector" aria-label="Collapse inspector"><i class="ph ph-sidebar-simple"></i></button>
+                <button type="button" x-on:click="inspectorOpen = false" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Collapse inspector" aria-label="Collapse inspector" aria-expanded="true" aria-controls="content-inspector">
+                    <x-jaunt.icon name="panel-right-close" size="sm" class="pointer-events-none" />
+                </button>
             </div>
-            @else
-                <button type="button" wire:click="toggleDrawer" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors" title="Expand inspector" aria-label="Expand inspector"><i class="ph ph-sidebar-simple"></i></button>
-            @endif
         </div>
 
-        @if($drawerOpen)
         {{-- Tabs --}}
         <div class="flex border-b border-slate-200 bg-slate-50/50 shrink-0">
             @foreach($editPanelTabs as $tab => $label)
-            <button type="button" wire:click="$wire.set('rightPanelTab', '{{ $tab }}')" class="flex-1 py-3 text-xs font-medium transition-colors {{ $rightPanelTab === $tab ? 'font-semibold text-teal-600 border-b-2 border-teal-500 bg-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">{{ $label }}</button>
+            <button type="button" wire:click="$wire.set('rightPanelTab', '{{ $tab }}')" class="flex-1 py-3 text-xs font-medium transition-colors {{ $rightPanelTab === $tab ? 'border-b-2 border-accent bg-card font-semibold text-primary' : 'text-tertiary hover:bg-hover hover:text-primary' }}">{{ $label }}</button>
             @endforeach
         </div>
 
         {{-- Scrollable body --}}
-        <div class="flex-1 overflow-y-auto p-5 space-y-7 min-h-0">
+        <div class="flex-1 overflow-y-auto p-5 space-y-7 min-h-0" data-editor-inspector-body>
 
             {{-- CONTENT TAB --}}
             <div class="{{ $rightPanelTab === 'content' ? '' : 'hidden' }}" role="tabpanel">
@@ -614,35 +671,31 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Name</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">text</span>
                         </div>
-                        <input type="text" value="{{ $content->name }}" wire:change="updateContent('name', $event.target.value)" placeholder="Page title" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <input type="text" value="{{ $content->name }}" wire:change="updateContent('name', $event.target.value)" placeholder="Page title" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast" />
                     </div>
 
                     {{-- Slug --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Slug</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">text</span>
                         </div>
-                        <input type="text" value="{{ $content->slug }}" wire:change="updateContent('slug', $event.target.value)" placeholder="page-slug" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <input type="text" value="{{ $content->slug }}" wire:change="updateContent('slug', $event.target.value)" placeholder="page-slug" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast" />
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Categories</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">list</span>
                         </div>
-                        <input type="text" value="{{ implode(', ', $content->categories ?? []) }}" wire:change="updateTaxonomy('categories', $event.target.value)" placeholder="News, Destinations" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <input type="text" value="{{ implode(', ', $content->categories ?? []) }}" wire:change="updateTaxonomy('categories', $event.target.value)" placeholder="News, Destinations" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast" />
                         <p class="mt-1 text-xs text-slate-400">Comma-separated categories for grouping content.</p>
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Tags</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">list</span>
                         </div>
-                        <input type="text" value="{{ implode(', ', $content->tags ?? []) }}" wire:change="updateTaxonomy('tags', $event.target.value)" placeholder="family travel, hiking, summer" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all" />
+                        <input type="text" value="{{ implode(', ', $content->tags ?? []) }}" wire:change="updateTaxonomy('tags', $event.target.value)" placeholder="family travel, hiking, summer" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast" />
                         <p class="mt-1 text-xs text-slate-400">Comma-separated tags for filtering and discovery.</p>
                     </div>
 
@@ -651,32 +704,30 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Content Type</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">schema</span>
                         </div>
                         <div class="relative">
-                            <select wire:change="updateContent('content_type_id', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer">
+                            <select wire:change="updateContent('content_type_id', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer">
                                 <option value="">Generic Page</option>
                                 @foreach($this->contentTypes as $contentType)
                                     <option value="{{ $contentType->id }}" {{ $content->content_type_id === $contentType->id ? 'selected' : '' }}>{{ $contentType->name }}</option>
                                 @endforeach
                             </select>
-                            <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                            <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                         </div>
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Parent Folder</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">select</span>
                         </div>
                         <div class="relative">
-                            <select wire:change="updateContent('parent_id', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer">
+                            <select wire:change="updateContent('parent_id', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer">
                                 <option value="">None (Root)</option>
                                 @foreach($this->folders as $folder)
                                     <option value="{{ $folder->id }}" {{ $content->parent_id == $folder->id ? 'selected' : '' }}>{{ $folder->name }}</option>
                                 @endforeach
                             </select>
-                            <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                            <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                         </div>
                     </div>
                     @endif
@@ -685,14 +736,13 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Status</label>
-                            <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded font-mono">select</span>
                         </div>
                         <div class="relative">
-                            <select wire:change="updateContent('status', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer">
+                            <select wire:change="updateContent('status', $event.target.value)" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer">
                                 <option value="draft" {{ $content->status === 'draft' ? 'selected' : '' }}>Draft</option>
                                 <option value="published" {{ $content->status === 'published' ? 'selected' : '' }}>Published</option>
                             </select>
-                            <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                            <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                         </div>
                     </div>
 
@@ -702,16 +752,16 @@
                     <div class="pt-5 mt-2 border-t border-slate-100">
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Blocks</span>
-                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="text-[10px] text-teal-600 font-bold hover:underline">+ Add</button>
+                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="text-[10px] text-blue-600 font-bold">+ Add</button>
                         </div>
                         <div wire:sort="sortItem" class="space-y-0.5">
                             @foreach($blocks as $block)
-                            <div wire:sort:item="{{ $block['id'] }}" wire:key="block-item-{{ $block['id'] }}" data-block-tree-item="{{ $block['id'] }}" class="flex items-center gap-2 px-3 py-2.5 rounded-md {{ $selectedBlockId === $block['id'] ? 'bg-teal-50 border border-teal-100' : 'hover:bg-slate-50' }}">
-                                <span class="cursor-grab active:cursor-grabbing touch-none text-slate-400 hover:text-slate-600" wire:sort:handle aria-label="Drag to reorder"><i class="ph ph-dots-six-vertical"></i></span>
+                            <div wire:sort:item="{{ $block['id'] }}" wire:key="block-item-{{ $block['id'] }}" data-block-tree-item="{{ $block['id'] }}" class="flex items-center gap-2 rounded-md px-3 py-2.5 {{ $selectedBlockId === $block['id'] ? 'bg-selected text-primary shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-hover' }}">
+                                <span class="cursor-grab active:cursor-grabbing touch-none text-slate-400 hover:text-slate-600" wire:sort:handle aria-label="Drag to reorder"><x-jaunt.icon name="grip-vertical" size="sm" /></span>
                                 <div class="flex-1 min-w-0 py-1 cursor-pointer" wire:click="$set('selectedBlockId', {{ $block['id'] }})">
                                     <span class="font-medium text-sm truncate block text-slate-700">{{ $blockTypes[$block['type']]->name ?? $block['type'] }}</span>
                                 </div>
-                                <button type="button" wire:click="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" wire:sort:ignore class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" aria-label="Delete block"><i class="ph ph-trash"></i></button>
+                                <button type="button" wire:click="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" wire:sort:ignore class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" aria-label="Delete block"><x-jaunt.icon name="trash-2" size="sm" /></button>
                             </div>
                             @endforeach
                         </div>
@@ -728,10 +778,10 @@
             <div class="{{ $rightPanelTab === 'comments' ? '' : 'hidden' }} space-y-5" role="tabpanel">
                 <div>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Presence</span>
-                    <div wire:poll.15000ms="touchPresence" class="space-y-2">
+                    <div wire:poll.visible.15000ms="touchPresence" class="space-y-2">
                         @forelse($this->activePresences as $presence)
                             <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500 text-xs font-bold text-white">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
                                     {{ $presence->user?->initials() ?? '?' }}
                                 </div>
                                 <div class="min-w-0 flex-1">
@@ -758,16 +808,16 @@
                                 <div class="rounded-lg border border-slate-200 bg-white p-3">
                                     <div class="mb-2 flex items-center justify-between gap-3">
                                         <span class="text-xs font-semibold text-slate-600">{{ $comment->user?->name ?? 'System' }}</span>
-                                        <button type="button" wire:click="resolveBlockComment({{ $comment->id }})" class="text-xs font-semibold text-teal-600 hover:underline">Resolve</button>
+                                        <button type="button" wire:click="resolveBlockComment({{ $comment->id }})" class="text-xs font-semibold text-blue-600">Resolve</button>
                                     </div>
                                     <p class="text-sm text-slate-600">{{ $comment->body }}</p>
                                 </div>
                             @empty
                                 <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No open comments on this block.</p>
                             @endforelse
-                            <textarea rows="3" wire:model="newCommentBody" placeholder="Leave a comment for reviewers" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"></textarea>
+                            <textarea rows="3" wire:model="newCommentBody" placeholder="Leave a comment for reviewers" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
                             @error('newCommentBody') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            <button type="button" wire:click="addBlockComment" class="w-full rounded-md bg-teal-500 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-600">Add comment</button>
+                            <button type="button" wire:click="addBlockComment" class="w-full rounded-md bg-accent px-3 py-2 text-xs font-semibold text-on-accent hover:bg-accent-hover">Add comment</button>
                         </div>
                     @else
                         <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">Select a block to view or add comments.</p>
@@ -786,11 +836,11 @@
                                 @if($issue['block_id']) wire:click="setSelectedBlockFromPreview({{ $issue['block_id'] }})" @endif
                                 class="flex w-full items-start gap-3 rounded-lg border {{ $issue['severity'] === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700' }} p-3 text-left"
                             >
-                                <i class="ph {{ $issue['severity'] === 'error' ? 'ph-warning-octagon' : 'ph-warning-circle' }} mt-0.5"></i>
+                                <x-jaunt.icon :name="$issue['severity'] === 'error' ? 'octagon-alert' : 'circle-alert'" size="sm" class="mt-0.5" />
                                 <span class="text-sm font-medium">{{ $issue['label'] }}</span>
                             </button>
                         @empty
-                            <div class="rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-medium text-teal-700">No validation issues found.</div>
+                            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-blue-700">No validation issues found.</div>
                         @endforelse
                     </div>
                 </div>
@@ -799,9 +849,9 @@
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Reusable blocks</span>
                     @if($hasSelectedBlock)
                         <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                            <input type="text" wire:model="reusableBlockName" placeholder="Reusable block name" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                            <input type="text" wire:model="reusableBlockName" placeholder="Reusable block name" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                             @error('reusableBlockName') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            <button type="button" wire:click="makeSelectedBlockReusable" class="w-full rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Save selected as reusable</button>
+                            <button type="button" wire:click="makeSelectedBlockReusable" class="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Save selected as reusable</button>
                         </div>
                     @endif
                     <div class="mt-3 space-y-2">
@@ -811,7 +861,7 @@
                                     <div class="truncate text-sm font-semibold text-slate-700">{{ $reusableBlock->reusable_name }}</div>
                                     <div class="truncate text-xs text-slate-400">{{ $reusableBlock->type }} · {{ $reusableBlock->content?->name }}</div>
                                 </div>
-                                <button type="button" wire:click="insertReusableBlock({{ $reusableBlock->id }})" class="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-teal-600 hover:bg-teal-50">Insert</button>
+                                <button type="button" wire:click="insertReusableBlock({{ $reusableBlock->id }})" class="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50">Insert</button>
                             </div>
                         @empty
                             <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No reusable blocks yet.</p>
@@ -826,22 +876,22 @@
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">SEO</span>
                     <div class="group mb-4">
                         <label class="text-xs text-slate-600 block mb-1.5">Meta title</label>
-                        <input type="text" value="{{ $content->meta['meta_title'] ?? '' }}" wire:change="updateContentMeta('meta_title', $event.target.value)" placeholder="Page title for search engines" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                        <input type="text" value="{{ $content->meta['meta_title'] ?? '' }}" wire:change="updateContentMeta('meta_title', $event.target.value)" placeholder="Page title for search engines" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" />
                     </div>
                     <div class="group">
                         <label class="text-xs text-slate-600 block mb-1.5">Meta description</label>
-                        <textarea rows="3" wire:change="updateContentMeta('meta_description', $event.target.value)" placeholder="Brief description" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none">{{ $content->meta['meta_description'] ?? '' }}</textarea>
+                        <textarea rows="3" wire:change="updateContentMeta('meta_description', $event.target.value)" placeholder="Brief description" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none">{{ $content->meta['meta_description'] ?? '' }}</textarea>
                     </div>
                     <div class="group mt-4">
                         <label class="text-xs text-slate-600 block mb-1.5">Canonical URL</label>
-                        <input type="text" value="{{ $content->meta['canonical_url'] ?? '' }}" wire:change="updateContentMeta('canonical_url', $event.target.value)" placeholder="https://example.com/page" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                        <input type="text" value="{{ $content->meta['canonical_url'] ?? '' }}" wire:change="updateContentMeta('canonical_url', $event.target.value)" placeholder="https://example.com/page" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" />
                     </div>
                     <div class="group mt-4">
                         <label class="text-xs text-slate-600 block mb-1.5">Open Graph image</label>
-                        <input type="text" value="{{ $content->meta['og_image'] ?? '' }}" wire:change="updateContentMeta('og_image', $event.target.value)" placeholder="/storage/social-card.jpg" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
+                        <input type="text" value="{{ $content->meta['og_image'] ?? '' }}" wire:change="updateContentMeta('og_image', $event.target.value)" placeholder="/storage/social-card.jpg" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" />
                     </div>
                     <label class="mt-4 flex items-center gap-2 text-sm text-slate-600">
-                        <input type="checkbox" wire:change="updateContentMeta('noindex', $event.target.checked)" {{ ! empty($content->meta['noindex']) ? 'checked' : '' }} class="rounded border-slate-300 text-teal-500 focus:ring-teal-500" />
+                        <input type="checkbox" wire:change="updateContentMeta('noindex', $event.target.checked)" {{ ! empty($content->meta['noindex']) ? 'checked' : '' }} class="rounded border-slate-300 text-blue-500 focus:ring-blue-500" />
                         Hide from search engines
                     </label>
                 </div>
@@ -864,28 +914,28 @@
                         <div class="mt-3 grid grid-cols-2 gap-2">
                             <button type="button" wire:click="requestReview" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Request Review</button>
                             <button type="button" wire:click="unpublish" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Unpublish</button>
-                            <button type="button" wire:click="approveReview" class="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Approve</button>
+                            <button type="button" wire:click="approveReview" class="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Approve</button>
                             <button type="button" wire:click="requestChanges" class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100">Request changes</button>
                         </div>
                     </div>
                     <div class="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
                         <label class="text-xs text-slate-600 block">Assign reviewer</label>
-                        <select wire:model="reviewerId" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                        <select wire:model="reviewerId" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             <option value="">Unassigned</option>
                             @foreach($this->reviewers as $reviewer)
                                 <option value="{{ $reviewer->id }}">{{ $reviewer->name }}</option>
                             @endforeach
                         </select>
                         <label class="text-xs text-slate-600 block">Review due date</label>
-                        <input type="datetime-local" wire:model="reviewDueAt" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                        <input type="datetime-local" wire:model="reviewDueAt" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                         <label class="text-xs text-slate-600 block">Review note</label>
-                        <textarea rows="3" wire:model="reviewNote" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"></textarea>
+                        <textarea rows="3" wire:model="reviewNote" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
                         <button type="button" wire:click="assignReview" class="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Assign review</button>
                     </div>
                     <div class="mt-3 space-y-2">
                         <label class="text-xs text-slate-600 block">Schedule publish</label>
-                        <input type="datetime-local" wire:model="scheduledFor" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm" />
-                        <button type="button" wire:click="schedulePublishing" class="w-full rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-100">Schedule</button>
+                        <input type="datetime-local" wire:model="scheduledFor" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" />
+                        <button type="button" wire:click="schedulePublishing" class="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Schedule</button>
                         @error('scheduledFor') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -912,8 +962,9 @@
                 @endif
             </div>
         </div>
-        @endif
+        </div>
     </aside>
+    </div>
 
     @if($revisionModalOpen)
         <div
@@ -985,7 +1036,7 @@
             <h2 id="block-library-title" class="sr-only">Add a block</h2>
 
             <div class="flex h-[54px] shrink-0 items-center gap-2.5 border-b border-slate-200 bg-white px-4">
-                <i class="ph ph-squares-four text-lg text-slate-500" aria-hidden="true"></i>
+                <x-jaunt.icon name="layout-grid" size="md" class="text-slate-500" />
                 <input
                     x-ref="blockSearch"
                     type="search"
@@ -1006,12 +1057,12 @@
 
                 @if($blockTypes->isEmpty())
                     <div class="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
-                        <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
-                            <i class="ph ph-squares-four text-2xl"></i>
+                        <span class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <x-jaunt.icon name="layout-grid" size="lg" />
                         </span>
                         <p class="font-medium text-slate-800">You don't have any block types yet</p>
                         <p class="mt-1 text-sm text-slate-500">Create one to start building pages.</p>
-                        <a href="{{ route('admin.blocks.create') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700">Create Block Type</a>
+                        <a href="{{ route('admin.blocks.create') }}" wire:navigate class="mt-5 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow-sm transition-colors hover:bg-accent-hover">Create Block Type</a>
                     </div>
                 @else
                     <div x-ref="blockGrid" class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -1020,16 +1071,16 @@
                             $blockDescription = $blockType->schema['description'] ?? '';
                             $blockSearchText = strtolower(trim($blockType->name.' '.$blockType->key.' '.$blockDescription));
                             $blockIcon = match ($blockType->icon) {
-                                'rectangle-stack' => 'ph-layout',
-                                'document-text' => 'ph-text-align-left',
-                                'photo' => 'ph-image-square',
-                                'squares-2x2' => 'ph-grid-four',
-                                'arrow-right' => 'ph-cursor-click',
-                                'columns' => 'ph-columns',
-                                'squares-plus' => 'ph-squares-four',
-                                'map' => 'ph-map-trifold',
-                                'calendar' => 'ph-calendar-dots',
-                                default => 'ph-cube',
+                                'rectangle-stack' => 'panels-top-left',
+                                'document-text' => 'align-left',
+                                'photo' => 'image',
+                                'squares-2x2' => 'grid-2x2',
+                                'arrow-right' => 'mouse-pointer-click',
+                                'columns' => 'columns-3',
+                                'squares-plus' => 'layout-grid',
+                                'map' => 'map',
+                                'calendar' => 'calendar-days',
+                                default => 'box',
                             };
                         @endphp
                         <button
@@ -1037,10 +1088,10 @@
                             x-show="blockMatches(@js($blockType->name), @js($blockType->key), @js($blockDescription))"
                             wire:click="addBlock('{{ $blockType->key }}')"
                             data-block-search-text="{{ $blockSearchText }}"
-                            class="group rounded-[10px] border border-slate-300 bg-white p-[15px] text-left shadow-[0_1px_1px_rgba(19,20,24,0.06),0_2px_3px_rgba(19,20,24,0.05)] outline-none transition-all hover:-translate-y-0.5 hover:border-teal-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+                            class="group rounded-[10px] border border-slate-300 bg-white p-[15px] text-left shadow-[0_1px_1px_rgba(19,20,24,0.06),0_2px_3px_rgba(19,20,24,0.05)] outline-none transition-[border-color,box-shadow,transform] duration-fast hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         >
-                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-50 text-teal-600 transition-colors group-hover:bg-teal-100">
-                                <i class="ph {{ $blockIcon }} text-lg" aria-hidden="true"></i>
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
+                                <x-jaunt.icon :name="$blockIcon" size="md" />
                             </span>
                             <span class="mt-2.5 block text-[13px] font-medium leading-[18px] tracking-[-0.01em] text-slate-900">{{ $blockType->name }}</span>
                             @if($blockDescription)
@@ -1059,4 +1110,5 @@
     </template>
 
     @livewire('admin.assets.asset-picker-modal')
+</div>
 </div>

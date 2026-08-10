@@ -1,24 +1,22 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Edit Block Type</h1>
-            <p class="cms-subtitle">Update the block schema and settings.</p>
-        </div>
-        <div class="cms-actions">
+    <x-jaunt.shell.dynamic-header title="Edit Block Type" subtitle="Update the block schema and settings." top="0px" as="header" scroll-target="#block-edit-scroll" aria-label="Page header">
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
             <a href="{{ route('admin.blocks.index') }}" wire:navigate class="cms-btn cms-btn-secondary">
                 Cancel
             </a>
             <button type="submit" form="block-type-form" class="cms-btn cms-btn-primary">
-                <i class="ph ph-check" aria-hidden="true"></i>
+                <x-jaunt.icon name="check" size="sm" />
                 Save changes
             </button>
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="flex flex-1 min-h-0">
 
     {{-- Main content --}}
-    <main class="flex-1 min-w-0 overflow-y-auto">
+    <main id="block-edit-scroll" class="flex-1 min-w-0 overflow-y-auto">
         <div class="w-full p-6 md:p-8">
             @php
                 $fieldTypes = [
@@ -35,8 +33,8 @@
             @endphp
 
             <form wire:submit="save" id="block-type-form" class="space-y-8">
-                <a href="{{ route('admin.blocks.index') }}" class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-teal-600 mb-6 transition-colors" wire:navigate>
-                    <i class="ph ph-arrow-left"></i>
+                <a href="{{ route('admin.blocks.index') }}" class="mb-6 inline-flex items-center gap-2 text-sm text-secondary transition-colors hover:text-primary" wire:navigate>
+                    <x-jaunt.icon name="arrow-left" size="sm" />
                     Back to Block Types
                 </a>
 
@@ -61,7 +59,7 @@
                         </div>
                         <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900" role="alert">
                             <div class="flex gap-3">
-                                <i class="ph ph-warning text-lg shrink-0" aria-hidden="true"></i>
+                                <x-jaunt.icon name="triangle-alert" size="md" class="shrink-0" />
                                 <div>
                                     <p class="text-sm font-semibold">Danger: changing the block key can cause errors.</p>
                                     <p class="mt-1 text-xs leading-5">Existing block and content type relationships will update automatically, but templates, integrations, or custom code using the old key may break.</p>
@@ -89,7 +87,7 @@
                             <p class="text-xs text-slate-500 mt-0.5">Add and order fields for this block</p>
                         </div>
                         <button type="button" wire:click="addField" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
-                            <i class="ph ph-plus text-base"></i>
+                            <x-jaunt.icon name="plus" size="sm" />
                             Add Field
                         </button>
                     </div>
@@ -99,7 +97,7 @@
                                 <button
                                     type="button"
                                     wire:click="addFieldOfType('{{ $fieldType['type'] }}')"
-                                    class="border border-slate-200 rounded-lg p-3 text-left transition-colors hover:bg-slate-50 hover:border-teal-200"
+                                    class="border border-slate-200 rounded-lg p-3 text-left transition-colors hover:bg-slate-50 hover:border-blue-200"
                                 >
                                     <div class="font-medium text-sm text-slate-800">{{ $fieldType['label'] }}</div>
                                     <div class="text-xs text-slate-500 mt-1">{{ $fieldType['desc'] }}</div>
@@ -111,7 +109,7 @@
                             @forelse($schema['fields'] ?? [] as $index => $field)
                                 <div
                                     wire:click="selectField({{ $index }})"
-                                    class="border rounded-lg p-4 cursor-pointer transition-colors {{ $selectedFieldIndex === $index ? 'border-teal-500 bg-teal-50/50 ring-1 ring-teal-500/20' : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300' }}"
+                                    class="border rounded-lg p-4 cursor-pointer transition-colors {{ $selectedFieldIndex === $index ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500/20' : 'border-slate-200 hover:bg-slate-50 hover:border-slate-300' }}"
                                 >
                                     <div class="flex items-center justify-between">
                                         <div>

@@ -1,22 +1,32 @@
 import '@tailwindplus/elements';
-import { createIcons, icons } from 'lucide';
+import { createIcons } from 'lucide';
+import { icons } from './lucide-icons';
 
 let lucideRescanTimer;
+const lucideRoots = new Set();
 
-const renderLucideIcons = () => {
+const renderLucideIcons = (root = document) => {
+    if (root === document) {
+        lucideRoots.clear();
+        lucideRoots.add(document);
+    } else if (! lucideRoots.has(document) && root?.querySelectorAll) {
+        lucideRoots.add(root);
+    }
+
     clearTimeout(lucideRescanTimer);
 
     lucideRescanTimer = setTimeout(() => {
-        createIcons({ icons });
+        lucideRoots.forEach((pendingRoot) => createIcons({ icons, root: pendingRoot }));
+        lucideRoots.clear();
     }, 16);
 };
 
-document.addEventListener('DOMContentLoaded', renderLucideIcons);
-document.addEventListener('livewire:navigated', renderLucideIcons);
-
-new MutationObserver(renderLucideIcons).observe(document.documentElement, {
-    childList: true,
-    subtree: true,
+document.addEventListener('DOMContentLoaded', () => renderLucideIcons());
+document.addEventListener('livewire:navigated', () => renderLucideIcons());
+document.addEventListener('livewire:init', () => {
+    Livewire.hook('morph.added', ({ el }) => {
+        renderLucideIcons(el.matches?.('[data-lucide]') ? el.parentElement : el);
+    });
 });
 
 const toastEventMessages = {
@@ -208,6 +218,10 @@ document.addEventListener('focusin', (event) => {
 }, true);
 
 const registerPilotRichTextEditor = () => {
+    window.Alpine.store('pilotRichTextWorkspace', {
+        expanded: false,
+    });
+
     window.Alpine.data('pilotRichTextEditor', (config) => ({
         html: config.value || '',
         lastSavedHtml: null,
@@ -217,14 +231,17 @@ const registerPilotRichTextEditor = () => {
         subFieldKey: config.subFieldKey,
         isRepeaterField: Boolean(config.isRepeaterField),
         sourceMode: false,
+        expanded: false,
         saveTimer: null,
         active: {
             bold: false,
             italic: false,
+            underline: false,
             link: false,
             ol: false,
             ul: false,
             block: 'p',
+            align: 'left',
         },
 
         init() {
@@ -249,7 +266,7 @@ const registerPilotRichTextEditor = () => {
         },
 
         handleInput() {
-            this.html = this.sanitizeHtml(this.$refs.editor.innerHTML);
+            this.html = this.sanitizeHtml(this.activeEditor().innerHTML);
             this.queueSave();
             this.refreshState();
         },
@@ -264,14 +281,67 @@ const registerPilotRichTextEditor = () => {
             this.handleInput();
         },
 
+        placeCaretFromPointer(event) {
+            if (event.button !== 0 || this.sourceMode) {
+                return;
+            }
+
+            const editor = this.activeEditor();
+
+            requestAnimationFrame(() => {
+                if (document.activeElement !== editor) {
+                    return;
+                }
+
+                let pointRange = document.caretRangeFromPoint?.(event.clientX, event.clientY);
+
+                if (! pointRange && document.caretPositionFromPoint) {
+                    const position = document.caretPositionFromPoint(event.clientX, event.clientY);
+
+                    if (position) {
+                        pointRange = document.createRange();
+                        pointRange.setStart(position.offsetNode, position.offset);
+                        pointRange.collapse(true);
+                    }
+                }
+
+                if (! pointRange || ! editor.contains(pointRange.startContainer)) {
+                    return;
+                }
+
+                const selection = window.getSelection();
+
+                if (! selection) {
+                    return;
+                }
+
+                selection.removeAllRanges();
+                selection.addRange(pointRange);
+                this.refreshState();
+            });
+        },
+
         runCommand(command, value = null) {
             this.focusEditor();
+            document.execCommand('styleWithCSS', false, true);
             document.execCommand(command, false, value);
             this.handleInput();
         },
 
         formatBlock(tag) {
             this.runCommand('formatBlock', tag);
+        },
+
+        blockLabel() {
+            return {
+                p: 'Body',
+                blockquote: 'Quote',
+                h2: 'Heading 2',
+                h3: 'Heading 3',
+                h4: 'Heading 4',
+                h5: 'Heading 5',
+                h6: 'Heading 6',
+            }[this.active.block] || 'Body';
         },
 
         createLink() {
@@ -298,16 +368,46 @@ const registerPilotRichTextEditor = () => {
         toggleSource() {
             if (this.sourceMode) {
                 this.html = this.sanitizeHtml(this.html);
-                this.$refs.editor.innerHTML = this.html;
+                this.activeEditor().innerHTML = this.html;
                 this.sourceMode = false;
                 this.queueSave();
                 this.$nextTick(() => this.focusEditor());
                 return;
             }
 
-            this.html = this.sanitizeHtml(this.$refs.editor.innerHTML);
+            this.html = this.sanitizeHtml(this.activeEditor().innerHTML);
             this.sourceMode = true;
-            this.$nextTick(() => this.$refs.source.focus());
+            this.$nextTick(() => this.activeSource().focus());
+        },
+
+        openExpandedEditor() {
+            this.expanded = true;
+            this.$store.pilotRichTextWorkspace.expanded = true;
+
+            this.$nextTick(() => {
+                if (this.sourceMode) {
+                    this.$refs.source.focus();
+                    return;
+                }
+
+                this.$refs.editor.focus();
+                this.refreshState();
+            });
+        },
+
+        closeExpandedEditor() {
+            if (! this.expanded) {
+                return;
+            }
+
+            this.expanded = false;
+            this.$store.pilotRichTextWorkspace.expanded = false;
+            this.flush();
+            this.$nextTick(() => this.$refs.editor.focus());
+        },
+
+        destroy() {
+            this.$store.pilotRichTextWorkspace.expanded = false;
         },
 
         queueSave() {
@@ -317,10 +417,15 @@ const registerPilotRichTextEditor = () => {
 
         flush() {
             clearTimeout(this.saveTimer);
-            this.html = this.sanitizeHtml(this.sourceMode ? this.html : this.$refs.editor.innerHTML);
+            const editor = this.activeEditor();
+            this.html = this.sanitizeHtml(this.sourceMode ? this.html : editor.innerHTML);
 
-            if (! this.sourceMode) {
-                this.$refs.editor.innerHTML = this.html;
+            // Replacing innerHTML while the contenteditable is focused destroys
+            // the browser selection and moves the caret back to the beginning.
+            // Normalize the DOM only after focus leaves the editor; autosave can
+            // persist the sanitized value without rewriting the active surface.
+            if (! this.sourceMode && document.activeElement !== editor && editor.innerHTML !== this.html) {
+                editor.innerHTML = this.html;
             }
 
             if (this.html === this.lastSavedHtml) {
@@ -342,7 +447,15 @@ const registerPilotRichTextEditor = () => {
                 this.toggleSource();
             }
 
-            this.$refs.editor.focus();
+            this.activeEditor().focus();
+        },
+
+        activeEditor() {
+            return this.$refs.editor;
+        },
+
+        activeSource() {
+            return this.$refs.source;
         },
 
         insertHtml(html) {
@@ -353,10 +466,13 @@ const registerPilotRichTextEditor = () => {
         refreshState() {
             this.active.bold = document.queryCommandState('bold');
             this.active.italic = document.queryCommandState('italic');
+            this.active.underline = document.queryCommandState('underline');
             this.active.ol = document.queryCommandState('insertOrderedList');
             this.active.ul = document.queryCommandState('insertUnorderedList');
             this.active.link = Boolean(this.closestTag('a'));
             this.active.block = this.currentBlock();
+            this.active.align = this.currentAlignment();
+
         },
 
         isBlock(tag) {
@@ -364,10 +480,22 @@ const registerPilotRichTextEditor = () => {
         },
 
         currentBlock() {
-            const block = this.closestTag('h2,h3,blockquote,li,p,div');
+            const block = this.closestTag('h2,h3,h4,h5,h6,blockquote,li,p,div');
             const tag = block?.tagName?.toLowerCase() || 'p';
 
             return tag === 'div' || tag === 'li' ? 'p' : tag;
+        },
+
+        currentAlignment() {
+            if (document.queryCommandState('justifyCenter')) {
+                return 'center';
+            }
+
+            if (document.queryCommandState('justifyRight')) {
+                return 'right';
+            }
+
+            return 'left';
         },
 
         closestTag(selector) {
@@ -381,7 +509,7 @@ const registerPilotRichTextEditor = () => {
                 ? selection.anchorNode.parentElement
                 : selection.anchorNode;
 
-            if (! node || ! this.$refs.editor.contains(node)) {
+            if (! node || ! this.activeEditor().contains(node)) {
                 return null;
             }
 
@@ -400,8 +528,8 @@ const registerPilotRichTextEditor = () => {
         sanitizeHtml(html) {
             const template = document.createElement('template');
             template.innerHTML = String(html || '');
-            const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'EM', 'H2', 'H3', 'I', 'LI', 'OL', 'P', 'STRONG', 'U', 'UL']);
-            const allowedAttrs = new Set(['href', 'target', 'rel']);
+            const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'EM', 'H2', 'H3', 'H4', 'H5', 'H6', 'I', 'LI', 'OL', 'P', 'SPAN', 'STRONG', 'U', 'UL']);
+            const allowedAttrs = new Set(['href', 'target', 'rel', 'style']);
 
             template.content.querySelectorAll('*').forEach((node) => {
                 if (! allowedTags.has(node.tagName)) {
@@ -414,6 +542,16 @@ const registerPilotRichTextEditor = () => {
                         node.removeAttribute(attribute.name);
                     }
                 });
+
+                if (node.hasAttribute('style')) {
+                    const safeStyle = this.sanitizeStyle(node.getAttribute('style'));
+
+                    if (safeStyle === '') {
+                        node.removeAttribute('style');
+                    } else {
+                        node.setAttribute('style', safeStyle);
+                    }
+                }
 
                 if (node.tagName === 'A') {
                     const href = node.getAttribute('href') || '';
@@ -429,6 +567,30 @@ const registerPilotRichTextEditor = () => {
             return template.innerHTML
                 .replace(/<p>(\s|&nbsp;|<br>)*<\/p>/gi, '')
                 .trim();
+        },
+
+        sanitizeStyle(style) {
+            return String(style || '')
+                .split(';')
+                .map((declaration) => declaration.trim())
+                .filter(Boolean)
+                .map((declaration) => {
+                    const [property, ...valueParts] = declaration.split(':');
+                    const name = property?.trim().toLowerCase();
+                    const value = valueParts.join(':').trim().toLowerCase();
+
+                    if (name === 'color' && (/^#[0-9a-f]{3,8}$/i.test(value) || /^rgb(a)?\([\d\s,.%]+\)$/i.test(value))) {
+                        return `color: ${value}`;
+                    }
+
+                    if (name === 'text-align' && ['left', 'center', 'right'].includes(value)) {
+                        return `text-align: ${value}`;
+                    }
+
+                    return null;
+                })
+                .filter(Boolean)
+                .join('; ');
         },
 
         escapeHtml(value) {

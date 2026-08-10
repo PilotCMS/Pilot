@@ -36,8 +36,13 @@ it('renders asset detail panel with copy link control without blade errors', fun
     $this->actingAs($user);
 
     Livewire::test(Index::class)
+        ->assertSeeHtml('aria-label="Open Example Image details"')
         ->call('openAssetDetail', $asset->id)
         ->assertSet('showDetailSlideOver', true)
+        ->assertSee('Basics')
+        ->assertSee('Rights')
+        ->assertSee('Usage')
+        ->assertSee('Danger zone')
         ->assertSee('Asset URL')
         ->assertSee($asset->relativeUrl())
         ->assertSee('x-bind:title');
@@ -68,6 +73,7 @@ it('uses relative asset urls in picker thumbnails', function () {
 
     Livewire::test(AssetPickerModal::class)
         ->call('open', 'image')
+        ->assertSeeHtml('aria-label="Select Example Image"')
         ->assertSee($asset->relativeUrl());
 });
 
@@ -95,7 +101,7 @@ it('renders external stock assets without requiring a configured filesystem disk
     $this->actingAs($user);
 
     Livewire::test(Index::class)
-        ->assertSee($asset->url())
+        ->assertSee($asset->thumbnailUrl())
         ->call('openAssetDetail', $asset->id)
         ->assertSee($asset->url());
 });
@@ -161,9 +167,42 @@ it('extracts technical metadata when uploading assets', function () {
     expect($asset->width)->toBe(640)
         ->and($asset->height)->toBe(360)
         ->and($asset->checksum)->toBe($expectedChecksum)
-        ->and($asset->metadata['client_original_name'])->toBe('hero.jpg');
+        ->and($asset->metadata['client_original_name'])->toBe('hero.jpg')
+        ->and($asset->thumbnail_path)->toBe("assets/thumbnails/{$asset->id}.webp")
+        ->and($asset->thumbnailUrl())->toContain("assets/thumbnails/{$asset->id}.webp");
 
     Storage::disk('public')->assertExists($asset->path);
+    Storage::disk('public')->assertExists($asset->thumbnail_path);
+
+    $thumbnailDimensions = getimagesize(Storage::disk('public')->path($asset->thumbnail_path));
+
+    expect($thumbnailDimensions[0])->toBeLessThanOrEqual(640)
+        ->and($thumbnailDimensions[1])->toBeLessThanOrEqual(480)
+        ->and($thumbnailDimensions['mime'])->toBe('image/webp');
+});
+
+it('deletes generated thumbnails with unused assets', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $asset = Asset::factory()->create([
+        'disk' => 'public',
+        'path' => 'assets/unused.jpg',
+        'thumbnail_path' => 'assets/thumbnails/unused.webp',
+        'filename' => 'unused.jpg',
+        'mime' => 'image/jpeg',
+    ]);
+
+    Storage::disk('public')->put($asset->path, 'original');
+    Storage::disk('public')->put($asset->thumbnail_path, 'thumbnail');
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)->call('deleteAsset', $asset->id);
+
+    expect($asset->fresh())->toBeNull();
+    Storage::disk('public')->assertMissing($asset->path);
+    Storage::disk('public')->assertMissing($asset->thumbnail_path);
 });
 
 it('scopes upload modal loading state to file and submit requests', function () {

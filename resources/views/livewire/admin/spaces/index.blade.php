@@ -1,31 +1,18 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Spaces</h1>
-            <p class="cms-subtitle">Organize content, assets, and datasources by project or site.</p>
-        </div>
-        <div class="cms-actions">
+    <x-jaunt.shell.dynamic-header title="Spaces" subtitle="Organize content, assets, and datasources by project or site." top="0px" as="header" scroll-target="#spaces-list-scroll" aria-label="Page header">
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
             <a href="{{ route('admin.spaces.create') }}" wire:navigate class="cms-btn cms-btn-primary">
-                <i class="ph ph-plus" aria-hidden="true"></i>
+                <x-jaunt.icon name="plus" size="sm" />
                 New space
             </a>
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="flex flex-1 min-h-0">
-    <main class="flex-1 min-w-0 overflow-y-auto">
+    <main id="spaces-list-scroll" class="flex-1 min-w-0 overflow-y-auto">
         <div class="w-full p-6 md:p-8">
-        <div class="mb-6">
-            <flux:heading>Spaces</flux:heading>
-            <flux:text class="text-muted-foreground text-sm mt-1">Organize content, assets, and datasources by project or site</flux:text>
-        </div>
-        <div class="flex flex-wrap items-center gap-3 mb-8 pb-6 border-b border-zinc-200 dark:border-zinc-700">
-            <flux:button href="{{ route('admin.spaces.create') }}" wire:navigate variant="primary" size="sm">
-                <flux:icon.plus class="size-4" />
-                New Space
-            </flux:button>
-        </div>
-
         <flux:card class="overflow-hidden rounded-2xl">
             <flux:table>
                 <flux:table.head>

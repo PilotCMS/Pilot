@@ -6,21 +6,21 @@
 
 @php
 $variants = [
-    'neutral' => 'bg-sunken text-secondary',
-    'accent'  => 'bg-accent-subtle text-accent-text',
-    'success' => 'bg-success-subtle text-success',
-    'warning' => 'bg-warning-subtle text-warning',
-    'danger'  => 'bg-danger-subtle text-danger',
-    'info'    => 'bg-info-subtle text-info',
+    'neutral' => 'bg-sunken text-secondary border-transparent',
+    'accent'  => 'bg-accent-subtle text-accent-text border-transparent',
+    'success' => 'bg-success-subtle text-success border-transparent',
+    'warning' => 'bg-warning-subtle text-warning border-transparent',
+    'danger'  => 'bg-danger-subtle text-danger border-transparent',
+    'info'    => 'bg-info-subtle text-info border-transparent',
     'ai'      => 'bg-ai-subtle text-ai-text border-ai-border',
-    'count'   => 'bg-accent text-on-accent justify-center min-w-[18px] h-[18px] px-[5px] tabular-nums',
+    'count'   => 'bg-accent text-on-accent border-transparent justify-center min-w-[18px] h-[18px] px-[5px] tabular-nums',
 ];
 @endphp
 
 <span
     {{ $attributes->merge([
         'class' => "inline-flex items-center gap-1 h-5 px-[7px] rounded-full text-xs font-medium
-            border border-transparent whitespace-nowrap {$variants[$variant]}",
+            border whitespace-nowrap {$variants[$variant]}",
     ]) }}
 >
     @if ($dot)

@@ -1,8 +1,5 @@
 <svg width="200" height="56" viewBox="0 0 200 56" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Jaunt">
-  <rect x="4" y="12" width="32" height="32" rx="8" fill="#23BFB0"></rect>
-  <g transform="translate(12,20.19) scale(0.1172)" fill="#08090B" fill-opacity="0.9">
-    <path d="M0,66.6h44.7s-11.4,35.3-11.4,35.3l52.8-16.5,17.1-52.7-36,11.2V0s69.3,0,69.3,0v66.8c-.1,21.6-11.4,41.3-28.6,53.6-27.9,20-66.3,16.1-89.7-9S.4,83.8,0,66.6Z"></path>
-    <circle cx="67.8" cy="67.3" r="10.3"></circle>
-  </g>
+  <rect x="4" y="12" width="32" height="32" rx="8" fill="#0A84FF"></rect>
+  <path d="M27.5 20.5L14 26.4C13.36 26.68 13.4 27.6 14.07 27.81L19.55 29.5C19.8 29.58 20 29.78 20.09 30.03L21.79 35.5C22 36.18 22.93 36.22 23.2 35.58L29.1 22.06C29.38 21.42 28.7 20.74 27.5 20.5Z" fill="#08090B" fill-opacity="0.9"></path>
   <text x="46" y="37.5" font-family="Geist, ui-sans-serif, system-ui, sans-serif" font-size="30" font-weight="600" letter-spacing="-0.02em" fill="#F4F5F7">Jaunt</text>
 </svg>

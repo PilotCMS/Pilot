@@ -56,7 +56,7 @@
     >
         <div
             role="dialog" aria-modal="true" aria-label="Command palette"
-            class="w-full max-w-[560px] overflow-hidden bg-raised border shadow-xl rounded-xl"
+            class="w-full max-w-[560px] overflow-hidden bg-raised border shadow-xl rounded-2xl"
             x-transition:enter="transition ease-out duration-DEFAULT"
             x-transition:enter-start="opacity-0 -translate-y-2 scale-[0.985]"
             x-transition:enter-end="opacity-100 translate-y-0 scale-100"

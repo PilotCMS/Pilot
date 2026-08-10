@@ -2,13 +2,15 @@
 @props([
     'label',
     'kbd' => null,
-    'side' => 'top', // top | bottom | right
+    'side' => 'top', // top | bottom | bottom-end | right
+    'id' => null,
 ])
 
 @php
 $position = [
     'top' => 'bottom-full left-1/2 -translate-x-1/2 mb-1.5',
     'bottom' => 'top-full left-1/2 -translate-x-1/2 mt-1.5',
+    'bottom-end' => 'top-full right-0 mt-1.5',
     'right' => 'left-full top-1/2 -translate-y-1/2 ml-1.5',
 ][$side];
 @endphp
@@ -21,6 +23,7 @@ $position = [
 >
     {{ $slot }}
     <span
+        @if($id) id="{{ $id }}" @endif
         x-show="show"
         x-transition:enter="transition ease-out duration-fast"
         x-transition:enter-start="opacity-0 translate-y-0.5"

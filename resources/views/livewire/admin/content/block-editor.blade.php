@@ -27,7 +27,7 @@
                                         <label class="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{{ $objectKey }}</label>
                                         <textarea rows="{{ $objectKey === 'body' ? 3 : 1 }}"
                                             wire:change="updateJsonObjectField(@js($field['key']), {{ $idx }}, @js($objectKey), $event.target.value)"
-                                            class="w-full min-h-9 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none transition-all focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                            class="w-full min-h-9 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none transition-[border-color,box-shadow,background-color] duration-fast focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                         >{{ $item[$objectKey] ?? '' }}</textarea>
                                     </div>
                                 @endforeach
@@ -47,14 +47,14 @@
                         value="{{ $fieldValue }}"
                         placeholder="{{ $field['placeholder'] ?? '' }}"
                         wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm transition-all"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast"
                     />
                 @endif
             @elseif($field['type'] === 'textarea')
                 <textarea rows="{{ $field['rows'] ?? 4 }}"
                     placeholder="{{ $field['placeholder'] ?? '' }}"
                     wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                    class="w-full min-h-[80px] p-3 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none resize-none shadow-sm transition-all"
+                    class="w-full min-h-[80px] p-3 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none shadow-sm transition-[border-color,box-shadow,background-color] duration-fast"
                 >{{ $fieldValue }}</textarea>
             @elseif($field['type'] === 'richtext')
                 @include('livewire.admin.content.partials.richtext-editor', [
@@ -69,7 +69,7 @@
                     max="{{ $field['max'] ?? '' }}"
                     placeholder="{{ $field['placeholder'] ?? '' }}"
                     wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
                 />
             @elseif($field['type'] === 'boolean')
                 @php $rawVal = $data[$field['key']] ?? false; $boolChecked = is_array($rawVal) ? !empty($rawVal) : (bool) $rawVal; @endphp
@@ -77,7 +77,7 @@
                     <input type="checkbox"
                         wire:change="updateField('{{ $field['key'] }}', $event.target.checked)"
                         {{ $boolChecked ? 'checked' : '' }}
-                        class="rounded border-slate-200 text-teal-500 focus:ring-teal-500"
+                        class="rounded border-slate-200 text-blue-500 focus:ring-blue-500"
                     />
                     <span class="text-sm text-slate-600">Enabled</span>
                 </label>
@@ -86,7 +86,7 @@
                     $focalX = $data[$field['key'].'_focal_x'] ?? 50;
                     $focalY = $data[$field['key'].'_focal_y'] ?? 50;
                 @endphp
-                <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-teal-400 cursor-pointer transition-all group/upload"
+                <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-center hover:bg-slate-50 hover:border-blue-400 cursor-pointer transition-[border-color,background-color] duration-fast group/upload"
                      wire:click="$dispatch('open-asset-picker', { fieldKey: '{{ $field['key'] }}' })">
                     @if($fieldValue)
                         <div class="mb-2 rounded-lg overflow-hidden max-h-24 bg-slate-100">
@@ -94,8 +94,8 @@
                         </div>
                         <span class="text-xs font-medium text-slate-600 truncate max-w-full">{{ $fieldValue }}</span>
                     @else
-                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2 group-hover/upload:bg-white group-hover/upload:text-teal-500 shadow-sm transition-colors">
-                            <i class="ph ph-upload-simple text-lg"></i>
+                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2 group-hover/upload:bg-white group-hover/upload:text-blue-500 shadow-sm transition-colors">
+                            <x-jaunt.icon name="upload" size="md" />
                         </div>
                         <span class="text-xs font-medium text-slate-600">Drop image here</span>
                         <span class="text-[10px] text-slate-400 mt-0.5">or click to browse</span>
@@ -114,10 +114,10 @@
                             $displayTitle = $itemLabel ?: ($field['label'] . ' ' . ($idx + 1));
                             $isExpanded = $this->isRepeaterItemExpanded($field['key'], $idx);
                         @endphp
-                        <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-teal-300 transition-colors group/item relative overflow-hidden">
-                            @if($idx === 0)<div class="absolute left-0 top-0 bottom-0 w-1 bg-teal-500"></div>@endif
+                        <div class="bg-white border border-slate-200 rounded-lg shadow-sm hover:border-blue-300 transition-colors group/item relative overflow-hidden">
+                            @if($idx === 0)<div class="absolute left-0 top-0 bottom-0 w-1 bg-accent"></div>@endif
                             <div class="flex items-center gap-3 p-3">
-                                <i class="ph ph-dots-six-vertical text-slate-300 cursor-move shrink-0" aria-hidden="true"></i>
+                                <x-jaunt.icon name="grip-vertical" size="sm" class="text-slate-300 cursor-move shrink-0" />
                                 <button
                                     type="button"
                                     wire:click="toggleRepeaterItem(@js($field['key']), {{ $idx }})"
@@ -128,9 +128,9 @@
                                         <span class="block text-xs font-bold text-slate-700">{{ $displayTitle }}</span>
                                         <span class="block text-[10px] text-slate-400 truncate">{{ $subVal ?: 'Empty' }}</span>
                                     </span>
-                                    <i class="ph {{ $isExpanded ? 'ph-caret-down' : 'ph-caret-right' }} text-slate-400 group-hover/item:text-teal-500 shrink-0"></i>
+                                    <x-jaunt.icon :name="$isExpanded ? 'chevron-down' : 'chevron-right'" size="sm" class="shrink-0 text-slate-400 group-hover/item:text-blue-500" />
                                 </button>
-                                <button type="button" wire:click.stop="removeRepeaterItem(@js($field['key']), {{ $idx }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 shrink-0" title="Remove"><i class="ph ph-trash"></i></button>
+                                <button type="button" wire:click.stop="removeRepeaterItem(@js($field['key']), {{ $idx }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 shrink-0" title="Remove"><x-jaunt.icon name="trash-2" size="sm" /></button>
                             </div>
 
                             @if($isExpanded)
@@ -159,7 +159,7 @@
                                                 <textarea rows="{{ $subField['rows'] ?? ($subFieldType === 'richtext' ? 5 : 3) }}"
                                                     placeholder="{{ $subField['placeholder'] ?? '' }}"
                                                     wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
-                                                    class="w-full min-h-[72px] rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none resize-none transition-all focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                                                    class="w-full min-h-[72px] rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 shadow-sm outline-none resize-none transition-[border-color,box-shadow,background-color] duration-fast focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                                 >{{ $subFieldValue }}</textarea>
                                             @elseif($subFieldType === 'number')
                                                 <input type="number"
@@ -168,28 +168,28 @@
                                                     max="{{ $subField['max'] ?? '' }}"
                                                     placeholder="{{ $subField['placeholder'] ?? '' }}"
                                                     wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
-                                                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                                                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
                                                 />
                                             @elseif($subFieldType === 'boolean')
                                                 <label class="flex items-center gap-2 cursor-pointer">
                                                     <input type="checkbox"
                                                         wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.checked)"
                                                         {{ $subFieldValue ? 'checked' : '' }}
-                                                        class="rounded border-slate-200 text-teal-500 focus:ring-teal-500"
+                                                        class="rounded border-slate-200 text-blue-500 focus:ring-blue-500"
                                                     />
                                                     <span class="text-sm text-slate-600">Enabled</span>
                                                 </label>
                                             @elseif($subFieldType === 'select')
                                                 <div class="relative">
                                                     <select wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
-                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer"
+                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer"
                                                     >
                                                         <option value="">Select...</option>
                                                         @foreach($subField['options'] ?? [] as $option)
                                                             <option value="{{ $option['value'] ?? '' }}" {{ $subFieldValue === ($option['value'] ?? '') ? 'selected' : '' }}>{{ $option['label'] ?? $option['value'] ?? '' }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                                                    <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                                                 </div>
                                             @else
                                                 @if($this->isLinkField($subField) && $contentChoices->isNotEmpty())
@@ -205,7 +205,7 @@
                                                         value="{{ $subFieldValue }}"
                                                         placeholder="{{ $subField['placeholder'] ?? ($subFieldType === 'image' ? 'Image URL' : '') }}"
                                                         wire:change="updateRepeaterField(@js($field['key']), {{ $idx }}, @js($subField['key']), $event.target.value)"
-                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                                                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
                                                     />
                                                 @endif
                                             @endif
@@ -221,14 +221,14 @@
                             @endif
                         </div>
                     @endforeach
-                    <button type="button" wire:click="addRepeaterItem('{{ $field['key'] }}')" class="text-[10px] text-teal-600 font-bold hover:underline">
+                    <button type="button" wire:click="addRepeaterItem('{{ $field['key'] }}')" class="text-[10px] text-blue-600 font-bold">
                         {{ in_array(strtolower($field['key'] ?? ''), ['buttons', 'button']) ? '+ Add Button' : '+ Add item' }}
                     </button>
                 </div>
             @elseif($field['type'] === 'select')
                 <div class="relative">
                 <select wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer"
+                    class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer"
                 >
                     <option value="">Select...</option>
                     @if(!empty($field['options']))
@@ -242,12 +242,12 @@
                         @endforeach
                     @endif
                 </select>
-                <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                 </div>
             @elseif($field['type'] === 'reference')
                 <div class="relative">
                     <select wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm appearance-none cursor-pointer"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm appearance-none cursor-pointer"
                     >
                         <option value="">Select content...</option>
                         @foreach($contentChoices as $contentChoice)
@@ -256,7 +256,7 @@
                             </option>
                         @endforeach
                     </select>
-                    <i class="ph ph-caret-down absolute right-3 top-3 text-slate-400 pointer-events-none"></i>
+                    <x-jaunt.icon name="chevron-down" size="sm" class="absolute right-3 top-3 text-slate-400 pointer-events-none" />
                 </div>
             @else
                 @if($this->isLinkField($field) && $contentChoices->isNotEmpty())
@@ -270,7 +270,7 @@
                         value="{{ $fieldValue }}"
                         placeholder="{{ $field['placeholder'] ?? '' }}"
                         wire:change="updateField('{{ $field['key'] }}', $event.target.value)"
-                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none shadow-sm"
+                        class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm"
                     />
                 @endif
             @endif

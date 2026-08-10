@@ -31,7 +31,7 @@ what happens next.
 | ghost | `Edit` | `Edit this item` | Context is already visible; don't restate it |
 | danger | `Delete` | `Yes, delete this item` | Dialog title carries the stakes; the button carries the verb |
 | danger | `Remove partner` | `Confirm removal` | Name the action, not the meta-action |
-| ai | `Generate summary` | `Use AI to generate a summary for me` | Sparkle icon + iris already signal "AI" — the label doesn't need to |
+| ai | `Generate summary` | `Use AI to generate a summary for me` | Sparkle icon + indigo already signal "AI" — the label doesn't need to |
 | ai | `Draft description` | `Let AI write this for you` | Same principle — the icon does the AI-announcing |
 
 ## 3. Errors
@@ -105,7 +105,7 @@ literal in text.
 **`jaunt.ai.ai-inline`** — the ghost ("Autofill with AI") and trigger modes
 live inside a field, so copy stays terse:
 - Ghost suggestion text: plain field content, e.g. `Missoula, Montana` — no
-  framing, since the `Accept` chip and iris tint already say "this is AI."
+  framing, since the `Accept` chip and indigo tint already say "this is AI."
 - Trigger label: `Autofill with AI` (default) — swap for the specific field
   when it helps: `Draft this field`, `Suggest tags`.
 
@@ -128,10 +128,10 @@ plain settled text after:
 
 **`jaunt.ai.confidence-badge`** — the label *is* the voice; no separate copy
 needed, but the level should match how the surrounding sentence hedges:
-- `high` (green): state findings directly — `Revenue is up 12% this quarter.`
-- `medium` (iris): keep a soft qualifier — `Likely driven by the new fall
+- `high`: state findings directly — `Revenue is up 12% this quarter.`
+- `medium`: keep a soft qualifier — `Likely driven by the new fall
   campaign.`
-- `low` (amber): flag it as a guess needing review — `Possible duplicate —
+- `low` (the one coloured level): flag it as a guess needing review — `Possible duplicate —
   worth a manual check.`
 
 Across all AI surfaces: first person ("I found 3 duplicates") is allowed

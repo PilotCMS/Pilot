@@ -3,7 +3,7 @@
         <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
             <label class="mb-1.5 block text-xs font-semibold text-slate-600">Checkpoint label</label>
             <div class="flex gap-2">
-                <input type="text" wire:model="checkpointLabel" placeholder="e.g. Before homepage rewrite" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500" />
+                <input type="text" wire:model="checkpointLabel" placeholder="e.g. Before homepage rewrite" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                 <button type="button" wire:click="saveCheckpoint" class="shrink-0 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Save</button>
             </div>
             @error('checkpointLabel') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -12,13 +12,13 @@
         <div class="rounded-lg border border-slate-200 bg-slate-50 p-2">
             <div class="mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Filters</div>
             <div class="grid grid-cols-2 gap-2">
-                <select wire:model.live="revisionTypeFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                <select wire:model.live="revisionTypeFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">All types</option>
                     @foreach($this->revisionTypeOptions as $revisionType)
                         <option value="{{ $revisionType }}">{{ str_replace('_', ' ', $revisionType) }}</option>
                     @endforeach
                 </select>
-                <select wire:model.live="revisionAuthorFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                <select wire:model.live="revisionAuthorFilter" class="rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">All authors</option>
                     @foreach($this->revisionAuthorOptions as $revisionAuthor)
                         <option value="{{ $revisionAuthor->id }}">{{ $revisionAuthor->name }}</option>
@@ -35,7 +35,7 @@
             <div class="p-2">
                 <div class="space-y-2">
                     @forelse($this->revisions as $revision)
-                        <div class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 {{ $this->selectedRevisionId === $revision->id ? 'bg-teal-50 ring-1 ring-teal-200' : 'hover:bg-slate-50' }}">
+                        <div class="flex items-center justify-between gap-3 rounded-lg px-3 py-2 {{ $this->selectedRevisionId === $revision->id ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-slate-50' }}">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="truncate text-sm font-medium text-slate-700">{{ $revision->label ?? 'Revision' }}</span>
@@ -47,8 +47,8 @@
                                 @endif
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
-                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="text-xs font-medium text-slate-500 hover:text-slate-700 hover:underline">Inspect</button>
-                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="text-xs font-medium text-teal-600 hover:underline">Restore</button>
+                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="text-xs font-medium text-slate-500 hover:text-slate-700">Inspect</button>
+                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="text-xs font-medium text-blue-600">Restore</button>
                             </div>
                         </div>
                     @empty
@@ -64,23 +64,23 @@
 
     <div class="min-h-0">
         @if($this->selectedRevision && $this->selectedRevisionComparison)
-            <div class="rounded-lg border border-teal-200 bg-teal-50 p-4 shadow-sm">
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <div class="truncate text-sm font-semibold text-slate-800">{{ $this->selectedRevision->label ?? 'Revision' }}</div>
                         <div class="mt-0.5 text-xs text-slate-500">{{ $this->selectedRevision->created_at->format('M j, Y g:i A') }} · {{ $this->selectedRevision->user?->name ?? 'System' }}</div>
-                        <div class="mt-1 inline-flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700">
-                            <i class="ph ph-magnifying-glass"></i>
+                        <div class="mt-1 inline-flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                            <x-jaunt.icon name="search" size="sm" />
                             Inspecting revision
                         </div>
                     </div>
                     <button type="button" wire:click="clearSelectedRevision" class="shrink-0 text-slate-400 hover:text-slate-600" title="Close revision details">
-                        <i class="ph ph-x"></i>
+                        <x-jaunt.icon name="x" size="sm" />
                     </button>
                 </div>
                 <div class="mt-3 rounded-md bg-white p-2">
                     <label class="text-[10px] font-bold uppercase tracking-wide text-slate-400">Compare against</label>
-                    <select wire:model.live="compareRevisionId" class="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500">
+                    <select wire:model.live="compareRevisionId" class="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">Current draft</option>
                         @foreach($this->comparisonRevisionOptions as $comparisonRevision)
                             <option value="{{ $comparisonRevision->id }}">{{ $comparisonRevision->label ?? 'Revision #'.$comparisonRevision->id }} · {{ $comparisonRevision->created_at->format('M j') }}</option>
@@ -161,7 +161,7 @@
                                             </div>
                                         @endif
                                         @if($change['action'] !== 'removed')
-                                            <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="mt-2 rounded-md border border-teal-200 bg-teal-50 px-2 py-1 text-[11px] font-semibold text-teal-700 hover:bg-teal-100">Restore this block</button>
+                                            <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="mt-2 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">Restore this block</button>
                                         @endif
                                     </div>
                                     <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{{ $change['path'] }}</span>
@@ -181,14 +181,14 @@
                 @endif
 
                 <div class="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="rounded-md border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-700 hover:bg-teal-50">Restore fields</button>
-                    <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="rounded-md bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-700">Restore all</button>
+                    <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="rounded-md border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Restore fields</button>
+                    <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-on-accent hover:bg-accent-hover">Restore all</button>
                 </div>
             </div>
         @else
             <div class="flex min-h-80 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
                 <div>
-                    <i class="ph ph-stack text-3xl text-slate-300"></i>
+                    <x-jaunt.icon name="layers-3" size="lg" class="text-slate-300" />
                     <div class="mt-2 text-sm font-semibold text-slate-600">Select a revision</div>
                     <div class="mt-1 text-xs text-slate-400">Inspect, compare, or restore from history.</div>
                 </div>

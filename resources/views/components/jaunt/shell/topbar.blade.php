@@ -9,8 +9,7 @@
     'hasNotifications' => false,
 ])
 
-<header class="flex items-center gap-2.5 h-topbar shrink-0 px-4 border-b border-subtle backdrop-blur-md"
-    style="background: color-mix(in oklab, var(--surface-app) 82%, transparent)">
+<header class="j-chrome-edge flex items-center gap-2.5 h-topbar shrink-0 px-4">
     <x-jaunt.navigation.breadcrumbs :items="$crumbs" />
 
     <div class="ml-auto flex items-center gap-1">

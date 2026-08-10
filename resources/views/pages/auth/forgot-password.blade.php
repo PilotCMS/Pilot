@@ -25,7 +25,7 @@
 
         <div class="space-x-1 pt-2 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
             <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate class="font-medium hover:underline">{{ __('log in') }}</flux:link>
+            <flux:link :href="route('login')" wire:navigate class="font-medium">{{ __('log in') }}</flux:link>
         </div>
     </div>
 </x-layouts::auth>

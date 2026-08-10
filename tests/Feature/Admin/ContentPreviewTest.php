@@ -99,7 +99,7 @@ it('shows a preview link in the content editor toolbar', function () {
     $this->actingAs($user)
         ->get(route('admin.content.editor', $content))
         ->assertOk()
-        ->assertSee('View preview')
+        ->assertSee('Open preview')
         ->assertSee("canvasMode: 'preview'", false)
         ->assertSee('x-show="canvasMode === \'compose\'" class="flex min-h-0 flex-1 overflow-hidden"', false)
         ->assertSee('class="h-full min-h-0 max-w-full overflow-y-auto bg-white', false)
@@ -131,7 +131,7 @@ it('shows a preview link in the content editor toolbar', function () {
         ->assertSee('target="_blank"', false);
 });
 
-it('renders compose blocks as fallback previews with formatted json', function () {
+it('renders compose blocks as semantic summaries without implementation json', function () {
     $user = User::factory()->create();
     $space = Space::create([
         'name' => 'Marketing',
@@ -163,10 +163,10 @@ it('renders compose blocks as fallback previews with formatted json', function (
     $this->actingAs($user)
         ->get(route('admin.content.editor', $content))
         ->assertOk()
-        ->assertSee('Fallback preview')
-        ->assertSee('"en": "Preview CTA"')
-        ->assertSee('"en": "/signup"')
-        ->assertSee('true');
+        ->assertSee('Preview CTA')
+        ->assertDontSee('Fallback preview')
+        ->assertDontSee('"en": "Preview CTA"')
+        ->assertDontSee('"en": "/signup"');
 });
 
 it('renders the content editor when image preview fields are localized arrays', function () {

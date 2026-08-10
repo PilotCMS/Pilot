@@ -4,7 +4,7 @@
 > foundation (indigo accent, Inter typeface). It's been rewritten to match the
 > canonical system produced in Claude Design and handed off for implementation
 > — see [docs/_source-readme.md](./_source-readme.md) for the untouched source.
-> Teal is now the one accent; iris is reserved exclusively for AI; Geist is the typeface.
+> Blue is now the one accent; indigo is reserved exclusively for AI; Geist is the typeface.
 
 Jaunt is the operating system a destination marketing organization runs its entire operation on — CRM, CMS, listings, events, campaigns, analytics, media — eight hours a day, every day. That constraint decides almost everything below.
 
@@ -27,7 +27,7 @@ AI lives *inline*, where the work is — drafting a listing description, spottin
 *Why:* the value of AI is proportional to how little friction stands between intent and result.
 
 **5. Calm, then confident.**
-Surfaces are quiet by default; emphasis is spent deliberately — one accent (teal), one AI signal (iris), sparse semantic color.
+Surfaces are quiet by default; emphasis is spent deliberately — one accent (blue), one AI signal (indigo), sparse semantic color.
 *Why:* a calm baseline makes the few loud moments — a destructive action, an AI insight — actually register.
 
 ## Interaction Philosophy
@@ -36,7 +36,7 @@ Keyboard-first, mouse-friendly. Every primary action has a shortcut; the command
 
 ## Visual Philosophy
 
-A near-monochrome canvas carried by a single teal accent and a strict neutral ramp. Depth comes from hairline borders and one soft shadow tier — never heavy drop shadows, never decorative gradients. **Dark is the native environment; light is a first-class peer** (the system defaults to dark — see `tokens/colors.css`). No colored-left-border cards, no double borders, no mixed corner radii within one component tier.
+A near-monochrome canvas on a warm neutral ramp, whose primary action is ink rather than a hue — blue is reserved for links, focus rings and data. Depth comes from a hairline outline and one soft shadow tier — never heavy drop shadows, never decorative gradients. Selection is a dark ring, not a colour wash. **Dark is the native environment; light is a first-class peer** (the system defaults to dark — see `tokens/colors.css`). No colored-left-border cards, no double borders, no mixed corner radii within one component tier.
 
 ## Motion Philosophy
 

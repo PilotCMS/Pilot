@@ -53,23 +53,23 @@ class CommandPalette extends Component
     protected function quickLinkGroups(): array
     {
         $workspace = [
-            $this->result('Dashboard', 'Workspace overview and recent activity', route('admin.dashboard'), 'ph-squares-four'),
-            $this->result('Content', 'Pages, folders, and global content', route('admin.content.index'), 'ph-files'),
-            $this->result('Assets', 'Images, documents, and media library', route('admin.assets.index'), 'ph-image'),
-            $this->result('Datasources', 'Reusable structured data entries', route('admin.datasources.index'), 'ph-database'),
+            $this->result('Dashboard', 'Workspace overview and recent activity', route('admin.dashboard'), 'layout-dashboard'),
+            $this->result('Content', 'Pages, folders, and global content', route('admin.content.index'), 'files'),
+            $this->result('Assets', 'Images, documents, and media library', route('admin.assets.index'), 'image'),
+            $this->result('Datasources', 'Reusable structured data entries', route('admin.datasources.index'), 'database'),
         ];
 
         $admin = [];
 
         if ($this->isAdmin()) {
-            $admin[] = $this->result('Blocks', 'Reusable CMS block types', route('admin.blocks.index'), 'ph-cube');
-            $admin[] = $this->result('Types', 'Content type definitions', route('admin.content-types.index'), 'ph-blueprint');
-            $admin[] = $this->result('Spaces', 'Workspace and locale settings', route('admin.spaces.index'), 'ph-stack');
-            $admin[] = $this->result('Settings', 'CMS settings and configuration', route('admin.settings.index'), 'ph-gear');
+            $admin[] = $this->result('Blocks', 'Reusable CMS block types', route('admin.blocks.index'), 'boxes');
+            $admin[] = $this->result('Types', 'Content type definitions', route('admin.content-types.index'), 'panels-top-left');
+            $admin[] = $this->result('Spaces', 'Workspace and locale settings', route('admin.spaces.index'), 'layers-3');
+            $admin[] = $this->result('Settings', 'CMS settings and configuration', route('admin.settings.index'), 'settings');
         }
 
         if (auth()->user()?->can('manage users')) {
-            $admin[] = $this->result('Users', 'Manage accounts, roles, and permissions', route('admin.users.index'), 'ph-users');
+            $admin[] = $this->result('Users', 'Manage accounts, roles, and permissions', route('admin.users.index'), 'users');
         }
 
         return collect([
@@ -98,7 +98,7 @@ class CommandPalette extends Component
                 $content->name,
                 ucfirst($content->type).' / '.$content->slug,
                 route('admin.content.edit', $content),
-                $content->isFolder() ? 'ph-folder' : 'ph-file-text'
+                $content->isFolder() ? 'folder' : 'file-text'
             ));
 
         return $this->group('Content', $results);
@@ -122,7 +122,7 @@ class CommandPalette extends Component
                 $asset->displayName(),
                 $asset->mime ?: 'Asset',
                 route('admin.assets.index'),
-                $asset->isImage() ? 'ph-image' : 'ph-file'
+                $asset->isImage() ? 'image' : 'file'
             ));
 
         return $this->group('Assets', $results);
@@ -149,7 +149,7 @@ class CommandPalette extends Component
                 $blockType->name,
                 'Block type / '.$blockType->key,
                 route('admin.blocks.edit', $blockType),
-                'ph-cube'
+                'boxes'
             ));
 
         return $this->group('Blocks', $results);
@@ -172,7 +172,7 @@ class CommandPalette extends Component
                 $datasource->name,
                 'Datasource / '.$datasource->slug,
                 route('admin.datasources.index', ['search' => $datasource->slug]),
-                'ph-database'
+                'database'
             ));
 
         return $this->group('Datasources', $results);
@@ -199,7 +199,7 @@ class CommandPalette extends Component
                 $space->name,
                 'Space / '.$space->slug,
                 route('admin.spaces.edit', $space),
-                'ph-stack'
+                'layers-3'
             ));
 
         return $this->group('Spaces', $results);
@@ -226,7 +226,7 @@ class CommandPalette extends Component
                 $user->name,
                 $user->email,
                 route('admin.users.index', ['search' => $user->email]),
-                'ph-user'
+                'user'
             ));
 
         return $this->group('Users', $results);

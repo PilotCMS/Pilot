@@ -14,6 +14,7 @@ use App\Models\Space;
 use App\Models\User;
 use App\Support\Cms\ContentLifecycle;
 use App\Support\Cms\ContentRevisionInspector;
+use App\Support\Cms\ContentSyncFingerprint;
 use Livewire\Livewire;
 
 it('keeps block library state open until a block is inserted', function () {
@@ -106,7 +107,8 @@ it('uses a conservative content sync polling interval', function () {
 
     $this->get(route('admin.content.editor', $content))
         ->assertOk()
-        ->assertSee('wire:poll.5000ms="poll"', false)
+        ->assertSee('wire:poll.10000ms="poll"', false)
+        ->assertDontSee('wire:poll.5000ms="poll"', false)
         ->assertDontSee('wire:poll.1000ms="poll"', false);
 });
 
@@ -298,7 +300,14 @@ it('renders rich text fields with the wysiwyg editor', function () {
         ->assertSeeHtml('class="pilot-richtext')
         ->assertSeeHtml('contenteditable="true"')
         ->assertSeeHtml('pilotRichTextEditor')
-        ->assertSeeHtml('ph-bold ph-code');
+        ->assertSeeHtml('Expand rich text editor')
+        ->assertSeeHtml("'is-expanded': expanded")
+        ->assertDontSeeHtml('pilot-richtext-modal')
+        ->assertSeeHtml('aria-label="Text formatting"')
+        ->assertSee('Heading 6')
+        ->assertDontSeeHtml('aria-label="Text color"')
+        ->assertSeeHtml('data-lucide="align-left"')
+        ->assertSeeHtml('data-lucide="code"');
 });
 
 it('expands schema repeater items and updates their nested fields', function () {
@@ -539,6 +548,8 @@ it('shows the add block action on the preview panel', function () {
         ->assertSee('x-show="canvasMode === \'preview\'"', false)
         ->assertSee('Add Block')
         ->assertSee('⌘B')
+        ->assertSee('text-white', false)
+        ->assertSee('text-sm font-medium text-white', false)
         ->assertSee("e.key.toLowerCase() === 'b'", false);
 });
 
@@ -572,7 +583,7 @@ it('renders searchable block choices in the add block modal', function () {
         ->set('blockLibraryOpen', true)
         ->assertSee('Add a block...')
         ->assertSee('data-block-library', false)
-        ->assertSee('ph-cube', false)
+        ->assertSee('data-lucide="box"', false)
         ->assertSee('No blocks match your search.')
         ->assertSee('data-block-search-text="testimonial testimonial customer quote"', false);
 });
@@ -597,15 +608,17 @@ it('can collapse the editor side panels for a wider canvas', function () {
     $this->actingAs($user);
 
     Livewire::test(Editor::class, ['content' => $content])
-        ->assertSee('Collapse content panel')
+        ->assertSee('Collapse pages')
         ->assertSee('Collapse inspector')
-        ->assertSee('shrink-0 border-b border-slate-200 bg-white px-4 py-2', false)
-        ->call('toggleLeftSidebar')
-        ->assertSet('leftSidebarCollapsed', true)
-        ->assertSee('Expand content panel')
-        ->call('toggleDrawer')
-        ->assertSet('drawerOpen', false)
-        ->assertSee('width: 3rem', false)
+        ->assertSee('flex shrink-0 items-center justify-between border-b border-subtle bg-card px-4 py-2', false)
+        ->assertSee('x-on:click="leftCollapsed = true"', false)
+        ->assertSee('x-on:click="openPages()"', false)
+        ->assertSee('Expand pages')
+        ->assertDontSee('title="Open pages"', false)
+        ->assertSee('x-on:click="inspectorOpen = false"', false)
+        ->assertSee('x-on:click="openInspector()"', false)
+        ->assertSee("marginRight: inspectorOpen ? 'var(--admin-rail-width)' : '44px'", false)
+        ->assertSee("width: inspectorOpen ? 'var(--admin-rail-width)' : '44px'", false)
         ->assertSee('Expand inspector');
 });
 
@@ -689,6 +702,45 @@ it('polls for content changes without refreshing the full editor when nothing ch
     $component
         ->call('poll')
         ->assertDispatched('content-external-change-detected');
+});
+
+it('does not treat its own block field autosave as an external change', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => ['title' => 'Before'],
+    ]);
+
+    $component = Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->set('selectedBlockId', $block->id)
+        ->call('updateBlock', $block->id, 'title', 'After')
+        ->assertSet('saveState', 'saved')
+        ->assertSet('conflictMessage', null);
+
+    expect($component->get('lastKnownContentSyncKey'))
+        ->toBe(ContentSyncFingerprint::make($content->fresh()));
+
+    $component
+        ->call('syncExternalChanges')
+        ->assertSet('saveState', 'saved')
+        ->assertSet('conflictMessage', null)
+        ->assertSet('blocks.0.data.title', 'After');
 });
 
 it('can add a nested block inside a container block', function () {
@@ -1056,7 +1108,9 @@ it('shows changes since the published revision', function () {
 
     Livewire::actingAs($user)
         ->test(Editor::class, ['content' => $content->refresh()])
-        ->assertSee('Since publish: 2 fields, 1 blocks')
+        ->assertSee('Since publish: 1 block, 2 fields')
+        ->assertSeeHtml('role="tooltip"')
+        ->assertSeeHtml('aria-describedby="since-publish-tooltip"')
         ->call('selectPublishedRevision')
         ->assertSet('selectedRevisionId', $publishedRevision->id)
         ->assertSet('revisionModalOpen', true)

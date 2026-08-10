@@ -6,7 +6,7 @@ Live version: `npm run dev`, open `/` — every value below renders as a swatch,
 
 ## Two-layer architecture
 
-**1. Primitives** — raw scales (`--gray-500`, `--teal-600`, `--iris-400`, ...). Never referenced directly in component markup.
+**1. Primitives** — raw scales (`--gray-500`, `--blue-600`, `--indigo-400`, ...). Never referenced directly in component markup.
 
 **2. Semantic** — role-based aliases (`--surface-card`, `--text-primary`, `--accent`, `--ai-accent`, `--border-default`, ...). What components actually consume. Semantic tokens point at a primitive step under `:root`/`[data-theme="light"]` and get re-pointed under `[data-theme="dark"]` — that's the entire theming mechanism. **Dark is the native theme; light is a first-class peer, not an afterthought** — `[data-theme="dark"]` is written first in intent even though `:root`/`[data-theme="light"]` appears first in the cascade for backward compatibility with unset `data-theme`.
 
@@ -14,14 +14,15 @@ If you're tempted to write `bg-gray-800` in a component "to make dark mode work,
 
 ## Color
 
-**One accent, one AI signal, semantic hues only for status.** This is the single most important color rule in the system (see [00-philosophy.md](./00-philosophy.md), Visual Philosophy):
+**The primary action is ink; one brand hue, one AI signal, semantic hues only for status.** This is the single most important color rule in the system (see [00-philosophy.md](./00-philosophy.md), Visual Philosophy):
 
 | Palette | Steps | Role |
 |---|---|---|
-| `gray` | 0, 25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000 | UI chrome, text, borders, surfaces. Very slightly cool ("software" gray, not warm). |
-| `teal` | 50–900 | **The** accent. Interactivity, selection, brand. Used nowhere else. |
-| `iris` | 50–900 | **Exclusively** AI. Never used for anything the user authored themselves — that separation is what makes "this came from the assistant" legible at a glance without a label. |
-| `green` / `amber` / `red` / `blue` | 400/500/600 | Semantic status only (success/warning/danger/info). |
+| `gray` | 0, 25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000 | UI chrome, text, borders, surfaces. Slightly **warm** — the stone-tinted neutral the InterfaceCraft samples sit on, not a cool "software" gray. |
+| `gray-900` (as `--accent`) | — | **The primary action.** Ink, not a hue: near-black on light, near-white on dark. Also `--border-selected`, the dark ring that marks a choice. |
+| `blue` | 50–900 | **`--brand`** — links, focus rings (`--ring`), and data/viz emphasis. *Not* the primary action, and never a selection fill. |
+| `indigo` | 50–900 | **Exclusively** AI. Never used for anything the user authored themselves — that separation is what makes "this came from the assistant" legible at a glance without a label. |
+| `green` / `yellow` / `red` / `cyan` | 400/500/600 | Semantic status only (success/warning/danger/info). |
 | `viz` | 1–8 | Calm categorical set, data visualization only. |
 
 ### Semantic tokens
@@ -33,7 +34,9 @@ Text:       text-primary · text-secondary · text-tertiary · text-disabled ·
             text-on-accent · text-link
 Borders:    border-subtle · border-default · border-strong · border-focus
 Accent:     accent · accent-hover · accent-active · accent-subtle ·
-            accent-subtle-hover · accent-text · accent-border
+            accent-subtle-hover · accent-text · accent-border   (ink)
+Brand:      brand · brand-hover · brand-subtle · brand-text · brand-border  (blue)
+Selection:  border-selected (the dark ring) · surface-selected (neutral fill)
 AI:         ai-accent · ai-text · ai-subtle · ai-border · ai-glow
 Status:     success/warning/danger/info, each with a base + -subtle + -border
 Focus ring: ring · ring-ai · ring-danger  (box-shadow spreads, not colors)
@@ -66,11 +69,11 @@ Semantic type roles (`--type-h1`, `--type-body`, `--type-label`, `--type-caption
 
 4px base unit (`--space-0` … `--space-24`). Product UI lives at 6–16px (`--gap-inline` 8px between icon and label, `--gap-control` 12px between form controls, `--pad-control` 12px control padding, `--pad-card` 20px card interior); layout lives at 24–48px (`--gap-section` 24px, `--pad-view` 24px workspace gutter).
 
-**Fixed shell metrics — shared by every workspace so muscle memory transfers:** `--sidebar-w` 248px, `--sidebar-w-mini` 56px, `--topbar-h` 48px, `--row-h` 36px, `--control-h` 32px (`-sm` 26px, `-lg` 40px).
+**Fixed shell metrics — shared by every workspace so muscle memory transfers:** `--sidebar-w` 300px, `--sidebar-w-mini` 56px, `--topbar-h` 48px, `--row-h` 44px (`--row-h-2line` 60px for stacked identity cells), `--control-h` 32px (`-sm` 26px, `-lg` 40px).
 
 ## Radius
 
-Controls 6px (`radius-sm`), dropdowns/small cards 8px (`radius-md`), cards/panels 10px (`radius-lg`), dialogs 14px (`radius-xl`), pills/avatars/switches full. Never mix radii within one component tier.
+Controls 8px (`radius-sm`), dropdowns/segmented controls 10px (`radius-md`), popovers 12px (`radius-lg`), **cards and panels 16px (`radius-xl`)** — the InterfaceCraft `rounded-2xl` — dialogs 24px (`radius-2xl`), tags/kbd 6px (`radius-xs`), pills/avatars/switches full. Never mix radii within one component tier.
 
 ## Elevation
 
@@ -92,7 +95,7 @@ Durations 80–260ms; everything interruptible; everything degrades to opacity/i
 
 ## Iconography
 
-**Lucide**, 1.5px stroke, sized 16px (dense/inline/table), 20px (default control), 24px (nav/headers). Icons inherit `currentColor`, default to `text-secondary`, go `text-primary` on hover/active, `accent` when selected. Pair with a label unless the metaphor is unambiguous (search, close, chevrons) — never decorate. AI actions use a single consistent glyph (Sparkles), tinted iris, everywhere.
+**Lucide**, 1.5px stroke, sized 16px (dense/inline/table), 20px (default control), 24px (nav/headers). Icons inherit `currentColor`, default to `text-secondary`, go `text-primary` on hover/active, `accent` when selected. Pair with a label unless the metaphor is unambiguous (search, close, chevrons) — never decorate. AI actions use a single consistent glyph (Sparkles), tinted indigo, everywhere.
 
 ## Grid & Layout
 

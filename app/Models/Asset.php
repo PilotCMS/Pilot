@@ -17,6 +17,7 @@ class Asset extends Model
         'folder_id',
         'disk',
         'path',
+        'thumbnail_path',
         'filename',
         'display_name',
         'description',
@@ -85,8 +86,43 @@ class Asset extends Model
         return static::toRelativeUrl($this->url());
     }
 
+    public function thumbnailUrl(): string
+    {
+        if (! $this->thumbnail_path || ! $this->hasConfiguredDisk()) {
+            return $this->optimizedExternalThumbnailUrl($this->url());
+        }
+
+        return Storage::disk($this->disk)->url($this->thumbnail_path);
+    }
+
+    public function thumbnailRelativeUrl(): string
+    {
+        return static::toRelativeUrl($this->thumbnailUrl());
+    }
+
+    protected function optimizedExternalThumbnailUrl(string $url): string
+    {
+        $parts = parse_url($url);
+
+        if (($parts['host'] ?? '') !== 'images.unsplash.com') {
+            return $url;
+        }
+
+        parse_str($parts['query'] ?? '', $query);
+        $query['fit'] = 'crop';
+        $query['w'] = 640;
+        $query['h'] = 480;
+        $query['q'] = 78;
+
+        return ($parts['scheme'] ?? 'https').'://'.$parts['host'].($parts['path'] ?? '').'?'.http_build_query($query);
+    }
+
     public function hasConfiguredDisk(): bool
     {
+        if (! app()->bound('config')) {
+            return false;
+        }
+
         return array_key_exists($this->disk, config('filesystems.disks', []));
     }
 

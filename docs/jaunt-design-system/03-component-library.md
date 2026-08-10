@@ -59,7 +59,7 @@ The most important group in the system — see [00-philosophy.md](./00-philosoph
 
 | Component | States / variants | Notes |
 |---|---|---|
-| `jaunt.ai.confidence-badge` | low (amber) · medium (iris) · high (green), with/without label | levels map to semantic status color, **except** medium, which stays iris — honesty over bravado, not a generic "ok" green |
+| `jaunt.ai.confidence-badge` | low · medium · high, with/without label | levels map to semantic status color, **except** medium, which stays indigo — honesty over bravado, not a generic "ok" green |
 | `jaunt.ai.ai-inline` | `ghost` (inline suggestion + Tab-to-accept chip) · `trigger` ("Autofill with AI" button) | the smallest AI touchpoint — lives inside a field, e.g. an Input's suffix slot |
 | `jaunt.ai.ai-streaming` | thinking (bouncing dots) → streaming (typewriter + caret) → settled | `role="status" aria-live="polite"` so assistive tech hears the *settled* result once, not every token. **The typewriter is a client-side mock** (`setInterval` revealing a fully-known string) — in production, bind `streaming` + a `text` prop that grows from a real Livewire `wire:stream`/SSE source and drop `typewriter` entirely; documented inline in the component. |
 | `jaunt.ai.ai-suggestion` | composes a `confidence` slot + Accept/Edit/Dismiss actions | nothing AI-authored is ever committed without an explicit Accept — this component *is* that guardrail, not just a visual |

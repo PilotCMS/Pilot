@@ -54,8 +54,8 @@ has a shortcut; the command palette (`⌘K`) is the universal entry point. State
 changes are optimistic and reversible (undo over confirm). Nothing blocks — long
 work streams in.
 
-**Visual philosophy.** A near-monochrome canvas carried by a single teal accent
-and a strict neutral ramp. Depth from hairline borders and one soft shadow tier,
+**Visual philosophy.** A near-monochrome canvas on a warm neutral ramp, whose
+primary action is ink rather than a hue. Depth from a hairline `outline` and one soft shadow tier,
 not heavy drop shadows or gradients. Dark is the native environment; light is a
 first-class peer.
 
@@ -113,10 +113,13 @@ Micro-examples:
 
 ## Visual foundations
 
-**Color.** A near-monochrome neutral ramp (very slightly cool gray) does 90% of
-the work. One signature accent — **Jaunt teal** (`--teal-500 #06a89a`) — carries
-interactivity, selection, and brand. **Iris** (`--iris-600 #7059f7`) is reserved
-*exclusively* for AI. Semantic hues (green/amber/red/blue) appear only for status.
+**Color.** A **warm** near-monochrome neutral ramp does 90% of the work. The
+primary action is **ink** (`--accent` = `--gray-900`), not a hue: a near-black
+button is unambiguous and never competes with status colour. Selection is a dark
+ring (`--border-selected`), not a tint. **System blue** survives as `--brand`
+for links, focus rings and data viz only — never a button fill. **Indigo**
+(`--indigo-500`) is reserved *exclusively* for AI. Semantic hues
+(green/yellow/red/cyan) appear only for status.
 A calm 8-color categorical set is reserved for data viz. No decorative gradients;
 the only gradients allowed are (a) subtle protection scrims over media and (b) the
 faint AI "shimmer" on streaming surfaces.
@@ -127,7 +130,7 @@ are semibold with tightened tracking; body is regular. Numbers use lining/tabula
 figures in tables.
 
 **Space & layout.** 4px base grid; product UI lives at 6–16px, layout at 24–48px.
-Fixed shell metrics (sidebar 248px, topbar 48px, row 36px) are shared by every
+Fixed shell metrics (sidebar 300px, topbar 48px, row 44px) are shared by every
 workspace so muscle memory transfers. 12-column fluid content grid, centered
 within `--width-wide` for dashboards.
 
@@ -136,15 +139,18 @@ appears only in *content* (listing photos, media library, marketing) — never i
 app chrome. Over imagery, a bottom-up protection scrim
 (`rgba(0,0,0,0) → rgba(0,0,0,.6)`) guarantees legible captions.
 
-**Borders & cards.** Depth comes from **hairline borders** (`--border-default`)
-plus one soft shadow tier. A **card** = `--surface-card`, `1px --border-default`,
-`--radius-lg (10px)`, `--shadow-sm`, `--pad-card (20px)`. In dark theme, cards
+**Borders & cards.** Depth comes from a **hairline outline** (`--border-subtle`)
+plus one soft shadow tier. A **card** = `--surface-card`, `1px outline --border-subtle`
+at `outline-offset: -1px`, `--radius-xl (16px)`, `--shadow-sm`, `--pad-card`.
+`outline` is deliberate: it draws outside the box, so it never changes layout or
+fights `overflow`. Selection adds a 1.5px `--border-selected` ring — dark, not
+tinted. In dark theme, cards
 lean on border + a faint highlight instead of shadow. No colored-left-border
 cards, no double borders.
 
-**Corner radii.** Controls 6px, dropdowns/small cards 8px, cards/panels 10px,
-dialogs 14px, pills/avatars full. Consistent per tier — never mix radii within
-one component.
+**Corner radii.** Controls 8px, dropdowns/segmented controls 10px, popovers 12px,
+cards/panels 16px (`rounded-2xl`), dialogs and modals 24px, tags/kbd 6px,
+pills/avatars full. Consistent per tier — never mix radii within one component.
 
 **Elevation.** Soft, low-spread, tinted shadows in five tiers. Menus/popovers use
 `--shadow-md`, dialogs `--shadow-lg/xl`. Inputs may use a faint inset well.
@@ -157,7 +163,7 @@ AI streams token-by-token with a soft caret.
 **Hover / focus / press.**
 - *Hover:* a translucent overlay (`--surface-hover`, ~4% ink) — not a color swap —
   so hover reads consistently on any surface. Buttons darken one accent step.
-- *Focus:* always a visible ring (`--ring`, a 3px teal spread) via box-shadow;
+- *Focus:* always a visible ring (`--ring`, a 3px blue spread) via box-shadow;
   keyboard focus never suppressed.
 - *Press:* background deepens (`--surface-active`) and the element scales to
   ~0.98; no bounce.
@@ -191,7 +197,7 @@ only for avatars-fallback initials. Grain is never added.
   is unambiguous (search, close, chevrons). No filled/duotone mixing.
 - **Emoji / unicode:** not used as UI icons. `⌘ ⌥ ⇧ ↵ ⌫` glyphs are used only in
   keyboard-hint (`kbd`) chips.
-- **AI mark:** AI actions use a single consistent glyph (a sparkle) tinted iris —
+- **AI mark:** AI actions use a single consistent glyph (a sparkle) tinted indigo —
   see the AI components — so "this is AI" is instantly recognizable.
 
 ---
@@ -201,14 +207,15 @@ only for avatars-fallback initials. Grain is never added.
 | Path | What's there |
 |---|---|
 | `styles.css` | Global entry point (consumers link this). `@import` manifest only. |
-| `tokens/` | `fonts, colors, typography, spacing, radius, elevation, motion, layout, base`. Light + dark. |
+| `tokens/` | `fonts, colors, typography, spacing, radius, elevation, materials, motion, layout, base`. Light + dark. |
+| `components/shell/` | Sidebar, Topbar, DynamicHeader, Inspector |
 | `components/forms/` | Button, IconButton, Input, Textarea, Select, Checkbox, Radio, Switch, Tag, FileUpload |
-| `components/feedback/` | Badge, Toast, Alert, Dialog, Tooltip, Progress, Skeleton |
+| `components/feedback/` | Badge, Toast, Alert, Dialog, Modal, Tooltip, Progress, Skeleton, Optimistic |
 | `components/navigation/` | Tabs, Menu (dropdown/context), Breadcrumbs, CommandPalette |
 | `components/data/` | Table, DataCard, Kanban, Avatar, EmptyState, Timeline |
 | `components/ai/` | AIInline, AISuggestion, AIStreaming, ConfidenceBadge |
 | `ui_kits/app/` | The universal Jaunt application shell + CRM, Listings (Kanban), and Analytics workspace screens |
-| `guidelines/` | Foundation specimen cards (Colors, Type, Spacing, Elevation, Motion, Brand) |
+| `guidelines/` | Foundation specimen cards (Colors, Type, Spacing, Elevation, Materials, Motion, Brand) |
 | `assets/` | Logo, AI mark, brand imagery |
 | `SKILL.md` | Portable Agent-Skill wrapper for using this system elsewhere |
 

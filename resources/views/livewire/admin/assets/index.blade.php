@@ -1,10 +1,5 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Assets</h1>
-            <p class="cms-subtitle">Manage media and files.</p>
-        </div>
-    </header>
+    <x-jaunt.shell.dynamic-header title="Assets" subtitle="Manage media and files." top="0px" as="header" scroll-target="#assets-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
     <main class="flex-1 min-w-0 overflow-hidden">
@@ -42,7 +37,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 overflow-y-auto min-w-0">
+    <div id="assets-scroll" class="flex-1 overflow-y-auto min-w-0">
         <div class="p-6 md:p-8">
             <div class="mb-6">
                 <flux:heading>
@@ -80,62 +75,86 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5" wire:key="assets-grid-{{ $assets->count() }}-{{ $assets->max('id') ?? 0 }}">
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 2xl:grid-cols-4" wire:key="assets-grid-{{ $assets->currentPage() }}-{{ $assets->count() }}">
                 @forelse($assets as $asset)
-                    <div
+                    @php
+                        $assetSize = $asset->size >= 1048576
+                            ? number_format($asset->size / 1048576, 1).' MB'
+                            : number_format($asset->size / 1024, 1).' KB';
+                        $assetExtension = strtoupper(pathinfo($asset->filename, PATHINFO_EXTENSION));
+                        $remainingTagCount = max(0, $asset->tags->count() - 1);
+                    @endphp
+                    <button
+                        type="button"
                         wire:click="openAssetDetail({{ $asset->id }})"
-                        class="group relative cursor-pointer"
+                        class="group relative block w-full overflow-hidden rounded-xl bg-card text-left shadow-xs outline outline-1 -outline-offset-1 outline-[color:var(--border-subtle)] transition-[box-shadow,transform] duration-fast ease-standard hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:shadow-ring"
+                        aria-label="Open {{ $asset->displayName() }} details"
                     >
-                        <flux:card class="overflow-hidden hover:ring-2 hover:ring-primary-500 hover:shadow-lg transition-all duration-200">
+                        <div class="relative aspect-[4/3] overflow-hidden bg-sunken">
                             {{-- Preview: Image --}}
                             @if($asset->isImage())
                                 <img
-                                    src="{{ $asset->url() }}"
+                                    src="{{ $asset->thumbnailUrl() }}"
                                     alt="{{ $asset->displayName() }}"
-                                    class="w-full aspect-square object-cover"
+                                    class="h-full w-full object-cover transition-transform duration-slow ease-standard group-hover:scale-[1.015]"
                                     loading="lazy"
                                 />
                             {{-- Preview: Video --}}
                             @elseif($asset->isVideo())
-                                <div class="w-full aspect-square bg-zinc-900 relative overflow-hidden flex items-center justify-center">
+                                <div class="relative flex h-full w-full items-center justify-center overflow-hidden bg-gray-900">
                                     <video
                                         src="{{ $asset->url() }}"
-                                        class="max-w-full max-h-full object-contain"
+                                        class="h-full w-full object-contain transition-transform duration-slow ease-standard group-hover:scale-[1.015]"
                                         muted
                                         preload="metadata"
                                     ></video>
-                                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                                        <flux:icon.play-circle class="size-14 text-white/90 drop-shadow-lg" />
+                                    <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
+                                        <span class="grid size-11 place-items-center rounded-full bg-black/55 text-white shadow-md backdrop-blur-sm">
+                                            <flux:icon.play class="size-5 translate-x-px" />
+                                        </span>
                                     </div>
                                 </div>
                             {{-- Preview: Document --}}
                             @else
-                                <div class="w-full aspect-square bg-zinc-100 dark:bg-zinc-800 flex flex-col items-center justify-center p-4">
-                                    <flux:icon.document class="size-16 text-muted-foreground" />
-                                    <span class="text-xs text-muted-foreground mt-2 truncate max-w-full px-2">{{ pathinfo($asset->filename, PATHINFO_EXTENSION) }}</span>
+                                <div class="flex h-full w-full flex-col items-center justify-center bg-sunken p-4 text-tertiary">
+                                    <span class="grid size-14 place-items-center rounded-xl border border-subtle bg-card shadow-xs">
+                                        <flux:icon.document class="size-7" />
+                                    </span>
+                                    <span class="mt-2 text-2xs font-semibold uppercase tracking-[var(--ls-caps)]">{{ $assetExtension ?: 'FILE' }}</span>
                                 </div>
                             @endif
-                            <div class="p-3">
-                                <flux:text class="text-sm font-medium truncate block" title="{{ $asset->displayName() }}">{{ $asset->displayName() }}</flux:text>
-                                <flux:text class="text-xs text-muted-foreground">
-                                    {{ $asset->size >= 1048576 ? number_format($asset->size / 1048576, 1) . ' MB' : number_format($asset->size / 1024, 1) . ' KB' }}
-                                </flux:text>
+
+                            @if($asset->isExpired())
+                                <span class="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full border border-warning-border bg-warning-subtle px-2 py-1 text-2xs font-semibold text-warning shadow-xs">
+                                    <x-jaunt.icon name="alert-triangle" size="xs" />
+                                    Rights expired
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="min-h-[102px] p-3.5">
+                            <span class="block truncate text-sm font-semibold text-primary" title="{{ $asset->displayName() }}">{{ $asset->displayName() }}</span>
+                            <span class="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-2xs text-tertiary">
+                                <span>{{ $assetSize }}</span>
                                 @if($asset->dimensions())
-                                    <flux:text class="text-xs text-muted-foreground">{{ $asset->dimensions() }}</flux:text>
+                                    <span aria-hidden="true">·</span>
+                                    <span class="truncate">{{ str_replace(' x ', ' × ', $asset->dimensions()) }}</span>
+                                @else
+                                    <span aria-hidden="true">·</span>
+                                    <span>{{ $assetExtension ?: 'File' }}</span>
                                 @endif
-                                @if($asset->isExpired())
-                                    <span class="mt-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Expired</span>
-                                @endif
-                                @if($asset->tags->isNotEmpty())
-                                    <div class="flex flex-wrap gap-1 mt-1">
-                                        @foreach($asset->tags->take(2) as $tag)
-                                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-muted-foreground">{{ $tag->name }}</span>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                        </flux:card>
-                    </div>
+                            </span>
+
+                            @if($asset->tags->isNotEmpty())
+                                <span class="mt-3 flex min-w-0 items-center gap-1.5">
+                                    <span class="max-w-full truncate rounded-full bg-sunken px-2 py-1 text-2xs font-medium text-secondary">{{ $asset->tags->first()->name }}</span>
+                                    @if($remainingTagCount > 0)
+                                        <span class="shrink-0 text-2xs text-tertiary">+{{ $remainingTagCount }}</span>
+                                    @endif
+                                </span>
+                            @endif
+                        </div>
+                    </button>
                 @empty
                     <div class="col-span-full flex flex-col items-center justify-center py-16 px-4">
                         <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
@@ -150,6 +169,12 @@
                     </div>
                 @endforelse
             </div>
+
+            @if($assets->hasPages())
+                <div class="mt-8">
+                    {{ $assets->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -160,9 +185,9 @@
 {{-- Asset Detail Slide-over --}}
 @if($showDetailSlideOver && $selectedAsset)
 <div
-    x-data="{ open: @entangle('showDetailSlideOver') }"
+    x-data="{ open: @entangle('showDetailSlideOver'), tab: 'basics' }"
     x-show="open"
-    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter="transition ease-out duration-base"
     x-transition:enter-start="opacity-0"
     x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-150"
@@ -175,24 +200,39 @@
 
     {{-- Panel --}}
     <div
-        class="absolute right-0 top-0 bottom-0 w-full max-w-lg bg-white dark:bg-zinc-800 shadow-2xl flex flex-col"
-        x-transition:enter="transition ease-out duration-200"
+        class="absolute bottom-0 right-0 top-0 flex w-full max-w-lg flex-col bg-card shadow-xl"
+        x-transition:enter="transition ease-out duration-base"
         x-transition:enter-start="translate-x-full"
         x-transition:enter-end="translate-x-0"
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
     >
-        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
-            <flux:heading size="md">Asset Details</flux:heading>
-            <button wire:click="closeAssetDetail" class="p-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700">
-                <flux:icon.x-mark class="size-5" />
+        <div class="flex shrink-0 items-center justify-between border-b border-subtle px-4 py-3">
+            <div class="min-w-0">
+                <h2 class="truncate text-sm font-semibold text-primary">{{ $selectedAsset->displayName() }}</h2>
+                <p class="truncate text-2xs text-tertiary">{{ $selectedAsset->filename }}</p>
+            </div>
+            <button wire:click="closeAssetDetail" class="cms-iconbtn text-tertiary hover:bg-hover hover:text-primary" aria-label="Close asset details">
+                <x-jaunt.icon name="x" size="sm" />
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+        <div class="flex shrink-0 border-b border-subtle bg-sunken px-3 pt-2" role="tablist" aria-label="Asset details sections">
+            @foreach(['basics' => 'Basics', 'rights' => 'Rights', 'usage' => 'Usage'] as $assetTab => $assetTabLabel)
+                <button type="button" x-on:click="tab = '{{ $assetTab }}'" class="flex-1 border-b-2 px-3 py-2 text-xs font-medium transition-colors" x-bind:class="tab === '{{ $assetTab }}' ? 'border-accent text-primary' : 'border-transparent text-tertiary hover:text-secondary'" role="tab" x-bind:aria-selected="tab === '{{ $assetTab }}'">
+                    {{ $assetTabLabel }}
+                    @if($assetTab === 'usage')
+                        <span class="ml-1 text-2xs text-tertiary">{{ $selectedAssetUsage->count() }}</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-y-auto p-5">
+            <div x-show="tab === 'basics'" class="space-y-5" role="tabpanel">
             {{-- Preview --}}
-            <div class="rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-900 aspect-square max-h-64">
+            <div class="aspect-[4/3] max-h-64 overflow-hidden rounded-lg bg-sunken">
                 @if($selectedAsset->isImage())
                     <div
                         class="relative h-full w-full cursor-crosshair"
@@ -206,18 +246,18 @@
                         <img
                             src="{{ $selectedAsset->url() }}"
                             alt="{{ $selectedAsset->displayName() }}"
-                            class="w-full h-full object-cover"
+                            class="h-full w-full object-cover"
                             style="object-position: {{ $editFocalX }}% {{ $editFocalY }}%;"
                         />
                         <div class="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style="left: {{ $editFocalX }}%; top: {{ $editFocalY }}%;">
-                            <div class="h-4 w-4 rounded-full border-2 border-white bg-teal-500 shadow"></div>
+                            <div class="h-4 w-4 rounded-full border-2 border-white bg-accent shadow"></div>
                         </div>
                     </div>
                 @elseif($selectedAsset->isVideo())
-                    <video src="{{ $selectedAsset->url() }}" controls class="w-full h-full object-contain"></video>
+                    <video src="{{ $selectedAsset->url() }}" controls class="h-full w-full object-contain"></video>
                 @else
-                    <div class="w-full h-full flex items-center justify-center">
-                        <flux:icon.document class="size-24 text-muted-foreground" />
+                    <div class="flex h-full w-full items-center justify-center text-tertiary">
+                        <flux:icon.document class="size-20" />
                     </div>
                 @endif
             </div>
@@ -226,7 +266,7 @@
             <flux:field>
                 <flux:label>Focal Point</flux:label>
                 <flux:description>Click the image preview to set the image focus used by blocks on the website.</flux:description>
-                <div class="mt-2 text-xs text-slate-500">X: {{ number_format($editFocalX, 1) }}% · Y: {{ number_format($editFocalY, 1) }}%</div>
+                <div class="mt-2 text-xs text-tertiary">X: {{ number_format($editFocalX, 1) }}% · Y: {{ number_format($editFocalY, 1) }}%</div>
             </flux:field>
             @endif
 
@@ -257,38 +297,6 @@
                 </flux:field>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <flux:field>
-                    <flux:label>Credit</flux:label>
-                    <flux:input wire:model="editCredit" placeholder="Photographer or source" />
-                    <flux:error name="editCredit" />
-                </flux:field>
-
-                <flux:field>
-                    <flux:label>License</flux:label>
-                    <flux:input wire:model="editLicense" placeholder="Owned, stock, CC BY..." />
-                    <flux:error name="editLicense" />
-                </flux:field>
-            </div>
-
-            <flux:field>
-                <flux:label>Copyright</flux:label>
-                <flux:input wire:model="editCopyright" placeholder="Copyright owner or rights note" />
-                <flux:error name="editCopyright" />
-            </flux:field>
-
-            <flux:field>
-                <flux:label>Source URL</flux:label>
-                <flux:input wire:model="editSourceUrl" placeholder="https://..." />
-                <flux:error name="editSourceUrl" />
-            </flux:field>
-
-            <flux:field>
-                <flux:label>Rights Expiration</flux:label>
-                <flux:input type="date" wire:model="editExpiresAt" />
-                <flux:error name="editExpiresAt" />
-            </flux:field>
-
             {{-- Tags --}}
             <flux:field>
                 <flux:label>Tags</flux:label>
@@ -312,67 +320,100 @@
                 <flux:label>Asset URL</flux:label>
                 <div class="flex gap-2" x-data="{ copied: false, url: {{ \Illuminate\Support\Js::from($selectedAsset->relativeUrl()) }} }">
                     <flux:input value="{{ $selectedAsset->relativeUrl() }}" readonly class="font-mono text-sm" />
-                    <flux:button
-                        type="button"
-                        x-on:click="navigator.clipboard.writeText(url).then(() => { copied = true; setTimeout(() => copied = false, 2000) })"
-                        variant="ghost"
-                        size="sm"
-                        x-bind:title="copied ? 'Copied!' : 'Copy link'"
-                    >
+                    <flux:button type="button" x-on:click="navigator.clipboard.writeText(url).then(() => { copied = true; setTimeout(() => copied = false, 2000) })" variant="ghost" size="sm" x-bind:title="copied ? 'Copied!' : 'Copy link'">
                         <flux:icon.clipboard class="size-5" x-show="!copied" />
-                        <flux:icon.check class="size-5 text-green-600" x-show="copied" x-cloak />
+                        <flux:icon.check class="size-5 text-success" x-show="copied" x-cloak />
                     </flux:button>
                 </div>
-                <flux:description>Use this URL to reference the asset</flux:description>
             </flux:field>
-
-            {{-- Meta --}}
-            <div class="text-sm text-muted-foreground space-y-1">
-                <div>Filename: {{ $selectedAsset->filename }}</div>
-                <div>Size: {{ $selectedAsset->size >= 1048576 ? number_format($selectedAsset->size / 1048576, 1) . ' MB' : number_format($selectedAsset->size / 1024, 1) . ' KB' }}</div>
-                @if($selectedAsset->dimensions())
-                    <div>Dimensions: {{ $selectedAsset->dimensions() }}</div>
-                @endif
-                <div>Type: {{ $selectedAsset->mime }}</div>
-                @if($selectedAsset->checksum)
-                    <div class="break-all">Checksum: {{ $selectedAsset->checksum }}</div>
-                @endif
-                @if($selectedAsset->expires_at)
-                    <div>Rights expire: {{ $selectedAsset->expires_at->toFormattedDateString() }}</div>
-                @endif
             </div>
 
-            <div class="rounded-lg border border-zinc-200 dark:border-zinc-700">
-                <div class="border-b border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-800 dark:border-zinc-700 dark:text-zinc-100">
+            <div x-show="tab === 'rights'" x-cloak class="space-y-5" role="tabpanel">
+                <div class="rounded-md bg-warning-subtle p-3 text-sm text-warning">
+                    Keep attribution and expiration current so editors can reuse this asset confidently.
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <flux:field>
+                    <flux:label>Credit</flux:label>
+                    <flux:input wire:model="editCredit" placeholder="Photographer or source" />
+                    <flux:error name="editCredit" />
+                </flux:field>
+
+                <flux:field>
+                    <flux:label>License</flux:label>
+                    <flux:input wire:model="editLicense" placeholder="Owned, stock, CC BY..." />
+                    <flux:error name="editLicense" />
+                </flux:field>
+                </div>
+
+            <flux:field>
+                <flux:label>Copyright</flux:label>
+                <flux:input wire:model="editCopyright" placeholder="Copyright owner or rights note" />
+                <flux:error name="editCopyright" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Source URL</flux:label>
+                <flux:input wire:model="editSourceUrl" placeholder="https://..." />
+                <flux:error name="editSourceUrl" />
+            </flux:field>
+
+            <flux:field>
+                <flux:label>Rights Expiration</flux:label>
+                <flux:input type="date" wire:model="editExpiresAt" />
+                <flux:error name="editExpiresAt" />
+            </flux:field>
+
+            </div>
+
+            <div x-show="tab === 'usage'" x-cloak class="space-y-5" role="tabpanel">
+            {{-- Meta --}}
+            <dl class="divide-y divide-subtle rounded-md border border-subtle text-sm">
+                <div class="flex justify-between gap-4 px-3 py-2"><dt class="text-tertiary">Filename</dt><dd class="truncate text-primary">{{ $selectedAsset->filename }}</dd></div>
+                <div class="flex justify-between gap-4 px-3 py-2"><dt class="text-tertiary">Size</dt><dd class="text-primary">{{ $selectedAsset->size >= 1048576 ? number_format($selectedAsset->size / 1048576, 1) . ' MB' : number_format($selectedAsset->size / 1024, 1) . ' KB' }}</dd></div>
+                @if($selectedAsset->dimensions())
+                    <div class="flex justify-between gap-4 px-3 py-2"><dt class="text-tertiary">Dimensions</dt><dd class="text-primary">{{ $selectedAsset->dimensions() }}</dd></div>
+                @endif
+                <div class="flex justify-between gap-4 px-3 py-2"><dt class="text-tertiary">Type</dt><dd class="text-primary">{{ $selectedAsset->mime }}</dd></div>
+                @if($selectedAsset->checksum)
+                    <div class="px-3 py-2"><dt class="text-tertiary">Checksum</dt><dd class="mt-1 break-all font-mono text-2xs text-secondary">{{ $selectedAsset->checksum }}</dd></div>
+                @endif
+            </dl>
+
+            <div class="rounded-md border border-subtle">
+                <div class="border-b border-subtle px-3 py-2 text-sm font-medium text-primary">
                     Used in {{ $selectedAssetUsage->count() }} {{ \Illuminate\Support\Str::plural('place', $selectedAssetUsage->count()) }}
                 </div>
-                <div class="max-h-48 overflow-y-auto divide-y divide-zinc-200 dark:divide-zinc-700">
+                <div class="max-h-48 divide-y divide-subtle overflow-y-auto">
                     @forelse($selectedAssetUsage as $usage)
-                        <a href="{{ route('admin.content.edit', $usage['content']) }}" wire:navigate class="block px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                            <div class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ $usage['content']->name }}</div>
-                            <div class="text-xs text-muted-foreground">
+                        <a href="{{ route('admin.content.edit', $usage['content']) }}" wire:navigate class="block px-3 py-2 hover:bg-hover">
+                            <div class="text-sm font-medium text-primary">{{ $usage['content']->name }}</div>
+                            <div class="text-xs text-tertiary">
                                 {{ $usage['block'] ? 'Block: '.$usage['block']->type : 'Content meta' }} / {{ $usage['location'] }}
                             </div>
                         </a>
                     @empty
-                        <div class="px-3 py-4 text-sm text-muted-foreground">No current content references found.</div>
+                        <div class="px-3 py-4 text-sm text-tertiary">No current content references found.</div>
                     @endforelse
                 </div>
             </div>
-        </div>
 
-        <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between shrink-0">
-            <div>
-                <flux:button wire:click="deleteAsset({{ $selectedAsset->id }})" wire:confirm="Delete this asset? The file will be permanently removed." variant="danger" size="sm">
+            <div class="rounded-md border border-danger-border bg-danger-subtle p-4">
+                <h3 class="text-sm font-semibold text-danger">Danger zone</h3>
+                <p class="mt-1 text-xs text-secondary">Deletion permanently removes the file and is available only when it has no content references.</p>
+                <flux:button wire:click="deleteAsset({{ $selectedAsset->id }})" wire:confirm="Delete this asset? The file will be permanently removed." variant="danger" size="sm" class="mt-3">
                     <flux:icon.trash class="size-4" />
-                    Delete
+                    Delete asset
                 </flux:button>
                 <flux:error name="deleteAsset" />
             </div>
-            <div class="flex gap-2">
+            </div>
+        </div>
+
+        <div class="flex shrink-0 items-center justify-end gap-2 border-t border-subtle bg-card p-4">
                 <flux:button wire:click="closeAssetDetail" variant="ghost">Cancel</flux:button>
                 <flux:button wire:click="saveAssetDetails" variant="primary">Save</flux:button>
-            </div>
         </div>
     </div>
 </div>

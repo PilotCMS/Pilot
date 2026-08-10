@@ -22,7 +22,7 @@ The shell is the one layout every Jaunt workspace inherits — CRM, CMS, Listing
 └─────────────┴──────────────────────────────────────────┘
 ```
 
-Fixed metrics (`tokens/spacing.css`): sidebar 248px (56px mini, `md` breakpoint and below), topbar 48px, row 36px. These never vary per workspace — that consistency is what makes muscle memory transfer between products.
+Fixed metrics (`tokens/spacing.css`): sidebar 300px (56px mini, `md` breakpoint and below), topbar 48px, row 44px — 60px where a cell stacks an identity (name + meta). These never vary per workspace — that consistency is what makes muscle memory transfer between products.
 
 ## Components
 
@@ -50,7 +50,7 @@ Below the search trigger — not a text input, a **button** that opens the comma
 The universal entry point — navigate, act, or ask AI, all from one surface. This is a deliberate, product-level choice per [00-philosophy.md](./00-philosophy.md): Jaunt does not have a separate "search page." Behavior:
 
 - **Groups**: "Go to" (workspaces) and "Actions" (New listing, New partner, Import calendar, Invite teammate — extend per workspace).
-- **AI row**: appears the moment the user types anything, above all other results, tinted iris with the Sparkles glyph — `Ask Jaunt: "<query>"`. This is the pattern that makes AI feel reachable from literally anywhere without a dedicated chatbot surface.
+- **AI row**: appears the moment the user types anything, above all other results, tinted indigo with the Sparkles glyph — `Ask Jaunt: "<query>"`. This is the pattern that makes AI feel reachable from literally anywhere without a dedicated chatbot surface.
 - **Keyboard**: `↑`/`↓` to move, `Enter` to select, `Esc` to close. Mouse hover updates the active row too — the two input methods share one `active` index, never diverge.
 - **Empty state**: "No results for '{query}'" — see [08-voice-and-microcopy.md](./08-voice-and-microcopy.md) for why this phrasing (not "0 results found").
 - Backdrop: `blur(3px)` over `--surface-overlay`; panel: `--shadow-xl`, `--radius-xl`.
@@ -63,13 +63,13 @@ Breadcrumbs on the left (last crumb is the current page, non-interactive). Four 
 
 ## Responsive behavior
 
-- **`lg` (1024px) and up**: full shell, sidebar expanded (248px).
+- **`lg` (1024px) and up**: full shell, sidebar expanded (300px).
 - **`md`–`lg`**: sidebar collapses to mini (56px, icons only — labels and section headers hidden, tooltips take over as the label source).
 - **Below `md`**: out of scope for v1 — Jaunt is desktop-first (see [00-philosophy.md](./00-philosophy.md)); a staffer on a phone is checking a notification, not building a campaign. The shell degrades gracefully (content stacks, sidebar becomes an overlay drawer) but isn't optimized further than "doesn't break."
 
 ## What the shell deliberately does not own
 
-The `view` region (everything right of the sidebar, below the topbar) is empty in `preview/shell.html` on purpose — the shell provides the gutter (`--pad-view`, 24px) and width ceiling (`--width-wide`, 1440px) and nothing else. Workspace screens (a CRM contact table, a Listings kanban board, an Analytics dashboard) are Livewire components that render into that region; see [05-workspace-pattern.md](./05-workspace-pattern.md).
+The `view` region (everything right of the sidebar, below the topbar) is empty in `preview/shell.html` on purpose — the shell provides the gutter (`--pad-view`, 28px) and width ceiling (`--width-wide`, 1440px) and nothing else. Workspace screens (a CRM contact table, a Listings kanban board, an Analytics dashboard) are Livewire components that render into that region; see [05-workspace-pattern.md](./05-workspace-pattern.md).
 
 ---
 

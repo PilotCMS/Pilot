@@ -63,7 +63,8 @@ test('admin topbar theme control toggles and describes the target appearance', f
         ->actingAs(User::factory()->create())
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee("window.Flux.applyAppearance(dark ? 'light' : 'dark')", false)
+        ->assertSee('$flux.appearance = dark ? \'light\' : \'dark\'', false)
+        ->assertDontSee("window.Flux.applyAppearance(dark ? 'light' : 'dark')", false)
         ->assertSee("dark ? 'Switch to light mode' : 'Switch to dark mode'", false)
         ->assertSee("dark ? 'Light mode' : 'Dark mode'", false)
         ->assertSee('x-on:pilot-theme-changed.window', false);

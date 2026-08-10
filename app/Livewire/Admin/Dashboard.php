@@ -21,6 +21,10 @@ class Dashboard extends Component
             'assetsCount' => Asset::count(),
             'usersCount' => User::count(),
             'draftsCount' => Content::where('status', 'draft')->count(),
+            'reviewsCount' => Content::where('workflow_status', 'in_review')->count(),
+            'changesRequestedCount' => Content::where('workflow_status', 'changes_requested')->count(),
+            'scheduledCount' => Content::where('workflow_status', 'scheduled')->count(),
+            'expiredAssetsCount' => Asset::whereNotNull('expires_at')->where('expires_at', '<', now())->count(),
             'recentActivities' => Activity::with(['user', 'subject'])->latest()->take(20)->get(),
             'recentPages' => Content::where('type', 'page')
                 ->where('updated_by', auth()->id())

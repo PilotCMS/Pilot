@@ -1,22 +1,16 @@
 <div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Edit {{ ucfirst($content->type) }}</h1>
-            <p class="cms-subtitle">Update content entry settings.</p>
-        </div>
-    </header>
+    <x-jaunt.shell.dynamic-header :title="'Edit '.ucfirst($content->type)" subtitle="Update content entry settings." top="0px" as="header" scroll-target="#content-edit-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
 
-    <main class="flex-1 min-w-0 overflow-y-auto">
+    <main id="content-edit-scroll" class="flex-1 min-w-0 overflow-y-auto">
         <div class="w-full p-6 md:p-8">
             <div class="max-w-2xl">
-                <div class="mb-8">
+                <div class="mb-6">
                     <a href="{{ route('admin.content.index') }}" class="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 mb-4 transition-colors" wire:navigate>
                         <flux:icon.arrow-left class="size-4" />
                         Back to Content
                     </a>
-                    <flux:heading>Edit {{ ucfirst($content->type) }}</flux:heading>
                 </div>
 
                 <flux:card>
@@ -59,8 +53,9 @@
                             <flux:button href="{{ route('admin.content.index') }}" wire:navigate variant="ghost">
                                 Cancel
                             </flux:button>
-                            <flux:button type="submit" variant="primary">
-                                Save Changes
+                            <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="save">
+                                <span wire:loading.remove wire:target="save">Save Changes</span>
+                                <span wire:loading wire:target="save">Saving…</span>
                             </flux:button>
                         </div>
                     </form>

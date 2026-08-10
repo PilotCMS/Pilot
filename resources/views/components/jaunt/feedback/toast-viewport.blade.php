@@ -99,7 +99,7 @@ $positionCls = $position === 'top-right'
                     x-show="toast.actionLabel"
                     x-text="toast.actionLabel"
                     @click="toast.onAction && toast.onAction(); $store.toasts.dismiss(toast.id)"
-                    class="self-start mt-1.5 text-xs font-semibold text-accent-text hover:underline"
+                    class="self-start mt-1.5 text-xs font-semibold text-accent-text"
                 ></button>
             </div>
 

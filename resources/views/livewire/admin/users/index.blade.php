@@ -1,19 +1,17 @@
 <div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
-    <header class="cms-topbar" aria-label="Page header">
-        <div class="min-w-0">
-            <h1 class="cms-title">Users &amp; Roles</h1>
-            <p class="cms-subtitle">Manage team members and permissions.</p>
-        </div>
-        <div class="cms-actions">
+    <x-jaunt.shell.dynamic-header :title="'Users & Roles'" subtitle="Manage team members and permissions." top="0px" as="header" scroll-target="#users-list-scroll" aria-label="Page header">
+        <x-slot:actions>
+        <div class="cms-actions pb-0.5">
             <button type="button" wire:click="openCreateUser" class="cms-btn cms-btn-primary">
-                <i class="ph ph-plus" aria-hidden="true"></i>
+                <x-jaunt.icon name="plus" size="sm" />
                 New user
             </button>
         </div>
-    </header>
+        </x-slot:actions>
+    </x-jaunt.shell.dynamic-header>
 
     <div class="flex min-h-0 flex-1">
-        <main class="min-w-0 flex-1 overflow-y-auto">
+        <main id="users-list-scroll" class="min-w-0 flex-1 overflow-y-auto">
             <div class="w-full space-y-8 p-6 md:p-8">
                 <section class="grid grid-cols-1 gap-4 lg:grid-cols-4">
                     <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -25,7 +23,7 @@
                         <button
                             type="button"
                             wire:click="$set('search', '{{ $role->name }}')"
-                            class="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-teal-200 hover:bg-teal-50/50"
+                            class="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/50"
                         >
                             <div class="flex items-center justify-between gap-3">
                                 <p class="text-sm font-semibold text-slate-900">{{ $role->name }}</p>
@@ -64,7 +62,7 @@
                                 <flux:table.row wire:key="user-row-{{ $user->id }}" class="transition-colors hover:bg-slate-50">
                                     <flux:table.cell>
                                         <button type="button" wire:click="selectUser({{ $user->id }})" class="flex items-center gap-3 text-left">
-                                            <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-sm font-bold text-teal-700">
+                                            <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">
                                                 {{ $user->initials() }}
                                             </span>
                                             <span>
@@ -85,12 +83,12 @@
                                     <flux:table.cell>
                                         @if($user->email_verified_at)
                                             <span class="inline-flex items-center gap-1 text-sm text-emerald-700">
-                                                <i class="ph ph-check-circle text-base"></i>
+                                                <x-jaunt.icon name="circle-check" size="sm" />
                                                 Verified
                                             </span>
                                         @else
                                             <span class="inline-flex items-center gap-1 text-sm text-amber-700">
-                                                <i class="ph ph-warning-circle text-base"></i>
+                                                <x-jaunt.icon name="circle-alert" size="sm" />
                                                 Pending
                                             </span>
                                         @endif
@@ -129,8 +127,8 @@
                                 <flux:table.row>
                                     <flux:table.cell colspan="5" class="py-16">
                                         <div class="flex flex-col items-center justify-center text-center">
-                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-teal-100">
-                                                <flux:icon.users class="size-7 text-teal-600" />
+                                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100">
+                                                <flux:icon.users class="size-7 text-blue-600" />
                                             </div>
                                             <flux:heading size="sm" class="mt-4">No users found</flux:heading>
                                             <flux:text class="mt-2 max-w-sm text-sm text-slate-500">Adjust your search or create a new user.</flux:text>
@@ -157,7 +155,7 @@
                 @if($selectedUser)
                     <form wire:submit="updateSelectedUser" class="space-y-5">
                         <div class="flex items-center gap-3 border-b border-slate-100 pb-5">
-                            <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-base font-bold text-teal-700">
+                            <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-base font-bold text-blue-700">
                                 {{ $selectedUser->initials() }}
                             </span>
                             <div class="min-w-0">

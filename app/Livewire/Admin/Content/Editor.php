@@ -105,7 +105,7 @@ class Editor extends Component
         $this->content = $content;
         $this->lastKnownContentUpdatedAt = $content->updated_at?->toJSON();
         $this->loadBlocks();
-        $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($content);
+        $this->lastKnownContentSyncKey = ContentSyncFingerprint::makeFromBlocks($content, $this->blocks);
         $this->blockTypes = $this->availableBlockTypes()->keyBy('key');
         $this->scheduledFor = $content->scheduled_for?->format('Y-m-d\TH:i') ?? '';
         $this->reviewerId = (string) ($content->reviewer_id ?? '');
@@ -133,18 +133,6 @@ class Editor extends Component
             ->toArray();
     }
 
-    public function toggleLeftSidebar()
-    {
-        $this->leftSidebarCollapsed = ! $this->leftSidebarCollapsed;
-        $this->saveEditorPreference('leftSidebarCollapsed', $this->leftSidebarCollapsed);
-    }
-
-    public function toggleDrawer()
-    {
-        $this->drawerOpen = ! $this->drawerOpen;
-        $this->saveEditorPreference('drawerOpen', $this->drawerOpen);
-    }
-
     public function updatedSelectedPreviewTargetId($value): void
     {
         $prefs = EditorPreference::get(auth()->id(), 'editor', []);
@@ -152,13 +140,6 @@ class Editor extends Component
         EditorPreference::set(auth()->id(), 'editor', $prefs);
 
         $this->dispatchPreviewFrameRefresh();
-    }
-
-    protected function saveEditorPreference(string $key, mixed $value): void
-    {
-        $prefs = EditorPreference::get(auth()->id(), 'editor', []);
-        $prefs[$key] = $value;
-        EditorPreference::set(auth()->id(), 'editor', $prefs);
     }
 
     public function addBlock($blockTypeKey, $position = null)
@@ -451,13 +432,13 @@ class Editor extends Component
         $block->update(['data' => $data]);
         $this->syncReusableBlockInstances($block);
 
-        $this->content->touch();
         $this->content->update(['updated_by' => auth()->id()]);
-        app(ContentLifecycle::class)->syncReferences($this->content);
+        app(ContentLifecycle::class)->syncReferencesForBlock($this->content, $block);
 
-        $this->loadBlocks();
+        $this->updateLoadedBlockData((int) $blockId, $data);
         $this->selectedBlockId = $blockId;
         $this->markSaved();
+        $this->skipRender();
     }
 
     public function deleteBlock($blockId)
@@ -973,7 +954,7 @@ class Editor extends Component
     {
         $this->content->refresh();
         $this->lastKnownContentUpdatedAt = $this->content->updated_at?->toJSON();
-        $this->lastKnownContentSyncKey = ContentSyncFingerprint::make($this->content);
+        $this->lastKnownContentSyncKey = ContentSyncFingerprint::makeFromBlocks($this->content, $this->blocks);
         $this->lastSavedAt = now();
         $this->saveState = 'saved';
         $this->conflictMessage = null;
@@ -1440,6 +1421,28 @@ class Editor extends Component
         }
 
         return null;
+    }
+
+    protected function updateLoadedBlockData(int $blockId, array $data): void
+    {
+        $this->blocks = $this->replaceBlockData($this->blocks, $blockId, $data);
+    }
+
+    protected function replaceBlockData(array $blocks, int $blockId, array $data): array
+    {
+        return array_map(function (array $block) use ($blockId, $data): array {
+            if ((int) $block['id'] === $blockId) {
+                $block['data'] = $data;
+
+                return $block;
+            }
+
+            if (! empty($block['children'])) {
+                $block['children'] = $this->replaceBlockData($block['children'], $blockId, $data);
+            }
+
+            return $block;
+        }, $blocks);
     }
 
     /**

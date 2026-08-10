@@ -30,14 +30,24 @@
   --gap-section:   var(--space-6);   /* between content blocks */
   --pad-control:   var(--space-3);   /* input / button horizontal padding */
   --pad-card:      var(--space-5);   /* card interior */
-  --pad-view:      var(--space-6);   /* workspace view gutter */
+  --pad-view:      var(--space-7);   /* workspace view gutter */
 
   /* Fixed shell metrics — shared by every workspace */
-  --sidebar-w:      248px;
+  --sidebar-w:      300px;
   --sidebar-w-mini: 56px;
+  --sidebar-row-h:     44px;   /* sidebar nav row */
+  --sidebar-section-h: 46px;   /* collapsible sidebar section band */
   --topbar-h:       48px;
-  --row-h:          36px;    /* table / list row */
-  --control-h:      32px;    /* default control height */
-  --control-h-sm:   26px;
-  --control-h-lg:   40px;
+  --row-h:          44px;    /* single-line table / list row */
+  --row-h-2line:    60px;    /* row with a stacked identity cell (name + meta) */
+  --control-h:      36px;    /* default control height */
+  --control-h-sm:   30px;
+  --control-h-lg:   44px;
+
+  /* Icon sizes — glyphs were previously hard-coded per component (15/16/17/18/19px),
+     which is how a set of icons drifts out of alignment with each other. */
+  --icon-xs: 14px;
+  --icon-sm: 16px;
+  --icon-md: 18px;
+  --icon-lg: 20px;
 }
