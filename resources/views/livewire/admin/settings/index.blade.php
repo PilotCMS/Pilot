@@ -1,4 +1,4 @@
-<div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="CMS Settings" subtitle="Configure public rendering, API access, and preview behavior." top="0px" as="header" scroll-target="#cms-settings-scroll" aria-label="Page header">
         <x-slot:actions>
         <div class="cms-actions pb-0.5">
@@ -97,12 +97,12 @@
             </div>
         </main>
 
-        <aside class="z-20 flex w-[var(--admin-rail-width)] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-xl" aria-label="Details">
-            <div class="flex h-14 shrink-0 items-center px-5 border-b border-slate-200 bg-white">
-                <h2 class="text-sm font-bold text-slate-800">Effective settings</h2>
+        <aside class="cms-drawer" aria-label="Details">
+            <div class="cms-drawer-header">
+                <h2 class="cms-drawer-title">Effective settings</h2>
             </div>
 
-            <div class="flex-1 space-y-6 overflow-y-auto p-5">
+            <div class="cms-drawer-body space-y-6">
                 <section class="space-y-3">
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Public routes</h3>
                     <dl class="space-y-3 text-sm">

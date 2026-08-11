@@ -375,8 +375,11 @@ class extends Component {
                                 />
 
                                 <button
+                                    type="button"
                                     @click="copy()"
                                     class="px-3 transition-colors border-l cursor-pointer border-stone-200 dark:border-stone-600"
+                                    x-bind:aria-label="copied ? 'Setup key copied' : 'Copy setup key'"
+                                    x-bind:title="copied ? 'Copied' : 'Copy setup key'"
                                 >
                                     <flux:icon.document-duplicate x-show="!copied" variant="outline"></flux:icon>
                                     <flux:icon.check

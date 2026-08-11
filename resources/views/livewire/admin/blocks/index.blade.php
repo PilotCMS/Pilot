@@ -24,7 +24,7 @@
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             {{-- Filter bar --}}
             <div class="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-                <div class="flex items-center gap-1 flex-wrap">
+                <div class="flex items-center gap-3 flex-wrap">
                     {{-- Search --}}
                     <div class="relative mr-3">
                         <x-jaunt.icon name="search" size="xs" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -32,11 +32,13 @@
                     </div>
 
                     {{-- Folder filter tabs --}}
-                    <button wire:click="setFolderFilter('all')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $folderFilter === 'all' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">All</button>
-                    <button wire:click="setFolderFilter('none')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $folderFilter === 'none' ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">No folder</button>
-                    @foreach($folders as $folder)
-                        <button wire:click="setFolderFilter('{{ $folder->id }}')" class="px-3 py-1.5 text-sm rounded-md transition-colors {{ $folderFilter == $folder->id ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">{{ $folder->name }}</button>
-                    @endforeach
+                    <div class="cms-seg" role="group" aria-label="Filter by folder">
+                        <button type="button" wire:click="setFolderFilter('all')" class="cms-seg-btn" aria-pressed="{{ $folderFilter === 'all' ? 'true' : 'false' }}">All</button>
+                        <button type="button" wire:click="setFolderFilter('none')" class="cms-seg-btn" aria-pressed="{{ $folderFilter === 'none' ? 'true' : 'false' }}">No folder</button>
+                        @foreach($folders as $folder)
+                            <button type="button" wire:click="setFolderFilter('{{ $folder->id }}')" class="cms-seg-btn" aria-pressed="{{ $folderFilter == $folder->id ? 'true' : 'false' }}">{{ $folder->name }}</button>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 text-xs text-slate-400">
@@ -112,10 +114,10 @@
 
                     {{-- Actions --}}
                     <div class="flex items-center justify-end gap-1">
-                        <a href="{{ route('admin.blocks.edit', $blockType) }}" wire:navigate class="flex h-8 w-8 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover hover:text-primary" title="Edit">
+                        <a href="{{ route('admin.blocks.edit', $blockType) }}" wire:navigate class="cms-iconbtn" aria-label="Edit block type" title="Edit block type">
                             <x-jaunt.icon name="pencil" size="sm" />
                         </a>
-                        <button type="button" wire:click="deleteBlockType({{ $blockType->id }})" wire:confirm="Are you sure you want to delete this block type? This cannot be undone." class="w-8 h-8 flex items-center justify-center rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Delete">
+                        <button type="button" wire:click="deleteBlockType({{ $blockType->id }})" wire:confirm="Are you sure you want to delete this block type? This cannot be undone." class="cms-iconbtn cms-iconbtn-danger" aria-label="Delete block type" title="Delete block type">
                             <x-jaunt.icon name="trash-2" size="sm" />
                         </button>
                     </div>
@@ -155,8 +157,8 @@
                     @enderror
                 </div>
                 <div class="flex justify-end gap-2">
-                    <button type="button" wire:click="$set('showNewFolderModal', false)" class="px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">Cancel</button>
-                    <button type="submit" class="px-3 py-2 text-sm font-semibold text-on-accent bg-accent hover:bg-accent-hover rounded-lg transition-colors">Create folder</button>
+                    <button type="button" wire:click="$set('showNewFolderModal', false)" class="cms-btn cms-btn-secondary">Cancel</button>
+                    <button type="submit" class="cms-btn cms-btn-primary">Create folder</button>
                 </div>
             </form>
         </div>

@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header :title="'Edit '.ucfirst($content->type)" subtitle="Update content entry settings." top="0px" as="header" scroll-target="#content-edit-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
@@ -64,11 +64,11 @@
         </div>
     </main>
 
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Details">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0">
-            <h2 class="text-sm font-bold text-slate-800">Details</h2>
+    <aside class="cms-drawer" aria-label="Details">
+        <div class="cms-drawer-header">
+            <h2 class="cms-drawer-title">Details</h2>
         </div>
-        <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-500 flex items-center justify-center">
+        <div class="cms-drawer-body flex items-center justify-center text-sm text-secondary">
             <p>Update core fields for this entry.</p>
         </div>
     </aside>

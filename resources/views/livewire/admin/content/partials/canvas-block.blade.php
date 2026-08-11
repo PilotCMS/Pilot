@@ -85,22 +85,22 @@
     @if($isSelected) data-label="{{ $blockType->name ?? $block['type'] }}" @endif
 >
     <div class="absolute right-2 top-2 z-20 flex overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm transition-opacity {{ $isSelected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100' }}">
-        <button type="button" wire:click.stop="moveBlockUp({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-blue-600" title="Move block up" aria-label="Move block up">
+        <button type="button" wire:click.stop="moveBlockUp({{ $block['id'] }})" class="cms-iconbtn !rounded-none border-r border-subtle" title="Move block up" aria-label="Move block up">
             <x-jaunt.icon name="arrow-up" size="xs" />
         </button>
-        <button type="button" wire:click.stop="moveBlockDown({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-blue-600" title="Move block down" aria-label="Move block down">
+        <button type="button" wire:click.stop="moveBlockDown({{ $block['id'] }})" class="cms-iconbtn !rounded-none border-r border-subtle" title="Move block down" aria-label="Move block down">
             <x-jaunt.icon name="arrow-down" size="xs" />
         </button>
-        <button type="button" wire:click.stop="addBlockAbove({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-blue-600" title="Insert above" aria-label="Insert above">
+        <button type="button" wire:click.stop="addBlockAbove({{ $block['id'] }})" class="cms-iconbtn !rounded-none border-r border-subtle" title="Insert above" aria-label="Insert above">
             <x-jaunt.icon name="arrow-up-to-line" size="xs" />
         </button>
-        <button type="button" wire:click.stop="addBlockBelow({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-blue-600" title="Insert below" aria-label="Insert below">
+        <button type="button" wire:click.stop="addBlockBelow({{ $block['id'] }})" class="cms-iconbtn !rounded-none border-r border-subtle" title="Insert below" aria-label="Insert below">
             <x-jaunt.icon name="arrow-down-to-line" size="xs" />
         </button>
-        <button type="button" wire:click.stop="duplicateBlock({{ $block['id'] }})" class="flex h-7 w-7 items-center justify-center border-r border-slate-200 text-slate-400 transition-colors hover:bg-slate-50 hover:text-blue-600" title="Duplicate block" aria-label="Duplicate block">
+        <button type="button" wire:click.stop="duplicateBlock({{ $block['id'] }})" class="cms-iconbtn !rounded-none border-r border-subtle" title="Duplicate block" aria-label="Duplicate block">
             <x-jaunt.icon name="copy" size="xs" />
         </button>
-        <button type="button" wire:click.stop="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" class="flex h-7 w-7 items-center justify-center text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Delete block" aria-label="Delete block">
+        <button type="button" wire:click.stop="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" class="cms-iconbtn cms-iconbtn-danger !rounded-none" title="Delete block" aria-label="Delete block">
             <x-jaunt.icon name="trash-2" size="xs" />
         </button>
     </div>
@@ -154,7 +154,7 @@
                     <div class="min-h-32 rounded-lg border border-dashed border-slate-200 bg-slate-50/70 p-2 transition-colors hover:border-blue-300 hover:bg-blue-50/30">
                         <div class="mb-2 flex items-center justify-between px-1">
                             <span class="text-xs font-medium text-slate-500">Column {{ $columnIndex + 1 }}</span>
-                            <button type="button" wire:click="addNestedBlock({{ $block['id'] }}, {{ $columnIndex }})" class="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white hover:text-blue-600 hover:shadow-sm" title="Add block to column {{ $columnIndex + 1 }}" aria-label="Add block to column {{ $columnIndex + 1 }}">
+                            <button type="button" wire:click="addNestedBlock({{ $block['id'] }}, {{ $columnIndex }})" class="cms-iconbtn" title="Add block to column {{ $columnIndex + 1 }}" aria-label="Add block to column {{ $columnIndex + 1 }}">
                                 <x-jaunt.icon name="plus" size="sm" />
                             </button>
                         </div>
@@ -171,7 +171,7 @@
                                 @endforeach
                             </div>
                         @else
-                            <button type="button" wire:click="addNestedBlock({{ $block['id'] }}, {{ $columnIndex }})" class="flex min-h-24 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white/70 px-3 py-4 text-sm font-medium text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-700">
+                            <button type="button" wire:click="addNestedBlock({{ $block['id'] }}, {{ $columnIndex }})" class="flex min-h-24 w-full items-center justify-center gap-2 rounded-sm border border-dashed border-default bg-card/70 px-3 py-4 text-sm font-medium text-secondary transition-colors hover:border-strong hover:bg-hover hover:text-primary">
                                 <x-jaunt.icon name="circle-plus" size="sm" />
                                 Add block
                             </button>
@@ -184,7 +184,7 @@
         <div class="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
             <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
                 <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Child blocks</span>
-                <button type="button" wire:click="addNestedBlock({{ $block['id'] }})" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:bg-white hover:text-blue-700 hover:shadow-sm">
+                <button type="button" wire:click="addNestedBlock({{ $block['id'] }})" class="cms-text-btn">
                     <x-jaunt.icon name="plus" size="sm" />
                     Add
                 </button>
@@ -203,7 +203,7 @@
                 </div>
             @else
                 <div class="p-3">
-                    <button type="button" wire:click="addNestedBlock({{ $block['id'] }})" class="flex min-h-24 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm font-medium text-slate-500 transition-colors hover:border-blue-400 hover:text-blue-700">
+                    <button type="button" wire:click="addNestedBlock({{ $block['id'] }})" class="flex min-h-24 w-full items-center justify-center gap-2 rounded-sm border border-dashed border-default bg-sunken px-3 py-4 text-sm font-medium text-secondary transition-colors hover:border-strong hover:bg-hover hover:text-primary">
                         <x-jaunt.icon name="circle-plus" size="sm" />
                         Add child block
                     </button>

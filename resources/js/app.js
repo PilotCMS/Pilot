@@ -29,6 +29,37 @@ document.addEventListener('livewire:init', () => {
     });
 });
 
+const cmsTabKeys = new Set(['ArrowLeft', 'ArrowRight', 'Home', 'End']);
+
+document.addEventListener('keydown', (event) => {
+    const currentTab = event.target.closest?.('[data-cms-tabs] [role="tab"]');
+
+    if (! currentTab || ! cmsTabKeys.has(event.key)) {
+        return;
+    }
+
+    const tablist = currentTab.closest('[data-cms-tabs]');
+    const tabs = [...tablist.querySelectorAll('[role="tab"]')].filter((tab) => ! tab.disabled && tab.offsetParent !== null);
+    const currentIndex = tabs.indexOf(currentTab);
+
+    if (currentIndex === -1 || tabs.length < 2) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const nextIndex = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+            ? tabs.length - 1
+            : event.key === 'ArrowRight'
+                ? (currentIndex + 1) % tabs.length
+                : (currentIndex - 1 + tabs.length) % tabs.length;
+
+    tabs[nextIndex].focus();
+    tabs[nextIndex].click();
+});
+
 const toastEventMessages = {
     'block-type-deleted': ['Block type deleted', 'success'],
     'cms-settings-reset': ['Settings reset to defaults', 'success'],

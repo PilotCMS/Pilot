@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
+<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="Assets" subtitle="Manage media and files." top="0px" as="header" scroll-target="#assets-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
@@ -8,14 +8,16 @@
     <div class="lg:w-64 shrink-0 border-b lg:border-b-0 lg:border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto">
         <div class="p-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between gap-2">
             <flux:heading size="md">Folders</flux:heading>
-            <flux:button wire:click="$set('showNewFolderModal', true)" variant="ghost" size="sm" title="New folder">
+            <flux:button wire:click="$set('showNewFolderModal', true)" variant="ghost" size="sm" square aria-label="New folder" title="New folder">
                 <flux:icon.folder-plus class="size-4" />
             </flux:button>
         </div>
         <div class="p-3 flex lg:flex-col gap-0.5">
             <button
+                type="button"
                 wire:click="selectFolder(null)"
-                class="shrink-0 lg:w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-150 hover:bg-zinc-200 dark:hover:bg-zinc-800 {{ $folderId === null ? 'bg-zinc-200 dark:bg-zinc-800 font-medium' : '' }}"
+                class="cms-choice-row shrink-0 lg:w-full"
+                aria-current="{{ $folderId === null ? 'true' : 'false' }}"
             >
                 <div class="flex items-center gap-2">
                     <flux:icon.folder class="size-4" />
@@ -24,8 +26,10 @@
             </button>
             @foreach($folders as $f)
                 <button
+                    type="button"
                     wire:click="selectFolder({{ $f->id }})"
-                    class="shrink-0 lg:w-full text-left px-3 py-2.5 rounded-lg transition-colors duration-150 hover:bg-zinc-200 dark:hover:bg-zinc-800 {{ $folderId === $f->id ? 'bg-zinc-200 dark:bg-zinc-800 font-medium' : '' }}"
+                    class="cms-choice-row shrink-0 lg:w-full"
+                    aria-current="{{ $folderId === $f->id ? 'true' : 'false' }}"
                 >
                     <div class="flex items-center gap-2">
                         <flux:icon.folder class="size-4" />
@@ -69,9 +73,11 @@
 
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>Sort:</span>
-                    <button wire:click="setSort('created_at')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'created_at' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Date</button>
-                    <button wire:click="setSort('filename')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'filename' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Name</button>
-                    <button wire:click="setSort('size')" class="px-3 py-1.5 rounded-lg transition-colors duration-150 hover:bg-zinc-100 dark:hover:bg-zinc-800 {{ $sortBy === 'size' ? 'font-medium bg-zinc-100 dark:bg-zinc-800' : '' }}">Size</button>
+                    <div class="cms-seg" role="group" aria-label="Sort assets">
+                        <button type="button" wire:click="setSort('created_at')" class="cms-seg-btn" aria-pressed="{{ $sortBy === 'created_at' ? 'true' : 'false' }}">Date</button>
+                        <button type="button" wire:click="setSort('filename')" class="cms-seg-btn" aria-pressed="{{ $sortBy === 'filename' ? 'true' : 'false' }}">Name</button>
+                        <button type="button" wire:click="setSort('size')" class="cms-seg-btn" aria-pressed="{{ $sortBy === 'size' ? 'true' : 'false' }}">Size</button>
+                    </div>
                 </div>
             </div>
 
@@ -193,14 +199,14 @@
     x-transition:leave="transition ease-in duration-150"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    class="fixed inset-0 z-50"
+    class="absolute inset-x-0 bottom-0 top-[var(--topbar-h)] z-50"
 >
     {{-- Backdrop --}}
     <div class="absolute inset-0 bg-black/50" wire:click="closeAssetDetail"></div>
 
     {{-- Panel --}}
     <div
-        class="absolute bottom-0 right-0 top-0 flex w-full max-w-lg flex-col bg-card shadow-xl"
+        class="cms-drawer cms-drawer--overlay"
         x-transition:enter="transition ease-out duration-base"
         x-transition:enter-start="translate-x-full"
         x-transition:enter-end="translate-x-0"
@@ -208,19 +214,19 @@
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
     >
-        <div class="flex shrink-0 items-center justify-between border-b border-subtle px-4 py-3">
+        <div class="cms-drawer-header">
             <div class="min-w-0">
-                <h2 class="truncate text-sm font-semibold text-primary">{{ $selectedAsset->displayName() }}</h2>
-                <p class="truncate text-2xs text-tertiary">{{ $selectedAsset->filename }}</p>
+                <h2 class="cms-drawer-title truncate">{{ $selectedAsset->displayName() }}</h2>
+                <p class="cms-drawer-subtitle">{{ $selectedAsset->filename }}</p>
             </div>
-            <button wire:click="closeAssetDetail" class="cms-iconbtn text-tertiary hover:bg-hover hover:text-primary" aria-label="Close asset details">
+            <button type="button" wire:click="closeAssetDetail" class="cms-iconbtn text-tertiary hover:bg-hover hover:text-primary" aria-label="Close asset details">
                 <x-jaunt.icon name="x" size="sm" />
             </button>
         </div>
 
-        <div class="flex shrink-0 border-b border-subtle bg-sunken px-3 pt-2" role="tablist" aria-label="Asset details sections">
+        <div class="cms-drawer-tabs px-3 pt-2" role="tablist" aria-label="Asset details sections" data-cms-tabs>
             @foreach(['basics' => 'Basics', 'rights' => 'Rights', 'usage' => 'Usage'] as $assetTab => $assetTabLabel)
-                <button type="button" x-on:click="tab = '{{ $assetTab }}'" class="flex-1 border-b-2 px-3 py-2 text-xs font-medium transition-colors" x-bind:class="tab === '{{ $assetTab }}' ? 'border-accent text-primary' : 'border-transparent text-tertiary hover:text-secondary'" role="tab" x-bind:aria-selected="tab === '{{ $assetTab }}'">
+                <button type="button" id="asset-tab-{{ $assetTab }}" x-on:click="tab = '{{ $assetTab }}'" class="cms-tab flex-1" role="tab" x-bind:aria-selected="tab === '{{ $assetTab }}'" aria-controls="asset-panel-{{ $assetTab }}" x-bind:tabindex="tab === '{{ $assetTab }}' ? 0 : -1">
                     {{ $assetTabLabel }}
                     @if($assetTab === 'usage')
                         <span class="ml-1 text-2xs text-tertiary">{{ $selectedAssetUsage->count() }}</span>
@@ -229,8 +235,8 @@
             @endforeach
         </div>
 
-        <div class="min-h-0 flex-1 overflow-y-auto p-5">
-            <div x-show="tab === 'basics'" class="space-y-5" role="tabpanel">
+        <div class="cms-drawer-body">
+            <div id="asset-panel-basics" x-show="tab === 'basics'" class="space-y-5" role="tabpanel" aria-labelledby="asset-tab-basics">
             {{-- Preview --}}
             <div class="aspect-[4/3] max-h-64 overflow-hidden rounded-lg bg-sunken">
                 @if($selectedAsset->isImage())
@@ -320,7 +326,7 @@
                 <flux:label>Asset URL</flux:label>
                 <div class="flex gap-2" x-data="{ copied: false, url: {{ \Illuminate\Support\Js::from($selectedAsset->relativeUrl()) }} }">
                     <flux:input value="{{ $selectedAsset->relativeUrl() }}" readonly class="font-mono text-sm" />
-                    <flux:button type="button" x-on:click="navigator.clipboard.writeText(url).then(() => { copied = true; setTimeout(() => copied = false, 2000) })" variant="ghost" size="sm" x-bind:title="copied ? 'Copied!' : 'Copy link'">
+                    <flux:button type="button" x-on:click="navigator.clipboard.writeText(url).then(() => { copied = true; setTimeout(() => copied = false, 2000) })" variant="ghost" size="sm" square x-bind:aria-label="copied ? 'Link copied' : 'Copy asset link'" x-bind:title="copied ? 'Copied' : 'Copy asset link'">
                         <flux:icon.clipboard class="size-5" x-show="!copied" />
                         <flux:icon.check class="size-5 text-success" x-show="copied" x-cloak />
                     </flux:button>
@@ -328,7 +334,7 @@
             </flux:field>
             </div>
 
-            <div x-show="tab === 'rights'" x-cloak class="space-y-5" role="tabpanel">
+            <div id="asset-panel-rights" x-show="tab === 'rights'" x-cloak class="space-y-5" role="tabpanel" aria-labelledby="asset-tab-rights">
                 <div class="rounded-md bg-warning-subtle p-3 text-sm text-warning">
                     Keep attribution and expiration current so editors can reuse this asset confidently.
                 </div>
@@ -367,7 +373,7 @@
 
             </div>
 
-            <div x-show="tab === 'usage'" x-cloak class="space-y-5" role="tabpanel">
+            <div id="asset-panel-usage" x-show="tab === 'usage'" x-cloak class="space-y-5" role="tabpanel" aria-labelledby="asset-tab-usage">
             {{-- Meta --}}
             <dl class="divide-y divide-subtle rounded-md border border-subtle text-sm">
                 <div class="flex justify-between gap-4 px-3 py-2"><dt class="text-tertiary">Filename</dt><dd class="truncate text-primary">{{ $selectedAsset->filename }}</dd></div>
@@ -411,7 +417,7 @@
             </div>
         </div>
 
-        <div class="flex shrink-0 items-center justify-end gap-2 border-t border-subtle bg-card p-4">
+        <div class="cms-drawer-footer">
                 <flux:button wire:click="closeAssetDetail" variant="ghost">Cancel</flux:button>
                 <flux:button wire:click="saveAssetDetails" variant="primary">Save</flux:button>
         </div>

@@ -1,6 +1,6 @@
-<x-layouts::auth>
-    <div class="flex flex-col gap-8">
-        <x-auth-header :title="__('Reset password')" :description="__('Please enter your new password below')" />
+<x-layouts::auth :title="__('Choose a new password · Pilot CMS')">
+    <div class="flex flex-col gap-7">
+        <x-auth-header :title="__('Choose a new password')" :description="__('Use a strong password you don’t use anywhere else.')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />

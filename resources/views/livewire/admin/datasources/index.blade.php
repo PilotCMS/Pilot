@@ -1,4 +1,4 @@
-<div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="Datasources" subtitle="Manage reusable option lists for block fields." top="0px" as="header" scroll-target="#datasources-scroll" aria-label="Page header">
         <x-slot:actions>
         @can('manage datasources')
@@ -65,7 +65,7 @@
                             @forelse($datasources as $datasource)
                                 <flux:table.row wire:key="datasource-row-{{ $datasource->id }}" class="transition-colors hover:bg-slate-50">
                                     <flux:table.cell>
-                                        <button type="button" wire:click="selectDatasource({{ $datasource->id }})" class="text-left">
+                                        <button type="button" wire:click="selectDatasource({{ $datasource->id }})" class="cms-text-btn !h-auto !min-h-0 !p-0 text-left">
                                             <span class="block font-medium text-slate-900">{{ $datasource->name }}</span>
                                             <span class="block text-sm text-slate-500">{{ $datasource->space->name }}</span>
                                         </button>
@@ -115,12 +115,12 @@
             </div>
         </main>
 
-        <aside class="z-20 flex w-[var(--admin-rail-width)] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-xl" aria-label="Details">
-            <div class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
-                <h2 class="text-sm font-bold text-slate-800">{{ $selectedDatasource ? 'Manage datasource' : 'Details' }}</h2>
+        <aside class="cms-drawer" aria-label="Details">
+            <div class="cms-drawer-header">
+                <h2 class="cms-drawer-title">{{ $selectedDatasource ? 'Manage datasource' : 'Details' }}</h2>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5">
+            <div class="cms-drawer-body">
                 @if($selectedDatasource)
                     <div class="space-y-6">
                         <section class="space-y-4 border-b border-slate-100 pb-6">
@@ -234,16 +234,16 @@
 
                                                 @can('manage datasources')
                                                     <div class="flex shrink-0 items-center gap-1">
-                                                        <button type="button" wire:click="moveEntryUp({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move up">
+                                                        <button type="button" wire:click="moveEntryUp({{ $entry->id }})" class="cms-iconbtn" aria-label="Move entry up" title="Move entry up">
                                                             <x-jaunt.icon name="arrow-up" size="xs" />
                                                         </button>
-                                                        <button type="button" wire:click="moveEntryDown({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Move down">
+                                                        <button type="button" wire:click="moveEntryDown({{ $entry->id }})" class="cms-iconbtn" aria-label="Move entry down" title="Move entry down">
                                                             <x-jaunt.icon name="arrow-down" size="xs" />
                                                         </button>
-                                                        <button type="button" wire:click="editEntry({{ $entry->id }})" class="flex size-7 items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Edit">
+                                                        <button type="button" wire:click="editEntry({{ $entry->id }})" class="cms-iconbtn" aria-label="Edit entry" title="Edit entry">
                                                             <x-jaunt.icon name="pencil" size="xs" />
                                                         </button>
-                                                        <button type="button" wire:click="deleteEntry({{ $entry->id }})" wire:confirm="Delete this entry?" class="flex size-7 items-center justify-center rounded text-red-500 hover:bg-red-50" title="Delete">
+                                                        <button type="button" wire:click="deleteEntry({{ $entry->id }})" wire:confirm="Delete this entry?" class="cms-iconbtn cms-iconbtn-danger" aria-label="Delete entry" title="Delete entry">
                                                             <x-jaunt.icon name="trash-2" size="xs" />
                                                         </button>
                                                     </div>

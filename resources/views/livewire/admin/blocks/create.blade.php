@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="Create Block Type" subtitle="Define a reusable block schema." top="0px" as="header" scroll-target="#block-create-scroll" aria-label="Page header">
         <x-slot:actions>
         <div class="cms-actions pb-0.5">
@@ -77,9 +77,9 @@
                             <h2 class="text-sm font-bold text-slate-800">Fields</h2>
                             <p class="text-xs text-slate-500 mt-0.5">Add and order fields for this block</p>
                         </div>
-                        <button type="button" wire:click="addField" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
+                        <button type="button" wire:click="addField" class="cms-btn cms-btn-secondary">
                             <x-jaunt.icon name="plus" size="sm" />
-                            Add Field
+                            Add field
                         </button>
                     </div>
                     <div class="p-5">
@@ -88,7 +88,7 @@
                                 <button
                                     type="button"
                                     wire:click="addFieldOfType('{{ $fieldType['type'] }}')"
-                                    class="border border-slate-200 rounded-lg p-3 text-left transition-colors hover:bg-slate-50 hover:border-blue-200"
+                                    class="rounded-sm border border-default bg-card p-3 text-left transition-colors hover:border-strong hover:bg-hover"
                                 >
                                     <div class="font-medium text-sm text-slate-800">{{ $fieldType['label'] }}</div>
                                     <div class="text-xs text-slate-500 mt-1">{{ $fieldType['desc'] }}</div>
@@ -152,11 +152,11 @@
     </main>
 
     {{-- Right aside: Field Settings --}}
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Field Settings">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0">
-            <h2 class="text-sm font-bold text-slate-800">Field Settings</h2>
+    <aside class="cms-drawer" aria-label="Field Settings">
+        <div class="cms-drawer-header">
+            <h2 class="cms-drawer-title">Field settings</h2>
         </div>
-        <div class="flex-1 overflow-y-auto p-5">
+        <div class="cms-drawer-body">
             @if($selectedFieldIndex !== null && isset($schema['fields'][$selectedFieldIndex]))
                 <div class="space-y-5">
                     <flux:field>

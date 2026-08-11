@@ -4,7 +4,7 @@
             <label class="mb-1.5 block text-xs font-semibold text-slate-600">Checkpoint label</label>
             <div class="flex gap-2">
                 <input type="text" wire:model="checkpointLabel" placeholder="e.g. Before homepage rewrite" class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
-                <button type="button" wire:click="saveCheckpoint" class="shrink-0 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Save</button>
+                <button type="button" wire:click="saveCheckpoint" class="cms-btn cms-btn-sm cms-btn-primary shrink-0">Save</button>
             </div>
             @error('checkpointLabel') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
@@ -47,8 +47,8 @@
                                 @endif
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
-                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="text-xs font-medium text-slate-500 hover:text-slate-700">Inspect</button>
-                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="text-xs font-medium text-blue-600">Restore</button>
+                                <button type="button" wire:click="selectRevision({{ $revision->id }})" class="cms-text-btn">Inspect</button>
+                                <button type="button" wire:click="restoreRevision({{ $revision->id }})" wire:confirm="Restore {{ $revision->label ?? 'this revision' }} from {{ $revision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="cms-text-btn">Restore</button>
                             </div>
                         </div>
                     @empty
@@ -56,7 +56,7 @@
                     @endforelse
                 </div>
                 @if($this->revisionTotalCount > $this->revisions->count())
-                    <button type="button" wire:click="loadMoreRevisions" class="mt-3 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Load more revisions</button>
+                    <button type="button" wire:click="loadMoreRevisions" class="cms-btn cms-btn-secondary mt-3 w-full">Load more revisions</button>
                 @endif
             </div>
         </div>
@@ -74,7 +74,7 @@
                             Inspecting revision
                         </div>
                     </div>
-                    <button type="button" wire:click="clearSelectedRevision" class="shrink-0 text-slate-400 hover:text-slate-600" title="Close revision details">
+                    <button type="button" wire:click="clearSelectedRevision" class="cms-iconbtn shrink-0" aria-label="Close revision details" title="Close revision details">
                         <x-jaunt.icon name="x" size="sm" />
                     </button>
                 </div>
@@ -161,7 +161,7 @@
                                             </div>
                                         @endif
                                         @if($change['action'] !== 'removed')
-                                            <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="mt-2 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">Restore this block</button>
+                                            <button type="button" wire:click="restoreSelectedRevisionBlock('{{ $change['path'] }}')" wire:confirm="Restore this block from the selected revision? A rollback checkpoint will be created first." class="cms-btn cms-btn-sm cms-btn-secondary mt-2">Restore this block</button>
                                         @endif
                                     </div>
                                     <span class="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">{{ $change['path'] }}</span>
@@ -181,8 +181,8 @@
                 @endif
 
                 <div class="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="rounded-md border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Restore fields</button>
-                    <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-on-accent hover:bg-accent-hover">Restore all</button>
+                    <button type="button" wire:click="restoreSelectedRevisionContent" wire:confirm="Restore only page fields from this revision? A rollback checkpoint will be created first." class="cms-btn cms-btn-secondary">Restore fields</button>
+                    <button type="button" wire:click="restoreRevision({{ $this->selectedRevision->id }})" wire:confirm="Restore {{ $this->selectedRevision->label ?? 'this revision' }} from {{ $this->selectedRevision->created_at->toDayDateTimeString() }}? A rollback checkpoint will be created first." class="cms-btn cms-btn-primary">Restore all</button>
                 </div>
             </div>
         @else

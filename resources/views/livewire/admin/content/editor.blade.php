@@ -369,14 +369,14 @@
         </div>
 
         <div class="flex shrink-0 items-center gap-2">
-            <div class="cms-seg" aria-label="Editor view">
-                <button type="button" x-on:click="canvasMode = 'compose'" x-bind:data-active="canvasMode === 'compose' ? 'true' : 'false'" class="cms-seg-btn">Compose</button>
-                <button type="button" x-on:click="canvasMode = 'preview'" x-bind:data-active="canvasMode === 'preview' ? 'true' : 'false'" class="cms-seg-btn">Preview</button>
+            <div class="cms-seg" role="group" aria-label="Editor view">
+                <button type="button" x-on:click="canvasMode = 'compose'" x-bind:aria-pressed="canvasMode === 'compose'" class="cms-seg-btn">Compose</button>
+                <button type="button" x-on:click="canvasMode = 'preview'" x-bind:aria-pressed="canvasMode === 'preview'" class="cms-seg-btn">Preview</button>
             </div>
-            <div x-show="canvasMode === 'preview'" class="cms-seg hidden lg:flex" aria-label="Preview device">
-                <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:data-active="previewDevice === 'desktop' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Desktop"><x-jaunt.icon name="monitor" size="sm" /></button>
-                <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:data-active="previewDevice === 'tablet' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Tablet"><x-jaunt.icon name="tablet" size="sm" /></button>
-                <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:data-active="previewDevice === 'mobile' ? 'true' : 'false'" class="cms-seg-btn !w-8 !px-0" title="Mobile"><x-jaunt.icon name="smartphone" size="sm" /></button>
+            <div x-show="canvasMode === 'preview'" class="cms-seg hidden lg:flex" role="group" aria-label="Preview device">
+                <button type="button" x-on:click="previewDevice = 'desktop'" x-bind:aria-pressed="previewDevice === 'desktop'" class="cms-seg-btn !w-[30px] !px-0" aria-label="Desktop preview"><x-jaunt.icon name="monitor" size="sm" /></button>
+                <button type="button" x-on:click="previewDevice = 'tablet'" x-bind:aria-pressed="previewDevice === 'tablet'" class="cms-seg-btn !w-[30px] !px-0" aria-label="Tablet preview"><x-jaunt.icon name="tablet" size="sm" /></button>
+                <button type="button" x-on:click="previewDevice = 'mobile'" x-bind:aria-pressed="previewDevice === 'mobile'" class="cms-seg-btn !w-[30px] !px-0" aria-label="Mobile preview"><x-jaunt.icon name="smartphone" size="sm" /></button>
             </div>
         </div>
 
@@ -461,7 +461,7 @@
         aria-label="Content tree"
     >
         <div x-cloak x-show="leftCollapsed" class="flex h-full w-11 flex-col items-center gap-2 py-2">
-            <button type="button" x-on:click="openPages()" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Expand pages" aria-label="Expand pages" aria-expanded="false" aria-controls="content-tree">
+            <button type="button" x-on:click="openPages()" class="cms-iconbtn text-tertiary" title="Expand pages" aria-label="Expand pages" aria-expanded="false" aria-controls="content-tree">
                 <x-jaunt.icon name="panel-left-open" size="sm" class="pointer-events-none" />
             </button>
             <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary [writing-mode:vertical-rl] rotate-180">Pages</span>
@@ -471,7 +471,7 @@
             <span class="text-[13px] font-medium leading-[17.55px] tracking-[-0.154px] text-primary">Pages</span>
             <div class="flex items-center gap-0.5">
                 <a href="{{ route('admin.content.create', ['type' => 'page', 'parent_id' => $content->parent_id ?? null]) }}" wire:navigate class="cms-iconbtn !h-[30px] !w-[30px] text-tertiary hover:bg-hover hover:text-primary" title="New page" aria-label="New page"><x-jaunt.icon name="plus" size="sm" /></a>
-                <button type="button" x-on:click="leftCollapsed = true" class="cms-iconbtn !h-[30px] !w-[30px] text-tertiary hover:bg-hover hover:text-primary" title="Collapse pages" aria-label="Collapse pages" aria-expanded="true" aria-controls="content-tree"><x-jaunt.icon name="panel-left-close" size="sm" class="pointer-events-none" /></button>
+                <button type="button" x-on:click="leftCollapsed = true" class="cms-iconbtn text-tertiary" title="Collapse pages" aria-label="Collapse pages" aria-expanded="true" aria-controls="content-tree"><x-jaunt.icon name="panel-left-close" size="sm" class="pointer-events-none" /></button>
             </div>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto p-2">
@@ -526,7 +526,7 @@
                 title="Live preview"
             ></iframe>
 
-            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="absolute bottom-8 left-1/2 z-50 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer border border-slate-700/50 hover:bg-black">
+            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="cms-fab absolute bottom-8 left-1/2 z-50 -translate-x-1/2">
                 <x-jaunt.icon name="plus" size="sm" class="text-white" />
                 <span class="text-sm font-medium text-white">Add Block</span>
                 <div class="h-4 w-px bg-white/30"></div>
@@ -569,7 +569,7 @@
                             ])
                         @endforeach
                         <div class="flex justify-center py-4">
-                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-slate-300 text-slate-500 hover:border-blue-500 hover:text-blue-600 transition-colors text-sm">
+                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="cms-btn cms-btn-secondary">
                                 <x-jaunt.icon name="plus" size="sm" />
                                 Add block
                             </button>
@@ -579,7 +579,7 @@
             </div>
 
             {{-- Floating Add Block button --}}
-            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="absolute bottom-8 z-50 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 hover:scale-105 transition-transform cursor-pointer border border-slate-700/50 hover:bg-black">
+            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="cms-fab absolute bottom-8 z-50">
                 <x-jaunt.icon name="plus" size="sm" class="text-white" />
                 <span class="text-sm font-medium text-white">Add Block</span>
                 <div class="h-4 w-px bg-white/30"></div>
@@ -605,21 +605,21 @@
             'shadow-none': ! inspectorOpen,
         }"
         x-bind:style="{ width: inspectorOpen ? 'var(--admin-rail-width)' : '44px' }"
-        class="cms-editor-inspector fixed top-[var(--topbar-h)] bottom-0 right-0 flex flex-col overflow-hidden border-l border-subtle bg-card transition-[width,box-shadow] duration-base ease-standard z-40"
+        class="cms-drawer cms-editor-inspector fixed top-[var(--topbar-h)] bottom-0 right-0 transition-[width,box-shadow] duration-base ease-standard z-40"
         aria-label="Edit panel"
     >
         <div x-cloak x-show="! inspectorOpen" class="flex h-full w-11 flex-col items-center gap-2 py-2">
-            <button type="button" x-on:click="openInspector()" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Expand inspector" aria-label="Expand inspector" aria-expanded="false" aria-controls="content-inspector">
+            <button type="button" x-on:click="openInspector()" class="cms-iconbtn text-tertiary" title="Expand inspector" aria-label="Expand inspector" aria-expanded="false" aria-controls="content-inspector">
                 <x-jaunt.icon name="panel-right-open" size="sm" class="pointer-events-none" />
             </button>
             <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tertiary [writing-mode:vertical-rl] rotate-180">Inspector</span>
         </div>
         <div x-cloak x-show="inspectorOpen" class="flex h-full min-h-0 flex-col">
         {{-- Header: breadcrumb nav (Page > Block Name) with actions --}}
-        <div class="flex shrink-0 items-center justify-between border-b border-subtle bg-card px-4 py-2">
+        <div class="cms-drawer-header">
             <div class="flex items-center gap-1.5 min-w-0">
                 {{-- "Page" is always the root, clickable to deselect block --}}
-                <button type="button" wire:click="$set('selectedBlockId', null)" class="flex items-center gap-1.5 {{ $hasSelectedBlock ? 'text-slate-400 hover:text-blue-600' : 'text-slate-800' }} transition-colors shrink-0">
+                <button type="button" wire:click="$set('selectedBlockId', null)" class="cms-text-btn shrink-0 {{ $hasSelectedBlock ? '' : 'text-primary' }}" aria-current="{{ $hasSelectedBlock ? 'false' : 'page' }}">
                     <span class="w-6 h-6 rounded bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold border border-blue-100">P</span>
                     <span class="text-sm {{ $hasSelectedBlock ? 'font-medium' : 'font-bold' }}">Page</span>
                 </button>
@@ -633,27 +633,27 @@
             </div>
             <div class="flex gap-1 shrink-0">
                 @if($hasSelectedBlock)
-                <button type="button" wire:click="duplicateBlock({{ $selectedBlockId }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600" title="Duplicate"><x-jaunt.icon name="copy" size="sm" /></button>
-                <button type="button" wire:click="deleteBlock({{ $selectedBlockId }})" wire:confirm="Delete this block?" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" title="Delete"><x-jaunt.icon name="trash-2" size="sm" /></button>
+                <button type="button" wire:click="duplicateBlock({{ $selectedBlockId }})" class="cms-iconbtn" aria-label="Duplicate block" title="Duplicate block"><x-jaunt.icon name="copy" size="sm" /></button>
+                <button type="button" wire:click="deleteBlock({{ $selectedBlockId }})" wire:confirm="Delete this block?" class="cms-iconbtn cms-iconbtn-danger" aria-label="Delete block" title="Delete block"><x-jaunt.icon name="trash-2" size="sm" /></button>
                 @endif
-                <button type="button" x-on:click="inspectorOpen = false" class="cms-iconbtn !h-7 !w-7 text-tertiary hover:bg-hover hover:text-primary" title="Collapse inspector" aria-label="Collapse inspector" aria-expanded="true" aria-controls="content-inspector">
+                <button type="button" x-on:click="inspectorOpen = false" class="cms-iconbtn text-tertiary" title="Collapse inspector" aria-label="Collapse inspector" aria-expanded="true" aria-controls="content-inspector">
                     <x-jaunt.icon name="panel-right-close" size="sm" class="pointer-events-none" />
                 </button>
             </div>
         </div>
 
         {{-- Tabs --}}
-        <div class="flex border-b border-slate-200 bg-slate-50/50 shrink-0">
+        <div class="cms-drawer-tabs" role="tablist" aria-label="Inspector sections" data-cms-tabs>
             @foreach($editPanelTabs as $tab => $label)
-            <button type="button" wire:click="$wire.set('rightPanelTab', '{{ $tab }}')" class="flex-1 py-3 text-xs font-medium transition-colors {{ $rightPanelTab === $tab ? 'border-b-2 border-accent bg-card font-semibold text-primary' : 'text-tertiary hover:bg-hover hover:text-primary' }}">{{ $label }}</button>
+            <button type="button" id="inspector-tab-{{ $tab }}" wire:click="$wire.set('rightPanelTab', '{{ $tab }}')" class="cms-tab flex-1" role="tab" aria-selected="{{ $rightPanelTab === $tab ? 'true' : 'false' }}" aria-controls="inspector-panel-{{ $tab }}" tabindex="{{ $rightPanelTab === $tab ? '0' : '-1' }}">{{ $label }}</button>
             @endforeach
         </div>
 
         {{-- Scrollable body --}}
-        <div class="flex-1 overflow-y-auto p-5 space-y-7 min-h-0" data-editor-inspector-body>
+        <div class="cms-drawer-body space-y-7" data-editor-inspector-body>
 
             {{-- CONTENT TAB --}}
-            <div class="{{ $rightPanelTab === 'content' ? '' : 'hidden' }}" role="tabpanel">
+            <div id="inspector-panel-content" class="{{ $rightPanelTab === 'content' ? '' : 'hidden' }}" role="tabpanel" aria-labelledby="inspector-tab-content">
 
                 @if($hasSelectedBlock && $bt)
                     {{-- When a block is selected: show ONLY the block fields --}}
@@ -752,7 +752,7 @@
                     <div class="pt-5 mt-2 border-t border-slate-100">
                         <div class="flex items-center justify-between mb-4">
                             <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Blocks</span>
-                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="text-[10px] text-blue-600 font-bold">+ Add</button>
+                            <button type="button" wire:click="$set('blockLibraryOpen', true)" class="cms-text-btn">Add block</button>
                         </div>
                         <div wire:sort="sortItem" class="space-y-0.5">
                             @foreach($blocks as $block)
@@ -761,7 +761,7 @@
                                 <div class="flex-1 min-w-0 py-1 cursor-pointer" wire:click="$set('selectedBlockId', {{ $block['id'] }})">
                                     <span class="font-medium text-sm truncate block text-slate-700">{{ $blockTypes[$block['type']]->name ?? $block['type'] }}</span>
                                 </div>
-                                <button type="button" wire:click="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" wire:sort:ignore class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500" aria-label="Delete block"><x-jaunt.icon name="trash-2" size="sm" /></button>
+                                <button type="button" wire:click="deleteBlock({{ $block['id'] }})" wire:confirm="Delete this block?" wire:sort:ignore class="cms-iconbtn cms-iconbtn-danger" aria-label="Delete block"><x-jaunt.icon name="trash-2" size="sm" /></button>
                             </div>
                             @endforeach
                         </div>
@@ -775,7 +775,7 @@
             </div>
 
             {{-- COMMENTS TAB --}}
-            <div class="{{ $rightPanelTab === 'comments' ? '' : 'hidden' }} space-y-5" role="tabpanel">
+            <div id="inspector-panel-comments" class="{{ $rightPanelTab === 'comments' ? '' : 'hidden' }} space-y-5" role="tabpanel" aria-labelledby="inspector-tab-comments">
                 <div>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Presence</span>
                     <div wire:poll.visible.15000ms="touchPresence" class="space-y-2">
@@ -808,7 +808,7 @@
                                 <div class="rounded-lg border border-slate-200 bg-white p-3">
                                     <div class="mb-2 flex items-center justify-between gap-3">
                                         <span class="text-xs font-semibold text-slate-600">{{ $comment->user?->name ?? 'System' }}</span>
-                                        <button type="button" wire:click="resolveBlockComment({{ $comment->id }})" class="text-xs font-semibold text-blue-600">Resolve</button>
+                                        <button type="button" wire:click="resolveBlockComment({{ $comment->id }})" class="cms-text-btn">Resolve</button>
                                     </div>
                                     <p class="text-sm text-slate-600">{{ $comment->body }}</p>
                                 </div>
@@ -817,7 +817,7 @@
                             @endforelse
                             <textarea rows="3" wire:model="newCommentBody" placeholder="Leave a comment for reviewers" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
                             @error('newCommentBody') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            <button type="button" wire:click="addBlockComment" class="w-full rounded-md bg-accent px-3 py-2 text-xs font-semibold text-on-accent hover:bg-accent-hover">Add comment</button>
+                            <button type="button" wire:click="addBlockComment" class="cms-btn cms-btn-primary w-full">Add comment</button>
                         </div>
                     @else
                         <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">Select a block to view or add comments.</p>
@@ -826,7 +826,7 @@
             </div>
 
             {{-- VALIDATION TAB --}}
-            <div class="{{ $rightPanelTab === 'validation' ? '' : 'hidden' }} space-y-5" role="tabpanel">
+            <div id="inspector-panel-validation" class="{{ $rightPanelTab === 'validation' ? '' : 'hidden' }} space-y-5" role="tabpanel" aria-labelledby="inspector-tab-validation">
                 <div>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">Validation panel</span>
                     <div class="space-y-2">
@@ -851,7 +851,7 @@
                         <div class="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
                             <input type="text" wire:model="reusableBlockName" placeholder="Reusable block name" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                             @error('reusableBlockName') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            <button type="button" wire:click="makeSelectedBlockReusable" class="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Save selected as reusable</button>
+                            <button type="button" wire:click="makeSelectedBlockReusable" class="cms-btn cms-btn-secondary w-full">Save selected as reusable</button>
                         </div>
                     @endif
                     <div class="mt-3 space-y-2">
@@ -861,7 +861,7 @@
                                     <div class="truncate text-sm font-semibold text-slate-700">{{ $reusableBlock->reusable_name }}</div>
                                     <div class="truncate text-xs text-slate-400">{{ $reusableBlock->type }} · {{ $reusableBlock->content?->name }}</div>
                                 </div>
-                                <button type="button" wire:click="insertReusableBlock({{ $reusableBlock->id }})" class="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50">Insert</button>
+                                <button type="button" wire:click="insertReusableBlock({{ $reusableBlock->id }})" class="cms-btn cms-btn-sm cms-btn-ghost shrink-0">Insert</button>
                             </div>
                         @empty
                             <p class="rounded-lg border border-dashed border-slate-200 p-4 text-center text-sm text-slate-400">No reusable blocks yet.</p>
@@ -871,7 +871,7 @@
             </div>
 
             {{-- ADVANCED TAB (SEO + Status + History) --}}
-            <div class="{{ $rightPanelTab === 'seo' ? '' : 'hidden' }} space-y-6" role="tabpanel">
+            <div id="inspector-panel-seo" class="{{ $rightPanelTab === 'seo' ? '' : 'hidden' }} space-y-6" role="tabpanel" aria-labelledby="inspector-tab-seo">
                 <div>
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wide block mb-2">SEO</span>
                     <div class="group mb-4">
@@ -912,10 +912,10 @@
                             <div class="mt-1 text-xs text-slate-500">Due {{ $content->review_due_at->format('M j, Y g:i A') }}</div>
                         @endif
                         <div class="mt-3 grid grid-cols-2 gap-2">
-                            <button type="button" wire:click="requestReview" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Request Review</button>
-                            <button type="button" wire:click="unpublish" class="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50">Unpublish</button>
-                            <button type="button" wire:click="approveReview" class="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Approve</button>
-                            <button type="button" wire:click="requestChanges" class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100">Request changes</button>
+                            <button type="button" wire:click="requestReview" class="cms-btn cms-btn-sm cms-btn-secondary">Request review</button>
+                            <button type="button" wire:click="unpublish" class="cms-btn cms-btn-sm cms-btn-danger">Unpublish</button>
+                            <button type="button" wire:click="approveReview" class="cms-btn cms-btn-sm cms-btn-primary">Approve</button>
+                            <button type="button" wire:click="requestChanges" class="cms-btn cms-btn-sm cms-btn-secondary">Request changes</button>
                         </div>
                     </div>
                     <div class="mt-3 space-y-2 rounded-lg border border-slate-200 bg-white p-3">
@@ -930,12 +930,12 @@
                         <input type="datetime-local" wire:model="reviewDueAt" class="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
                         <label class="text-xs text-slate-600 block">Review note</label>
                         <textarea rows="3" wire:model="reviewNote" class="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></textarea>
-                        <button type="button" wire:click="assignReview" class="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800">Assign review</button>
+                        <button type="button" wire:click="assignReview" class="cms-btn cms-btn-sm cms-btn-primary w-full">Assign review</button>
                     </div>
                     <div class="mt-3 space-y-2">
                         <label class="text-xs text-slate-600 block">Schedule publish</label>
                         <input type="datetime-local" wire:model="scheduledFor" class="w-full p-2.5 text-sm text-slate-700 bg-white border border-slate-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none shadow-sm" />
-                        <button type="button" wire:click="schedulePublishing" class="w-full rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Schedule</button>
+                        <button type="button" wire:click="schedulePublishing" class="cms-btn cms-btn-sm cms-btn-secondary w-full">Schedule</button>
                         @error('scheduledFor') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>

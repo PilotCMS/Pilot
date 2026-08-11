@@ -16,7 +16,7 @@ $variants = [
     'primary'   => 'bg-accent text-on-accent hover:bg-accent-hover active:bg-accent-active',
     'secondary' => 'bg-sunken text-primary hover:bg-gray-200 active:bg-gray-300 dark:bg-active dark:hover:bg-[rgba(255,255,255,0.14)] dark:active:bg-[rgba(255,255,255,0.18)]',
     'ghost'     => 'text-secondary hover:bg-hover hover:text-primary active:bg-active',
-    'danger'    => 'bg-danger-subtle text-danger hover:bg-danger-border focus-visible:shadow-ring-danger',
+    'danger'    => 'bg-danger !text-white hover:bg-[color-mix(in_oklab,var(--danger),#000_12%)] active:bg-[color-mix(in_oklab,var(--danger),#000_20%)] focus-visible:shadow-ring-danger',
     'ai'        => 'bg-ai-subtle text-ai-text border-ai-border hover:border-ai focus-visible:shadow-ring-ai',
 ];
 $sizes = [

@@ -1,4 +1,4 @@
-<div class="flex h-full min-w-0 flex-col bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="Content Types" subtitle="Define page models, fields, blocks, and URL behavior." top="0px" as="header" scroll-target="#content-types-scroll" aria-label="Page header">
         <x-slot:actions>
         <div class="cms-actions pb-0.5">
@@ -10,7 +10,7 @@
         </x-slot:actions>
     </x-jaunt.shell.dynamic-header>
 
-    <div class="grid flex-1 min-h-0 grid-cols-[minmax(0,1fr)_var(--admin-rail-width)]">
+    <div class="flex min-h-0 flex-1">
         <main id="content-types-scroll" class="min-w-0 overflow-y-auto p-6">
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @forelse($contentTypes as $contentType)
@@ -39,13 +39,13 @@
             </div>
         </main>
 
-        <aside class="flex min-h-0 flex-col border-l border-slate-200 bg-white shadow-xl">
+        <aside class="cms-drawer" aria-label="Content type editor">
             <form wire:submit="save" class="flex min-h-0 flex-1 flex-col">
-                <div class="h-14 shrink-0 border-b border-slate-200 px-5 py-4">
-                    <h2 class="text-sm font-bold text-slate-800">{{ $editingId ? 'Edit Content Type' : 'New Content Type' }}</h2>
+                <div class="cms-drawer-header">
+                    <h2 class="cms-drawer-title">{{ $editingId ? 'Edit content type' : 'New content type' }}</h2>
                 </div>
 
-                <div class="flex-1 space-y-5 overflow-y-auto p-5">
+                <div class="cms-drawer-body space-y-5">
                     <flux:field>
                         <flux:label>Name</flux:label>
                         <flux:input wire:model.live="name" placeholder="Blog Post" />
@@ -75,7 +75,7 @@
                             <span class="text-xs font-bold uppercase tracking-wide text-slate-600">Fields</span>
                             <div class="flex gap-1">
                                 @foreach(['text', 'textarea', 'richtext', 'image', 'reference', 'boolean'] as $fieldType)
-                                    <button type="button" wire:click="addFieldOfType('{{ $fieldType }}')" class="rounded border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50">{{ $fieldType }}</button>
+                                    <button type="button" wire:click="addFieldOfType('{{ $fieldType }}')" class="cms-btn cms-btn-sm cms-btn-secondary">{{ $fieldType }}</button>
                                 @endforeach
                             </div>
                         </div>
@@ -87,7 +87,7 @@
                                         <div class="truncate text-sm font-medium text-slate-800">{{ $field['label'] ?: 'Untitled field' }}</div>
                                         <div class="text-xs text-slate-500">{{ $field['type'] }} · {{ $field['key'] ?: 'key' }}</div>
                                     </div>
-                                    <button type="button" wire:click.stop="removeField({{ $index }})" class="text-slate-400 hover:text-red-500">
+                                    <button type="button" wire:click.stop="removeField({{ $index }})" class="cms-iconbtn cms-iconbtn-danger" aria-label="Remove field">
                                         <x-jaunt.icon name="trash-2" size="sm" />
                                     </button>
                                 </div>
@@ -133,9 +133,9 @@
                     </flux:field>
                 </div>
 
-                <div class="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-slate-50 p-4">
-                    <button type="button" wire:click="resetForm" class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
-                    <flux:button type="submit" variant="primary">Save Content Type</flux:button>
+                <div class="cms-drawer-footer">
+                    <button type="button" wire:click="resetForm" class="cms-btn cms-btn-secondary">Cancel</button>
+                    <flux:button type="submit" variant="primary">Save content type</flux:button>
                 </div>
             </form>
         </aside>

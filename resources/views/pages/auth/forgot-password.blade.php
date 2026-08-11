@@ -1,6 +1,6 @@
-<x-layouts::auth>
-    <div class="flex flex-col gap-8">
-        <x-auth-header :title="__('Forgot password')" :description="__('Enter your email to receive a password reset link')" />
+<x-layouts::auth :title="__('Reset password · Pilot CMS')">
+    <div class="flex flex-col gap-7">
+        <x-auth-header :title="__('Reset your password')" :description="__('Enter your email and we’ll send you a secure reset link.')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
@@ -23,9 +23,8 @@
             </flux:button>
         </form>
 
-        <div class="space-x-1 pt-2 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Or, return to') }}</span>
-            <flux:link :href="route('login')" wire:navigate class="font-medium">{{ __('log in') }}</flux:link>
+        <div class="text-center text-sm text-secondary">
+            <flux:link :href="route('login')" wire:navigate class="auth-inline-link">{{ __('Back to sign in') }}</flux:link>
         </div>
     </div>
 </x-layouts::auth>

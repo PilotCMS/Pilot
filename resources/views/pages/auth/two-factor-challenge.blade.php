@@ -1,4 +1,4 @@
-<x-layouts::auth>
+<x-layouts::auth :title="__('Two-step verification · Pilot CMS')">
     <div class="flex flex-col gap-6">
         <div
             class="relative w-full h-auto"
@@ -25,15 +25,15 @@
         >
             <div x-show="!showRecoveryInput">
                 <x-auth-header
-                    :title="__('Authentication Code')"
-                    :description="__('Enter the authentication code provided by your authenticator application.')"
+                    :title="__('Two-step verification')"
+                    :description="__('Enter the 6-digit code from your authenticator app.')"
                 />
             </div>
 
             <div x-show="showRecoveryInput">
                 <x-auth-header
-                    :title="__('Recovery Code')"
-                    :description="__('Please confirm access to your account by entering one of your emergency recovery codes.')"
+                    :title="__('Use a recovery code')"
+                    :description="__('Enter one of the recovery codes you saved when you set up two-step verification.')"
                 />
             </div>
 
@@ -82,12 +82,11 @@
                     </flux:button>
                 </div>
 
-                <div class="mt-5 space-x-0.5 text-sm leading-5 text-center">
-                    <span class="opacity-50">{{ __('or you can') }}</span>
-                    <div class="inline font-medium underline cursor-pointer opacity-80">
-                        <span x-show="!showRecoveryInput" @click="toggleInput()">{{ __('login using a recovery code') }}</span>
-                        <span x-show="showRecoveryInput" @click="toggleInput()">{{ __('login using an authentication code') }}</span>
-                    </div>
+                <div class="mt-5 text-sm leading-5 text-center text-secondary">
+                    <button type="button" class="auth-toggle-link" @click="toggleInput()">
+                        <span x-show="!showRecoveryInput">{{ __('Use a recovery code instead') }}</span>
+                        <span x-show="showRecoveryInput">{{ __('Use an authentication code instead') }}</span>
+                    </button>
                 </div>
             </form>
         </div>

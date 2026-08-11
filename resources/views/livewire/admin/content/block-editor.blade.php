@@ -123,6 +123,7 @@
                                     wire:click="toggleRepeaterItem(@js($field['key']), {{ $idx }})"
                                     class="flex flex-1 min-w-0 items-center gap-3 text-left"
                                     aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
+                                    aria-controls="repeater-{{ $field['key'] }}-{{ $idx }}"
                                 >
                                     <span class="flex-1 min-w-0">
                                         <span class="block text-xs font-bold text-slate-700">{{ $displayTitle }}</span>
@@ -130,11 +131,11 @@
                                     </span>
                                     <x-jaunt.icon :name="$isExpanded ? 'chevron-down' : 'chevron-right'" size="sm" class="shrink-0 text-slate-400 group-hover/item:text-blue-500" />
                                 </button>
-                                <button type="button" wire:click.stop="removeRepeaterItem(@js($field['key']), {{ $idx }})" class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-red-500 shrink-0" title="Remove"><x-jaunt.icon name="trash-2" size="sm" /></button>
+                                <button type="button" wire:click.stop="removeRepeaterItem(@js($field['key']), {{ $idx }})" class="cms-iconbtn cms-iconbtn-danger shrink-0" aria-label="Remove item" title="Remove item"><x-jaunt.icon name="trash-2" size="sm" /></button>
                             </div>
 
                             @if($isExpanded)
-                                <div class="border-t border-slate-100 bg-slate-50/70 p-3 space-y-3">
+                                <div id="repeater-{{ $field['key'] }}-{{ $idx }}" class="border-t border-slate-100 bg-slate-50/70 p-3 space-y-3">
                                     @forelse($field['fields'] ?? [] as $subField)
                                         @php
                                             $subFieldValue = $item[$subField['key']] ?? '';
@@ -221,8 +222,8 @@
                             @endif
                         </div>
                     @endforeach
-                    <button type="button" wire:click="addRepeaterItem('{{ $field['key'] }}')" class="text-[10px] text-blue-600 font-bold">
-                        {{ in_array(strtolower($field['key'] ?? ''), ['buttons', 'button']) ? '+ Add Button' : '+ Add item' }}
+                    <button type="button" wire:click="addRepeaterItem('{{ $field['key'] }}')" class="cms-text-btn">
+                        {{ in_array(strtolower($field['key'] ?? ''), ['buttons', 'button']) ? 'Add button' : 'Add item' }}
                     </button>
                 </div>
             @elseif($field['type'] === 'select')

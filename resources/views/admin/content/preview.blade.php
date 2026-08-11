@@ -55,11 +55,11 @@
             display: none;
             align-items: center;
             gap: 2px;
-            border: 1px solid rgb(226 232 240);
-            border-radius: 8px;
-            background: white;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--surface-card);
             padding: 2px;
-            box-shadow: 0 10px 25px rgb(15 23 42 / 0.12);
+            box-shadow: var(--shadow-md);
         }
 
         [data-pilot-editable="block"]:hover > .pilot-preview-toolbar,
@@ -69,19 +69,32 @@
 
         .pilot-preview-toolbar button {
             display: flex;
-            height: 26px;
-            min-width: 26px;
+            height: 30px;
+            min-width: 30px;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
-            color: rgb(71 85 105);
-            font-size: 12px;
-            font-weight: 700;
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            transition: background-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), transform var(--dur-instant) var(--ease-spring);
         }
 
         .pilot-preview-toolbar button:hover {
-            background: rgb(240 253 250);
-            color: rgb(13 148 136);
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+
+        .pilot-preview-toolbar button:focus-visible {
+            outline: none;
+            box-shadow: var(--ring);
+        }
+
+        .pilot-preview-toolbar button:active {
+            transform: scale(.94);
+        }
+
+        .pilot-preview-toolbar button[data-pilot-action="delete"]:hover {
+            background: var(--danger-subtle);
+            color: var(--danger);
         }
     </style>
 </head>
@@ -109,11 +122,11 @@
                         data-pilot-component-path="{{ $content->type }}/{{ $block->type }}"
                         class="rounded-lg border border-transparent transition-colors hover:border-blue-300 hover:bg-blue-50/30"
                     >
-                        <div class="pilot-preview-toolbar" aria-hidden="true">
-                            <button type="button" data-pilot-action="move-up" title="Move up">↑</button>
-                            <button type="button" data-pilot-action="move-down" title="Move down">↓</button>
-                            <button type="button" data-pilot-action="duplicate" title="Duplicate">⧉</button>
-                            <button type="button" data-pilot-action="delete" title="Delete">×</button>
+                        <div class="pilot-preview-toolbar" role="group" aria-label="Block actions">
+                            <button type="button" data-pilot-action="move-up" aria-label="Move block up" title="Move block up"><x-jaunt.icon name="arrow-up" size="xs" /></button>
+                            <button type="button" data-pilot-action="move-down" aria-label="Move block down" title="Move block down"><x-jaunt.icon name="arrow-down" size="xs" /></button>
+                            <button type="button" data-pilot-action="duplicate" aria-label="Duplicate block" title="Duplicate block"><x-jaunt.icon name="copy" size="xs" /></button>
+                            <button type="button" data-pilot-action="delete" aria-label="Delete block" title="Delete block"><x-jaunt.icon name="trash-2" size="xs" /></button>
                         </div>
                         @if(view()->exists($componentView))
                             <x-dynamic-component :component="$componentName" :block="$block" :data="$data" :children="$children" />

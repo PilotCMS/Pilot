@@ -1,11 +1,11 @@
 <flux:modal wire:model="show">
     <div class="flex items-center justify-between mb-4">
         <flux:heading size="lg">Select asset</flux:heading>
-        <div class="flex items-center gap-2">
-            <button wire:click="setViewMode('grid')" class="p-2 rounded {{ $viewMode === 'grid' ? 'bg-zinc-100 dark:bg-zinc-800' : '' }}" title="Grid view">
+        <div class="cms-seg" role="group" aria-label="Asset view">
+            <button type="button" wire:click="setViewMode('grid')" class="cms-seg-btn !w-[30px] !px-0" aria-label="Grid view" aria-pressed="{{ $viewMode === 'grid' ? 'true' : 'false' }}">
                 <flux:icon.squares-2x2 class="size-4" />
             </button>
-            <button wire:click="setViewMode('list')" class="p-2 rounded {{ $viewMode === 'list' ? 'bg-zinc-100 dark:bg-zinc-800' : '' }}" title="List view">
+            <button type="button" wire:click="setViewMode('list')" class="cms-seg-btn !w-[30px] !px-0" aria-label="List view" aria-pressed="{{ $viewMode === 'list' ? 'true' : 'false' }}">
                 <flux:icon.list-bullet class="size-4" />
             </button>
         </div>
@@ -24,11 +24,11 @@
     <div class="flex gap-4 min-h-[300px]">
         {{-- Folders sidebar --}}
         <div class="w-48 shrink-0 border-r border-zinc-200 dark:border-zinc-700 pr-4">
-            <button wire:click="selectFolder(null)" class="w-full text-left px-3 py-2 rounded-lg text-sm {{ $folderId === null ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : 'hover:bg-zinc-50 dark:hover:bg-zinc-900' }}">
+            <button type="button" wire:click="selectFolder(null)" class="cms-choice-row" aria-current="{{ $folderId === null ? 'true' : 'false' }}">
                 All
             </button>
             @foreach($folders as $folder)
-                <button wire:click="selectFolder({{ $folder->id }})" class="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 {{ $folderId == $folder->id ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : 'hover:bg-zinc-50 dark:hover:bg-zinc-900' }}">
+                <button type="button" wire:click="selectFolder({{ $folder->id }})" class="cms-choice-row" aria-current="{{ $folderId == $folder->id ? 'true' : 'false' }}">
                     <flux:icon.folder class="size-4" />
                     {{ $folder->name }}
                 </button>
@@ -57,7 +57,7 @@
             @else
             <div class="divide-y divide-zinc-200 dark:divide-zinc-700">
                 @foreach($assets as $asset)
-                    <button wire:click="selectAsset({{ $asset->id }})" class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-left">
+                    <button type="button" wire:click="selectAsset({{ $asset->id }})" class="cms-choice-row !min-h-0 !rounded-none !p-3">
                         @if($asset->isImage())
                             <img src="{{ $asset->thumbnailRelativeUrl() }}" alt="" class="w-12 h-12 object-cover rounded" loading="lazy" />
                         @else

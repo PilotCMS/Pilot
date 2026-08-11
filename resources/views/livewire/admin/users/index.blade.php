@@ -1,4 +1,4 @@
-<div class="flex h-full w-full min-w-0 flex-col bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header :title="'Users & Roles'" subtitle="Manage team members and permissions." top="0px" as="header" scroll-target="#users-list-scroll" aria-label="Page header">
         <x-slot:actions>
         <div class="cms-actions pb-0.5">
@@ -23,7 +23,7 @@
                         <button
                             type="button"
                             wire:click="$set('search', '{{ $role->name }}')"
-                            class="rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50/50"
+                            class="rounded-sm border border-default bg-card p-4 text-left shadow-xs transition-[background-color,border-color,box-shadow] hover:border-strong hover:bg-hover hover:shadow-sm"
                         >
                             <div class="flex items-center justify-between gap-3">
                                 <p class="text-sm font-semibold text-slate-900">{{ $role->name }}</p>
@@ -146,12 +146,12 @@
             </div>
         </main>
 
-        <aside class="z-20 flex w-[var(--admin-rail-width)] shrink-0 flex-col overflow-hidden border-l border-slate-200 bg-white shadow-xl" aria-label="Details">
-            <div class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
-                <h2 class="text-sm font-bold text-slate-800">{{ $selectedUser ? 'Edit user' : 'Role details' }}</h2>
+        <aside class="cms-drawer" aria-label="Details">
+            <div class="cms-drawer-header">
+                <h2 class="cms-drawer-title">{{ $selectedUser ? 'Edit user' : 'Role details' }}</h2>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-5">
+            <div class="cms-drawer-body">
                 @if($selectedUser)
                     <form wire:submit="updateSelectedUser" class="space-y-5">
                         <div class="flex items-center gap-3 border-b border-slate-100 pb-5">

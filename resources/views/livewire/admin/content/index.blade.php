@@ -37,11 +37,11 @@
                             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search content" />
                         </label>
 
-                        <div class="cms-seg" aria-label="Content type filter">
-                            <button type="button" wire:click="setTypeFilter('all')" class="cms-seg-btn" data-active="{{ $typeFilter === 'all' ? 'true' : 'false' }}">All</button>
-                            <button type="button" wire:click="setTypeFilter('page')" class="cms-seg-btn" data-active="{{ $typeFilter === 'page' ? 'true' : 'false' }}">Pages</button>
-                            <button type="button" wire:click="setTypeFilter('folder')" class="cms-seg-btn" data-active="{{ $typeFilter === 'folder' ? 'true' : 'false' }}">Folders</button>
-                            <button type="button" wire:click="setTypeFilter('global')" class="cms-seg-btn" data-active="{{ $typeFilter === 'global' ? 'true' : 'false' }}">Global</button>
+                        <div class="cms-seg" role="group" aria-label="Content type filter">
+                            <button type="button" wire:click="setTypeFilter('all')" class="cms-seg-btn" aria-pressed="{{ $typeFilter === 'all' ? 'true' : 'false' }}">All</button>
+                            <button type="button" wire:click="setTypeFilter('page')" class="cms-seg-btn" aria-pressed="{{ $typeFilter === 'page' ? 'true' : 'false' }}">Pages</button>
+                            <button type="button" wire:click="setTypeFilter('folder')" class="cms-seg-btn" aria-pressed="{{ $typeFilter === 'folder' ? 'true' : 'false' }}">Folders</button>
+                            <button type="button" wire:click="setTypeFilter('global')" class="cms-seg-btn" aria-pressed="{{ $typeFilter === 'global' ? 'true' : 'false' }}">Global</button>
                         </div>
 
                         <span class="flex-1"></span>
@@ -73,7 +73,7 @@
                             <div class="cms-table-row cms-content-table-grid group" wire:key="content-{{ $content->id }}">
                                 <div class="flex min-w-0 items-center gap-2" style="padding-left: {{ $depth * 20 }}px;">
                                     @if($content->isFolder())
-                                        <button type="button" wire:click="toggleFolder({{ $content->id }})" class="cms-iconbtn !h-5 !w-5" aria-label="{{ $this->isFolderExpanded($content->id) ? 'Collapse' : 'Expand' }}">
+                                        <button type="button" wire:click="toggleFolder({{ $content->id }})" class="cms-iconbtn cms-iconbtn-sm" aria-label="{{ $this->isFolderExpanded($content->id) ? 'Collapse' : 'Expand' }}">
                                             <x-jaunt.icon :name="$this->isFolderExpanded($content->id) ? 'chevron-down' : 'chevron-right'" size="xs" />
                                         </button>
                                         <span class="cms-tile cms-tile-info"><x-jaunt.icon name="folder" size="sm" /></span>

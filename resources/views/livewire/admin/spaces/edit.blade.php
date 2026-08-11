@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full min-w-0 h-full bg-gray-50">
+<div class="cms-drawer-page flex min-h-0 w-full min-w-0 flex-1 flex-col bg-gray-50">
     <x-jaunt.shell.dynamic-header title="Edit Space" subtitle="Update workspace settings." top="0px" as="header" scroll-target="#space-edit-scroll" aria-label="Page header" />
 
     <div class="flex flex-1 min-h-0">
@@ -78,10 +78,10 @@
                                         </flux:field>
 
                                         <div class="flex items-end gap-2">
-                                            <button type="button" wire:click="markDefaultPreviewTarget({{ $index }})" class="h-10 rounded-md border px-3 text-sm font-medium {{ ! empty($target['is_default']) ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50' }}">
+                                            <button type="button" wire:click="markDefaultPreviewTarget({{ $index }})" class="cms-btn cms-btn-secondary" aria-pressed="{{ ! empty($target['is_default']) ? 'true' : 'false' }}">
                                                 Default
                                             </button>
-                                            <button type="button" wire:click="removePreviewTarget({{ $index }})" class="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-red-500" aria-label="Remove preview URL">
+                                            <button type="button" wire:click="removePreviewTarget({{ $index }})" class="cms-iconbtn cms-iconbtn-danger" aria-label="Remove preview URL">
                                                 <x-jaunt.icon name="trash-2" size="sm" />
                                             </button>
                                         </div>
@@ -111,11 +111,11 @@
         </div>
     </main>
 
-    <aside class="w-[var(--admin-rail-width)] shrink-0 bg-white border-l border-slate-200 flex flex-col shadow-xl overflow-hidden z-20" aria-label="Details">
-        <div class="h-14 border-b border-slate-200 flex items-center px-5 bg-white shrink-0">
-            <h2 class="text-sm font-bold text-slate-800">Details</h2>
+    <aside class="cms-drawer" aria-label="Details">
+        <div class="cms-drawer-header">
+            <h2 class="cms-drawer-title">Details</h2>
         </div>
-        <div class="flex-1 overflow-y-auto p-5 text-sm text-slate-500">
+        <div class="cms-drawer-body text-sm text-secondary">
             <div class="space-y-4">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview URL format</p>
