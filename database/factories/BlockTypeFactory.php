@@ -4,9 +4,10 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Pilot\Core\Models\BlockType;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\BlockType>
+ * @extends Factory<BlockType>
  */
 class BlockTypeFactory extends Factory
 {

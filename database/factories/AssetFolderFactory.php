@@ -3,9 +3,10 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\AssetFolder;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\AssetFolder>
+ * @extends Factory<AssetFolder>
  */
 class AssetFolderFactory extends Factory
 {

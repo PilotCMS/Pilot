@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Content;
-use App\Models\Space;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Redirect;
+use Pilot\Core\Models\Space;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Redirect>
+ * @extends Factory<Redirect>
  */
 class RedirectFactory extends Factory
 {

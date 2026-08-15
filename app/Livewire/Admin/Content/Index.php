@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Models\Activity;
-use App\Models\Content;
-use App\Models\Space;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Pilot\Core\Models\Activity;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 class Index extends Component
 {

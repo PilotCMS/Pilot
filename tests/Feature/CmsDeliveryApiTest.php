@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 it('returns storyblok style content with editor links and localized block data', function () {
     $user = User::factory()->create();

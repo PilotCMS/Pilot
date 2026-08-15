@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-use App\Models\CmsSetting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
+use Pilot\Core\Models\CmsSetting;
 use Pilot\Laravel\Facades\Pilot;
 use Pilot\Laravel\Models\Content;
 use Pilot\Laravel\Models\Redirect;
@@ -67,7 +67,11 @@ class PageController extends Controller
         $spaceSlug = CmsSetting::get('default_space', config('pilot.default_space'));
 
         if ($spaceSlug) {
-            return Space::query()->where('slug', $spaceSlug)->first();
+            $space = Space::query()->where('slug', $spaceSlug)->first();
+
+            if ($space) {
+                return $space;
+            }
         }
 
         return Space::query()->orderBy('id')->first();

@@ -2,15 +2,15 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\Asset;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\Datasource;
-use App\Models\Space;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Component;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Datasource;
+use Pilot\Core\Models\Space;
 
 class CommandPalette extends Component
 {

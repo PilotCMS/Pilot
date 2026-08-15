@@ -3,19 +3,19 @@
 use App\Livewire\Admin\Content\BlockEditor;
 use App\Livewire\Admin\Content\ContentSyncPoller;
 use App\Livewire\Admin\Content\Editor;
-use App\Models\Activity;
-use App\Models\Block;
-use App\Models\BlockComment;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\ContentPresence;
-use App\Models\ContentRevision;
-use App\Models\Space;
 use App\Models\User;
-use App\Support\Cms\ContentLifecycle;
-use App\Support\Cms\ContentRevisionInspector;
-use App\Support\Cms\ContentSyncFingerprint;
 use Livewire\Livewire;
+use Pilot\Core\Models\Activity;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockComment;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentPresence;
+use Pilot\Core\Models\ContentRevision;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\ContentLifecycle;
+use Pilot\Core\Support\Cms\ContentRevisionInspector;
+use Pilot\Core\Support\Cms\ContentSyncFingerprint;
 
 it('keeps block library state open until a block is inserted', function () {
     $user = User::factory()->create();

@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Admin\Datasources;
 
-use App\Models\Datasource;
-use App\Models\DatasourceEntry;
-use App\Models\Space;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Pilot\Core\Models\Datasource;
+use Pilot\Core\Models\DatasourceEntry;
+use Pilot\Core\Models\Space;
 
 class Index extends Component
 {

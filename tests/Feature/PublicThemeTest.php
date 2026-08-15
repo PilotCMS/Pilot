@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 it('renders published home content with Laravel block views', function () {
     $user = User::factory()->create();

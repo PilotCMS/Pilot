@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
 use Illuminate\Support\Facades\URL;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 it('renders posted headless content for live preview', function () {
     $this->postJson(route('api.preview.render'), [

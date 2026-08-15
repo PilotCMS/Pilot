@@ -2,15 +2,15 @@
 
 use App\Livewire\Admin\Assets\AssetPickerModal;
 use App\Livewire\Admin\Assets\Index;
-use App\Models\Asset;
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
-use App\Support\Cms\AssetUsageFinder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\AssetUsageFinder;
 
 it('renders asset detail panel with copy link control without blade errors', function () {
     $user = User::factory()->create();

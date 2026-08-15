@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin\Spaces;
 
-use App\Models\CmsSetting;
-use App\Models\Space;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Space;
 
 class Edit extends Component
 {

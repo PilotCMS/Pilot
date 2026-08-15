@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Admin\Settings;
 
-use App\Models\CmsSetting;
-use App\Models\Space;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Space;
 
 class Index extends Component
 {

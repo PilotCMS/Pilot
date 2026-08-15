@@ -1,12 +1,12 @@
 <?php
 
 use App\Livewire\Admin\Users\Index;
-use App\Models\Activity;
-use App\Models\Content;
-use App\Models\EditorPreference;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
+use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Models\Activity;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\EditorPreference;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {

@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Models\Content;
-use App\Support\Cms\ContentSyncFingerprint;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Support\Cms\ContentSyncFingerprint;
 
 class ContentSyncPoller extends Component
 {

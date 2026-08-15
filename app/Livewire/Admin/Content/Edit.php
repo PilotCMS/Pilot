@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Models\Content;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\Content;
 
 class Edit extends Component
 {

@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Spaces;
 
-use App\Models\Space;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\Space;
 
 class Create extends Component
 {

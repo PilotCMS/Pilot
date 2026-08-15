@@ -1,11 +1,11 @@
 <?php
 
 use App\Livewire\Admin\CommandPalette;
-use App\Models\BlockType;
-use App\Models\Content;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
+use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

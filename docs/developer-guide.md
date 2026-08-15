@@ -30,8 +30,8 @@ This prevents draft content from leaking publicly.
 
 The controller passes these variables to the theme page view:
 
-- `$content` (`App\Support\Cms\ContentPayload`)
-- `$space` (`App\Models\Space`)
+- `$content` (`Pilot\Core\Support\Cms\ContentPayload`)
+- `$space` (`Pilot\Core\Models\Space`)
 - `$blocks` (`Collection<array<string,mixed>>`)
 - `$theme` (string)
 

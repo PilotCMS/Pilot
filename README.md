@@ -26,23 +26,46 @@ Use the same supported PHP binary for Composer, Artisan, queues, and tests. If y
 
 ## Installation
 
-Pilot installs like a conventional Laravel application. Clone the repository and install its dependencies:
+Install the Pilot installer once with Composer:
 
 ```bash
-git clone https://github.com/WindfallInc/Pilot.git
+composer global require pilotcms/installer
+```
+
+Create a project in a new directory, the current directory, or an explicit path:
+
+```shell
+pilot new my-project
+pilot new .
+pilot new --path=/absolute/path/to/my-project
+```
+
+The installer downloads the latest stable Pilot release, installs its PHP and frontend dependencies, creates the environment file and key, builds the assets, and prepares public storage. If the repository does not have a tagged release yet, it installs `main`. Use `--branch=<name>` to intentionally install another branch or `--no-build` to skip npm.
+
+When Laravel Herd is installed, the project is linked automatically and the installer prints its `.test/setup` URL. Add `--secure` for HTTPS, `--site=<name>` to choose the Herd site name, or `--no-herd` to skip this step.
+
+Open the `/setup` URL printed by the command. The browser wizard will:
+
+1. Check the server requirements and writable paths.
+2. Test and save the MySQL, PostgreSQL, or SQLite connection.
+3. Run migrations and seed Pilot's required reference data.
+4. Create the first administrator account.
+5. Configure the workspace name, URL, and default locale.
+6. Show the IDE and frontend integration commands for the project.
+
+Setup writes database credentials directly to `.env`. When setup finishes, Pilot writes a local installation lock, signs in the administrator, and disables the setup wizard.
+
+### Installing from source
+
+To work on Pilot itself, clone the repository and prepare the application:
+
+```bash
+git clone https://github.com/PilotCMS/Pilot.git
 cd Pilot
-composer install
-npm install
+composer run setup
 ```
 
-Create the Laravel environment file and application key:
-
-```bash
-cp .env.example .env
-php artisan key:generate
-```
-
-Create an empty MySQL database named `pilot`, then adjust the standard `DB_*` values in `.env` if your local credentials differ from the defaults:
+Create an empty database before opening `/setup`. The wizard accepts the standard Laravel database values:
 
 ```dotenv
 DB_CONNECTION=mysql
@@ -53,23 +76,33 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Run Pilot's interactive installer. It uses Laravel migrations for the schema and prompts for the first administrator's name, email address, and password; no default user accounts are created.
+For servers and automated environments, the terminal installer remains available. Configure `.env` first, then run:
 
 ```bash
-php artisan pilot:install
-php artisan storage:link
-npm run build
+php artisan pilot:install --force
 ```
 
-Start the development stack:
+It runs the same migrations and seeders as the browser wizard and interactively creates the first administrator. No default user accounts are created.
+
+## Updating
+
+Pilot's versioned CMS engine is installed as `pilotcms/core`. Update it from the project directory with:
+
+```bash
+pilot update
+```
+
+The command updates Pilot Core and its dependencies, runs pending database migrations, and rebuilds frontend assets. Commit changes to `composer.json` and `composer.lock` first; use `pilot update --dry-run` to check for a release or `--no-build` when frontend assets are built elsewhere.
+
+Project-owned files—views, routes, configuration, the user model, and custom application code—remain outside the package and are not overwritten by an update.
+
+Start the local development stack with:
 
 ```bash
 composer run dev
 ```
 
 This starts Laravel, the queue worker, Pail logs, and Vite together. Open the URL printed in the terminal, normally `http://127.0.0.1:8000`.
-
-For a prepared environment with its MySQL database already created, `composer run setup` runs the same steps and presents the administrator prompts as a convenience.
 
 ### Laravel Boost (optional)
 
@@ -163,7 +196,7 @@ The system comes with several built-in block types:
 
 ## Adding a New Block Type
 
-1. Create a block type seeder entry in `database/seeders/BlockTypeSeeder.php`
+1. Create a project seeder that adds the block type and call it from `database/seeders/DatabaseSeeder.php`
 2. Create a Blade renderer in `resources/views/blocks/{key}.blade.php`
 3. Create field renderers in `resources/views/admin/fields/{type}.blade.php` if needed
 

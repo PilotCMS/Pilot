@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin\ContentTypes;
 
-use App\Models\BlockType;
-use App\Models\ContentType;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\ContentType;
 
 class Index extends Component
 {

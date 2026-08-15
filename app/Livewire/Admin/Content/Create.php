@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Models\Content;
-use App\Models\ContentType;
-use App\Models\Space;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentType;
+use Pilot\Core\Models\Space;
 
 class Create extends Component
 {

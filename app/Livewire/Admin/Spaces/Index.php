@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin\Spaces;
 
-use App\Models\Space;
 use Livewire\Component;
+use Pilot\Core\Models\Space;
 
 class Index extends Component
 {

@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Content;
 
-use App\Models\BlockType;
-use App\Models\Content;
 use Livewire\Component;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
 
 class BlockEditor extends Component
 {

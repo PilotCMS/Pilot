@@ -2,11 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 /**
  * @extends Factory<Content>

@@ -4,9 +4,10 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Pilot\Core\Models\ContentType;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ContentType>
+ * @extends Factory<ContentType>
  */
 class ContentTypeFactory extends Factory
 {

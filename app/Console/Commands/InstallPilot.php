@@ -3,10 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use Database\Seeders\DatabaseSeeder;
-use Database\Seeders\SpaceSeeder;
+use App\Support\Installation\PilotInstaller;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -20,15 +18,17 @@ class InstallPilot extends Command
     {
         $this->components->info('Installing Pilot');
 
-        if ($this->call('migrate', ['--force' => (bool) $this->option('force')]) !== self::SUCCESS) {
-            return self::FAILURE;
-        }
+        try {
+            $installer = app(PilotInstaller::class);
+            $installer->prepareDatabase((bool) $this->option('force'));
+        } catch (\Throwable $exception) {
+            $this->components->error($exception->getMessage());
 
-        if ($this->call('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true]) !== self::SUCCESS) {
             return self::FAILURE;
         }
 
         $admin = User::role('Admin')->oldest()->first();
+        $createdAdministrator = false;
 
         if ($admin === null) {
             if (! $this->input->isInteractive()) {
@@ -38,13 +38,15 @@ class InstallPilot extends Command
             }
 
             $admin = $this->createAdministrator();
+            $createdAdministrator = true;
         } else {
             $this->components->warn("Pilot already has an administrator ({$admin->email}); account creation was skipped.");
         }
 
-        DB::transaction(function () use ($admin): void {
-            app(SpaceSeeder::class)->run($admin);
-        });
+        if (! $createdAdministrator) {
+            $installer->seedSpace($admin);
+        }
+        $installer->finish($admin);
 
         $this->newLine();
         $this->components->info("Pilot is ready. Sign in with {$admin->email}.");
@@ -68,18 +70,11 @@ class InstallPilot extends Command
         ));
         $password = $this->validatedPassword();
 
-        return DB::transaction(function () use ($name, $email, $password): User {
-            $admin = User::create([
-                'name' => $name,
-                'email' => $email,
-                'password' => $password,
-            ]);
-
-            $admin->forceFill(['email_verified_at' => now()])->save();
-            $admin->assignRole('Admin');
-
-            return $admin;
-        });
+        return app(PilotInstaller::class)->createAdministrator([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+        ]);
     }
 
     /**

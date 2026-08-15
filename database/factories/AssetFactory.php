@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Models\Space;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\Space;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Asset>
+ * @extends Factory<Asset>
  */
 class AssetFactory extends Factory
 {

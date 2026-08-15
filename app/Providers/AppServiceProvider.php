@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\CmsSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Date;
@@ -10,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Pilot\Core\Models\CmsSetting;
 
 class AppServiceProvider extends ServiceProvider
 {

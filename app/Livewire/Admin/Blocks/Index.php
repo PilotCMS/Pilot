@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Blocks;
 
-use App\Models\BlockType;
-use App\Models\BlockTypeFolder;
 use Livewire\Component;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\BlockTypeFolder;
 
 class Index extends Component
 {

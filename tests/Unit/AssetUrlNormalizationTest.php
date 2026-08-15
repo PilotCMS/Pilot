@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Asset;
+use Pilot\Core\Models\Asset;
 
 it('keeps a relative url unchanged', function () {
     expect(Asset::toRelativeUrl('/storage/assets/example.png'))

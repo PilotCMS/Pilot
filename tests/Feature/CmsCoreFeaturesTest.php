@@ -3,18 +3,18 @@
 use App\Livewire\Admin\Content\BlockEditor;
 use App\Livewire\Admin\Content\Editor;
 use App\Livewire\Admin\Spaces\Index as SpacesIndex;
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\ContentReference;
-use App\Models\ContentType;
-use App\Models\Redirect;
-use App\Models\Space;
 use App\Models\User;
-use App\Support\Cms\ContentLifecycle;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentReference;
+use Pilot\Core\Models\ContentType;
+use Pilot\Core\Models\Redirect;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\ContentLifecycle;
 
 it('creates content with a content type and exposes the type in delivery payloads', function () {
     $user = User::factory()->create();

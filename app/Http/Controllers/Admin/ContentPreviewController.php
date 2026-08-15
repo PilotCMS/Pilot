@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Content;
-use App\Models\ContentRevision;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentRevision;
 use Pilot\Laravel\Support\ContentRenderer;
 
 class ContentPreviewController extends Controller

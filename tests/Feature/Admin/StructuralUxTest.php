@@ -3,12 +3,12 @@
 use App\Livewire\Admin\Content\Create;
 use App\Livewire\Admin\Content\Editor;
 use App\Livewire\Admin\Content\Index;
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
 use Livewire\Livewire;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 it('uses a draft first progressively disclosed creation flow', function () {
     $user = User::factory()->create();

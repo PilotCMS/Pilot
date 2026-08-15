@@ -4,9 +4,10 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Pilot\Core\Models\Space;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Space>
+ * @extends Factory<Space>
  */
 class SpaceFactory extends Factory
 {

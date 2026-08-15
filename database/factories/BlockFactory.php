@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Block;
-use App\Models\Content;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
 
 /**
  * @extends Factory<Block>

@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Cms\ContentResource;
-use App\Models\CmsSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Pilot\Core\Models\CmsSetting;
 use Pilot\Laravel\Models\Content;
 use Pilot\Laravel\Models\Space;
 use Pilot\Laravel\Support\ContentRenderer;

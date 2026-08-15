@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\ContentRevision;
 use App\Models\User;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentRevision;
 
 it('backfills published revisions for published content missing a published revision', function () {
     $user = User::factory()->create();

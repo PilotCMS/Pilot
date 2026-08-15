@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LivePreviewRenderRequest;
-use App\Models\CmsSetting;
-use App\Models\Content;
-use App\Models\Space;
 use Illuminate\Http\JsonResponse;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 use Pilot\Laravel\Support\ContentRenderer;
 
 class LivePreviewController extends Controller

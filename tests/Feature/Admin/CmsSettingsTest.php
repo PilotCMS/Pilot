@@ -2,14 +2,14 @@
 
 use App\Http\Controllers\Api\PreviewController;
 use App\Livewire\Admin\Settings\Index;
-use App\Models\Block;
-use App\Models\CmsSetting;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
+use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

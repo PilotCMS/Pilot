@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Admin\Assets;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
-use App\Models\Space;
 use Livewire\Component;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\AssetFolder;
+use Pilot\Core\Models\Space;
 
 class AssetPickerModal extends Component
 {

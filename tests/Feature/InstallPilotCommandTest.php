@@ -1,8 +1,12 @@
 <?php
 
-use App\Models\Space;
 use App\Models\User;
+use Pilot\Core\Models\Space;
 use Spatie\Permission\Models\Role;
+
+beforeEach(function () {
+    config(['installation.lock_file' => storage_path('framework/testing/pilot-install-command.json')]);
+});
 
 test('pilot install prompts for the first administrator instead of seeding demo accounts', function () {
     $this->artisan('pilot:install', ['--force' => true])

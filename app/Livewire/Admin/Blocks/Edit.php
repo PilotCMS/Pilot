@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Admin\Blocks;
 
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\ContentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\ContentType;
 
 class Edit extends Component
 {

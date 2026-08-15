@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Cms\ContentResource;
-use App\Models\CmsSetting;
-use App\Models\Content;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Content;
 use Pilot\Laravel\Support\ContentRenderer;
 
 class PreviewController extends Controller

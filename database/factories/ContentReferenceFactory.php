@@ -2,12 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Block;
-use App\Models\Content;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentReference;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ContentReference>
+ * @extends Factory<ContentReference>
  */
 class ContentReferenceFactory extends Factory
 {

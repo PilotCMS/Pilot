@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin\Blocks;
 
-use App\Models\BlockType;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\BlockType;
 
 class Create extends Component
 {

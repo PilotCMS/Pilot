@@ -12,18 +12,18 @@ Pilot now has a Storyblok-like content delivery layer that can render content fr
 
 ## Core classes
 
-- `App\Support\Cms\ContentRenderer`
+- `Pilot\Core\Support\Cms\ContentRenderer`
   - `fromModel(Content $content, ?string $locale = null)` normalizes MySQL content.
   - `fromHeadless(array $payload, ?string $locale = null)` normalizes posted JSON.
   - `renderBlocks(ContentPayload $content, ?string $theme = null)` renders a theme block fragment.
   - `renderPage(ContentPayload $content, ?string $theme = null)` renders a full theme page.
 
-- `App\Support\Cms\ContentPayload`
+- `Pilot\Core\Support\Cms\ContentPayload`
   - Represents one page/story.
   - Produces a Storyblok-like API shape with `content.component = page` and `content.body`.
   - Includes public URL and editor URL links.
 
-- `App\Support\Cms\BlockPayload`
+- `Pilot\Core\Support\Cms\BlockPayload`
   - Represents one CMS block.
   - Localizes translatable field arrays by locale.
   - Adds editor metadata when `pilot_editor=1`, `editor=1`, or the request referer comes from `/admin/content/`.
@@ -70,8 +70,8 @@ Public rendering only selects content where:
 
 `PageController` resolves the space from `CMS_DEFAULT_SPACE`, then falls back to the first space. It loads blocks, normalizes the page with `ContentRenderer`, and passes this view data to the active theme:
 
-- `$content`: `App\Support\Cms\ContentPayload`
-- `$space`: `App\Models\Space`
+- `$content`: `Pilot\Core\Support\Cms\ContentPayload`
+- `$space`: `Pilot\Core\Models\Space`
 - `$blocks`: `Collection<array<string, mixed>>`
 - `$theme`: active theme name
 

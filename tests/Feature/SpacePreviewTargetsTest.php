@@ -2,15 +2,15 @@
 
 use App\Livewire\Admin\Content\Editor;
 use App\Livewire\Admin\Spaces\Edit;
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\CmsSetting;
-use App\Models\Content;
-use App\Models\Space;
-use App\Models\SpacePreviewTarget;
 use App\Models\User;
-use App\Support\Cms\ContentLifecycle;
 use Livewire\Livewire;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\CmsSetting;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Models\SpacePreviewTarget;
+use Pilot\Core\Support\Cms\ContentLifecycle;
 
 it('saves named preview targets from space settings', function () {
     $user = User::factory()->create();

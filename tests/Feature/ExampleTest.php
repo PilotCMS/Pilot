@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 test('returns a successful response', function () {
     $user = User::factory()->create();

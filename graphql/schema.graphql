@@ -2,7 +2,7 @@
 scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
 
 "A JSON string."
-scalar JSON @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\JSON")
+scalar JSON @scalar(class: "Pilot\\Core\\GraphQL\\Scalars\\Json")
 
 "Indicates what fields are available at the top level of a query operation."
 type Query {
@@ -27,14 +27,14 @@ type Query {
       slug: String!
       locale: String = "en"
       version: String = "published"
-    ): Content @field(resolver: "App\\GraphQL\\Queries\\ContentQuery")
+    ): Content @field(resolver: "Pilot\\Core\\GraphQL\\Queries\\ContentQuery")
 
     "List all contents in a space."
     contents(
       space: String!
       locale: String = "en"
       version: String = "published"
-    ): [Content!]! @field(resolver: "App\\GraphQL\\Queries\\ContentsQuery")
+    ): [Content!]! @field(resolver: "Pilot\\Core\\GraphQL\\Queries\\ContentsQuery")
 }
 
 "Content item (page or folder)."
@@ -43,16 +43,16 @@ type Content {
     slug: String!
     name: String!
     status: String!
-    publishedAt: DateTime @field(resolver: "App\\GraphQL\\Resolvers\\ContentResolver@publishedAt")
-    body: [Block!]! @field(resolver: "App\\GraphQL\\Resolvers\\ContentResolver@body")
+    publishedAt: DateTime @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\ContentResolver@publishedAt")
+    body: [Block!]! @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\ContentResolver@body")
 }
 
 "Block component in content."
 type Block {
-    _uid: ID! @field(resolver: "App\\GraphQL\\Resolvers\\BlockResolver@uid")
-    component: String! @field(resolver: "App\\GraphQL\\Resolvers\\BlockResolver@component")
-    data: JSON! @field(resolver: "App\\GraphQL\\Resolvers\\BlockResolver@data")
-    children: [Block!]! @field(resolver: "App\\GraphQL\\Resolvers\\BlockResolver@children")
+    _uid: ID! @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\BlockResolver@uid")
+    component: String! @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\BlockResolver@component")
+    data: JSON! @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\BlockResolver@data")
+    children: [Block!]! @field(resolver: "Pilot\\Core\\GraphQL\\Resolvers\\BlockResolver@children")
 }
 
 "Account of a person who uses this application."

@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\Block;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
-use App\Support\Cms\ContentLifecycle;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\ContentLifecycle;
 
 it('redirects guests from admin content preview', function () {
     $user = User::factory()->create();

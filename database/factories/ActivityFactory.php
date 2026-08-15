@@ -3,9 +3,10 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\Activity;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Activity>
+ * @extends Factory<Activity>
  */
 class ActivityFactory extends Factory
 {

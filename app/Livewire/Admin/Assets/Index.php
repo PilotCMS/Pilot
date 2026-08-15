@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Admin\Assets;
 
-use App\Models\Asset;
-use App\Models\AssetFolder;
-use App\Models\AssetTag;
-use App\Models\Space;
-use App\Support\Cms\AssetThumbnailer;
-use App\Support\Cms\AssetUsageFinder;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\AssetFolder;
+use Pilot\Core\Models\AssetTag;
+use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\AssetThumbnailer;
+use Pilot\Core\Support\Cms\AssetUsageFinder;
 
 class Index extends Component
 {

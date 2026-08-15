@@ -1,11 +1,11 @@
 <?php
 
 use App\Livewire\Admin\Blocks\Edit;
-use App\Models\Block;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\ContentType;
 use Livewire\Livewire;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentType;
 
 it('updates block relationships when a block type key changes', function () {
     $blockType = BlockType::factory()->create(['key' => 'old-key']);

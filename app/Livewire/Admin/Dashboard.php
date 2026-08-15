@@ -2,12 +2,12 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\Activity;
-use App\Models\Asset;
-use App\Models\Content;
-use App\Models\Space;
 use App\Models\User;
 use Livewire\Component;
+use Pilot\Core\Models\Activity;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Space;
 
 class Dashboard extends Component
 {

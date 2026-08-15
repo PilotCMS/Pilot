@@ -1,12 +1,12 @@
 <?php
 
 use App\Livewire\Admin\Datasources\Index;
-use App\Models\Datasource;
-use App\Models\DatasourceEntry;
-use App\Models\Space;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
+use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Models\Datasource;
+use Pilot\Core\Models\DatasourceEntry;
+use Pilot\Core\Models\Space;
 
 beforeEach(function () {
     $this->seed(RoleSeeder::class);

@@ -5,18 +5,18 @@ use App\Livewire\Admin\Blocks\Index as BlockIndex;
 use App\Livewire\Admin\Content\Index as ContentIndex;
 use App\Livewire\Admin\Datasources\Index as DatasourceIndex;
 use App\Livewire\Admin\Users\Index as UserIndex;
-use App\Models\Asset;
-use App\Models\AssetFolder;
-use App\Models\AssetTag;
-use App\Models\BlockType;
-use App\Models\BlockTypeFolder;
-use App\Models\Content;
-use App\Models\Datasource;
-use App\Models\DatasourceEntry;
-use App\Models\Space;
 use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Livewire\Livewire;
+use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\AssetFolder;
+use Pilot\Core\Models\AssetTag;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\BlockTypeFolder;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\Datasource;
+use Pilot\Core\Models\DatasourceEntry;
+use Pilot\Core\Models\Space;
 
 beforeEach(function (): void {
     $this->seed(RoleSeeder::class);

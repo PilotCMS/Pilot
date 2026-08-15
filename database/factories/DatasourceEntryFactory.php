@@ -3,9 +3,10 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Pilot\Core\Models\DatasourceEntry;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\DatasourceEntry>
+ * @extends Factory<DatasourceEntry>
  */
 class DatasourceEntryFactory extends Factory
 {

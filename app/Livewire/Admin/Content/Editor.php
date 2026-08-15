@@ -3,24 +3,24 @@
 namespace App\Livewire\Admin\Content;
 
 use App\Livewire\Admin\Assets\AssetPickerModal;
-use App\Models\Activity;
-use App\Models\Asset;
-use App\Models\Block;
-use App\Models\BlockComment;
-use App\Models\BlockType;
-use App\Models\Content;
-use App\Models\ContentPresence;
-use App\Models\ContentRevision;
-use App\Models\ContentType;
-use App\Models\EditorPreference;
 use App\Models\User;
-use App\Support\Cms\ContentLifecycle;
-use App\Support\Cms\ContentRevisionInspector;
-use App\Support\Cms\ContentSyncFingerprint;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Pilot\Core\Models\Activity;
+use Pilot\Core\Models\Asset;
+use Pilot\Core\Models\Block;
+use Pilot\Core\Models\BlockComment;
+use Pilot\Core\Models\BlockType;
+use Pilot\Core\Models\Content;
+use Pilot\Core\Models\ContentPresence;
+use Pilot\Core\Models\ContentRevision;
+use Pilot\Core\Models\ContentType;
+use Pilot\Core\Models\EditorPreference;
+use Pilot\Core\Support\Cms\ContentLifecycle;
+use Pilot\Core\Support\Cms\ContentRevisionInspector;
+use Pilot\Core\Support\Cms\ContentSyncFingerprint;
 
 class Editor extends Component
 {

@@ -178,7 +178,7 @@
                                     @php
                                         $subjectName = $activity->subject->name ?? $activity->subject->key ?? class_basename($activity->subject_type);
                                         $subjectRoute = null;
-                                        if ($activity->subject instanceof \App\Models\Content && $activity->subject->isPage()) {
+                                        if ($activity->subject instanceof \Pilot\Core\Models\Content && $activity->subject->isPage()) {
                                             $subjectRoute = route('admin.content.editor', $activity->subject);
                                         }
                                     @endphp

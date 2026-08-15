@@ -237,7 +237,7 @@
                             <option value="{{ $option['value'] ?? '' }}" {{ $fieldValue === ($option['value'] ?? '') ? 'selected' : '' }}>{{ $option['label'] ?? $option['value'] ?? '' }}</option>
                         @endforeach
                     @elseif(isset($field['datasource']))
-                        @php $datasource = \App\Models\Datasource::where('slug', $field['datasource'])->first(); $entries = $datasource ? $datasource->entries : collect(); @endphp
+                        @php $datasource = \Pilot\Core\Models\Datasource::where('slug', $field['datasource'])->first(); $entries = $datasource ? $datasource->entries : collect(); @endphp
                         @foreach($entries as $entry)
                             <option value="{{ $entry->key }}" {{ $fieldValue === $entry->key ? 'selected' : '' }}>{{ $entry->value['en'] ?? $entry->key }}</option>
                         @endforeach
