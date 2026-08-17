@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
@@ -10,8 +12,13 @@ use Pilot\Core\Models\Block;
 use Pilot\Core\Models\CmsSetting;
 use Pilot\Core\Models\Content;
 use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Updates\PilotUpdateManager;
 
 beforeEach(function () {
+    Cache::forget('pilot.core.latest-release');
+    Http::fake([
+        'api.github.com/repos/PilotCMS/core/releases/latest' => Http::response(['tag_name' => 'v9.9.9']),
+    ]);
     $this->seed(RoleSeeder::class);
 });
 
@@ -24,7 +31,32 @@ it('allows admins to view the cms settings area', function () {
         ->assertOk()
         ->assertSee('CMS Settings')
         ->assertSee('Public website')
-        ->assertSee('preview');
+        ->assertSee('Update available')
+        ->assertSee('v9.9.9');
+});
+
+it('can initiate an available Pilot update when self updates are enabled', function () {
+    config(['cms.updates.self_update' => true]);
+
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $manager = Mockery::mock(PilotUpdateManager::class);
+    $manager->shouldReceive('status')->once()->andReturn(['status' => 'idle', 'message' => null]);
+    $manager->shouldReceive('log')->once()->andReturn('');
+    $manager->shouldReceive('start')->once()->with('v9.9.9', $admin->id)->andReturn([
+        'status' => 'queued',
+        'target' => 'v9.9.9',
+        'message' => 'Waiting for the updater to start…',
+    ]);
+    app()->instance(PilotUpdateManager::class, $manager);
+
+    $this->actingAs($admin);
+
+    Livewire::test(Index::class)
+        ->call('startPilotUpdate')
+        ->assertSet('pilotUpdate.status', 'queued')
+        ->assertHasNoErrors();
 });
 
 it('prevents non admins from viewing the cms settings area', function () {
