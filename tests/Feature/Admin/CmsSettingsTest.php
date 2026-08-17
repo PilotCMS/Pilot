@@ -25,6 +25,7 @@ beforeEach(function () {
 it('allows admins to view the cms settings area', function () {
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
+    CmsSetting::set('preview_secret', 'do-not-render-this-secret');
 
     $this->actingAs($admin)
         ->get(route('admin.settings.index'))
@@ -32,7 +33,8 @@ it('allows admins to view the cms settings area', function () {
         ->assertSee('CMS Settings')
         ->assertSee('Public website')
         ->assertSee('Update available')
-        ->assertSee('v9.9.9');
+        ->assertSee('v9.9.9')
+        ->assertDontSee('do-not-render-this-secret');
 });
 
 it('can initiate an available Pilot update when self updates are enabled', function () {
