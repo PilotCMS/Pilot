@@ -3680,16 +3680,16 @@
         },
         {
             "name": "pilotcms/core",
-            "version": "v0.2.0",
+            "version": "v0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/core.git",
-                "reference": "7df8992ee9b79ff481e0ac81bca8df47b13460ed"
+                "reference": "fa7963461bd9f47e175af9b3f4d63d3aaef956dc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/core/zipball/7df8992ee9b79ff481e0ac81bca8df47b13460ed",
-                "reference": "7df8992ee9b79ff481e0ac81bca8df47b13460ed",
+                "url": "https://api.github.com/repos/PilotCMS/core/zipball/fa7963461bd9f47e175af9b3f4d63d3aaef956dc",
+                "reference": "fa7963461bd9f47e175af9b3f4d63d3aaef956dc",
                 "shasum": ""
             },
             "require": {
@@ -3727,10 +3727,10 @@
             ],
             "description": "The complete versioned CMS application for Pilot.",
             "support": {
-                "source": "https://github.com/PilotCMS/core/tree/v0.2.0",
+                "source": "https://github.com/PilotCMS/core/tree/v0.2.2",
                 "issues": "https://github.com/PilotCMS/core/issues"
             },
-            "time": "2026-08-17T21:08:16+00:00"
+            "time": "2026-08-17T21:15:59+00:00"
         },
         {
             "name": "pragmarx/google2fa",

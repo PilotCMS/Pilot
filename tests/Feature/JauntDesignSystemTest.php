@@ -132,10 +132,10 @@ test('every scrollable admin page uses the shared dynamic header', function () {
         'livewire/admin/spaces/edit.blade.php',
         'livewire/admin/spaces/index.blade.php',
         'livewire/admin/users/index.blade.php',
-        'pages/settings/⚡appearance.blade.php',
-        'pages/settings/⚡password.blade.php',
-        'pages/settings/⚡profile.blade.php',
-        'pages/settings/⚡two-factor.blade.php',
+        'pages/settings/appearance.blade.php',
+        'pages/settings/password.blade.php',
+        'pages/settings/profile.blade.php',
+        'pages/settings/two-factor.blade.php',
     ];
 
     foreach ($pageViews as $pageView) {

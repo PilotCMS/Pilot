@@ -30,16 +30,18 @@ test('legacy hosts can be migrated to package owned routes and assets idempotent
         $files->put($host.'/bootstrap/app.php', "<?php\n        api: __DIR__.'/../routes/api.php',\n");
         $files->put($host.'/bootstrap/providers.php', "<?php\nreturn [\n    Tweaker\\TweakerServiceProvider::class,\n];\n");
         $files->put($host.'/routes/web.php', "<?php\nrequire __DIR__.'/admin.php';\n");
+        $files->put($host.'/routes/console.php', "<?php\nuse Illuminate\\Support\\Facades\\Schedule;\nSchedule::command('pilot:publish-scheduled')->everyMinute();\n");
         $files->put($host.'/resources/css/app.css', 'legacy css');
         $files->put($host.'/resources/js/app.js', 'legacy js');
 
         $synchronizer = new HostSynchronizer($files);
 
-        expect($synchronizer->sync($host))->toHaveCount(7);
+        expect($synchronizer->sync($host))->toHaveCount(8);
         expect($synchronizer->sync($host))->toBe([]);
-        expect($files->get($host.'/bootstrap/app.php'))->not->toContain("routes/api.php");
+        expect($files->get($host.'/bootstrap/app.php'))->not->toContain('routes/api.php');
         expect($files->get($host.'/bootstrap/providers.php'))->not->toContain('Tweaker');
-        expect($files->get($host.'/routes/web.php'))->not->toContain("routes/admin.php");
+        expect($files->get($host.'/routes/web.php'))->not->toContain('routes/admin.php');
+        expect($files->get($host.'/routes/console.php'))->not->toContain('pilot:publish-scheduled');
         expect($files->get($host.'/resources/css/app.css'))->toContain('vendor/pilotcms/core/resources/css/app.css');
         expect($files->get($host.'/resources/js/app.js'))->toContain('vendor/pilotcms/core/resources/js/app.js');
         expect($files->get($host.'/package.json'))->toContain('"build": "vite build"');
