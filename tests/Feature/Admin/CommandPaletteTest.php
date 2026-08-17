@@ -1,9 +1,9 @@
 <?php
 
-use App\Livewire\Admin\CommandPalette;
 use App\Models\User;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Livewire\Admin\CommandPalette;
 use Pilot\Core\Models\BlockType;
 use Pilot\Core\Models\Content;
 

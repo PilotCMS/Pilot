@@ -1,8 +1,7 @@
 <?php
 
+use Pilot\Laravel\PilotServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\FortifyServiceProvider::class,
-    Pilot\Laravel\PilotServiceProvider::class,
-    Tweaker\TweakerServiceProvider::class,
+    PilotServiceProvider::class,
 ];

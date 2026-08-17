@@ -86,15 +86,15 @@ It runs the same migrations and seeders as the browser wizard and interactively 
 
 ## Updating
 
-Pilot's versioned CMS engine is installed as `pilotcms/core`. Update it from the project directory with:
+Pilot's versioned CMS application is installed as `pilotcms/core`. Update it from the project directory with:
 
 ```bash
 pilot update
 ```
 
-The command updates Pilot Core and its dependencies, runs pending database migrations, and rebuilds frontend assets. Commit changes to `composer.json` and `composer.lock` first; use `pilot update --dry-run` to check for a release or `--no-build` when frontend assets are built elsewhere.
+The command updates Pilot Core and its compatible dependencies, connects legacy host files to the package-owned application, installs the managed frontend dependencies, runs pending database migrations, rebuilds frontend assets, and clears application caches. Commit changes to `composer.json` and `composer.lock` first; use `pilot update --dry-run` to check for a release or `--no-build` when frontend assets are built elsewhere.
 
-Project-owned files—views, routes, configuration, the user model, and custom application code—remain outside the package and are not overwritten by an update.
+Environment configuration, the user model, storage, and uploaded content remain in the Laravel host. Versioned CMS routes, admin components, views, migrations, and frontend sources are loaded from Core so fresh and updated installations run the same managed product code.
 
 Start the local development stack with:
 

@@ -1,13 +1,13 @@
 <?php
 
-use App\Livewire\Admin\Assets\Index as AssetIndex;
-use App\Livewire\Admin\Blocks\Index as BlockIndex;
-use App\Livewire\Admin\Content\Index as ContentIndex;
-use App\Livewire\Admin\Datasources\Index as DatasourceIndex;
-use App\Livewire\Admin\Users\Index as UserIndex;
 use App\Models\User;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Livewire\Admin\Assets\Index as AssetIndex;
+use Pilot\Core\Livewire\Admin\Blocks\Index as BlockIndex;
+use Pilot\Core\Livewire\Admin\Content\Index as ContentIndex;
+use Pilot\Core\Livewire\Admin\Datasources\Index as DatasourceIndex;
+use Pilot\Core\Livewire\Admin\Users\Index as UserIndex;
 use Pilot\Core\Models\Asset;
 use Pilot\Core\Models\AssetFolder;
 use Pilot\Core\Models\AssetTag;

@@ -1,9 +1,9 @@
 <?php
 
-use App\Livewire\Admin\Users\Index;
 use App\Models\User;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Livewire\Admin\Users\Index;
 use Pilot\Core\Models\Activity;
 use Pilot\Core\Models\Content;
 use Pilot\Core\Models\EditorPreference;

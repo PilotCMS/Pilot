@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\PreviewController;
-use App\Livewire\Admin\Settings\Index;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Http\Controllers\Api\PreviewController;
+use Pilot\Core\Livewire\Admin\Settings\Index;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\CmsSetting;
 use Pilot\Core\Models\Content;

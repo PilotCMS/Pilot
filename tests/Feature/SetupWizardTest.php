@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\User;
-use App\Support\Installation\InstallationState;
 use Illuminate\Support\Facades\File;
 use Pilot\Core\Database\Seeders\DatabaseSeeder;
 use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Installation\InstallationState;
 
 beforeEach(function () {
     $lock = storage_path('framework/testing/pilot-setup-wizard.json');

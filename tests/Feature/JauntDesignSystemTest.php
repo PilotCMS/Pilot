@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\File;
 
 test('the latest Jaunt semantic color contract is installed', function () {
-    $colors = File::get(resource_path('css/jaunt/tokens/colors.css'));
+    $colors = File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/colors.css'));
 
     expect($colors)
         ->toContain('--gray-900:  #1c1917;')
@@ -15,15 +15,15 @@ test('the latest Jaunt semantic color contract is installed', function () {
 });
 
 test('the latest Jaunt geometry elevation and material tokens are installed', function () {
-    expect(File::get(resource_path('css/jaunt/tokens/radius.css')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/radius.css')))
         ->toContain('--radius-xl:   16px;')
         ->toContain('--radius-2xl:  24px;');
 
-    expect(File::get(resource_path('css/jaunt/tokens/spacing.css')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/spacing.css')))
         ->toContain('--sidebar-w:      300px;')
         ->toContain('--control-h:      36px;');
 
-    expect(File::get(resource_path('css/app.css')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/app.css')))
         ->toContain("@import './jaunt/tokens/materials.css';")
         ->toContain('background: var(--material-chrome-bg);')
         ->toContain('--color-slate-900: var(--gray-900);');
@@ -43,12 +43,13 @@ test('the design-system update keeps the existing application stack', function (
 });
 
 test('the application shell follows the current Jaunt component contracts', function () {
-    $styles = File::get(resource_path('css/app.css'));
-    $base = File::get(resource_path('css/jaunt/tokens/base.css'));
-    $palette = File::get(resource_path('views/livewire/admin/command-palette.blade.php'));
-    $editor = File::get(resource_path('views/livewire/admin/content/editor.blade.php'));
-    $contentIndex = File::get(resource_path('views/livewire/admin/content/index.blade.php'));
-    $views = collect(File::allFiles(resource_path('views')))
+    $coreResources = base_path('vendor/pilotcms/core/resources');
+    $styles = File::get($coreResources.'/css/app.css');
+    $base = File::get($coreResources.'/css/jaunt/tokens/base.css');
+    $palette = File::get($coreResources.'/views/livewire/admin/command-palette.blade.php');
+    $editor = File::get($coreResources.'/views/livewire/admin/content/editor.blade.php');
+    $contentIndex = File::get($coreResources.'/views/livewire/admin/content/index.blade.php');
+    $views = collect(File::allFiles($coreResources.'/views'))
         ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'php')
         ->map(fn (SplFileInfo $file): string => File::get($file->getPathname()))
         ->implode("\n");
@@ -86,11 +87,12 @@ test('the application shell follows the current Jaunt component contracts', func
 });
 
 test('admin interfaces follow the Interface Craft means and methods contract', function () {
-    $adminViews = collect(File::allFiles(resource_path('views/livewire/admin')))
+    $coreViews = base_path('vendor/pilotcms/core/resources/views');
+    $adminViews = collect(File::allFiles($coreViews.'/livewire/admin'))
         ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'php')
         ->map(fn (SplFileInfo $file): string => File::get($file->getPathname()))
         ->implode("\n");
-    $philosophy = File::get(resource_path('design-system/docs/11-interface-craft-means-and-methods.md'));
+    $philosophy = File::get(base_path('vendor/pilotcms/core/resources/design-system/docs/11-interface-craft-means-and-methods.md'));
 
     expect($adminViews)
         ->not->toContain('transition-all')
@@ -102,10 +104,10 @@ test('admin interfaces follow the Interface Craft means and methods contract', f
         ->toContain('Adopting this philosophy must not replace or bypass those tools');
 
     foreach ([
-        resource_path('views/livewire/admin/content/create.blade.php'),
-        resource_path('views/livewire/admin/content/edit.blade.php'),
-        resource_path('views/livewire/admin/spaces/create.blade.php'),
-        resource_path('views/livewire/admin/spaces/edit.blade.php'),
+        $coreViews.'/livewire/admin/content/create.blade.php',
+        $coreViews.'/livewire/admin/content/edit.blade.php',
+        $coreViews.'/livewire/admin/spaces/create.blade.php',
+        $coreViews.'/livewire/admin/spaces/edit.blade.php',
     ] as $formView) {
         expect(File::get($formView))
             ->toContain('wire:loading.attr="disabled"')
@@ -137,7 +139,9 @@ test('every scrollable admin page uses the shared dynamic header', function () {
     ];
 
     foreach ($pageViews as $pageView) {
-        expect(File::get(resource_path("views/{$pageView}")))
+        $path = base_path("vendor/pilotcms/core/resources/views/{$pageView}");
+
+        expect(File::get($path))
             ->toContain('<x-jaunt.shell.dynamic-header')
             ->toContain('as="header"')
             ->toContain('scroll-target=')

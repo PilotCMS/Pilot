@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bd9a283624775dcd9177cc4f61d0d971",
+    "content-hash": "53b3b8085f8e6bf61a1205a667897b0e",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3629,16 +3629,16 @@
         },
         {
             "name": "pilot/laravel",
-            "version": "dev-main",
+            "version": "v0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/pilot-laravel.git",
-                "reference": "ae3db073f05841b7c4401f9fa2b92e8b9dd56d9c"
+                "reference": "0c7aa3f9c1ee114fa5a051b16e0b10355c611b99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/ae3db073f05841b7c4401f9fa2b92e8b9dd56d9c",
-                "reference": "ae3db073f05841b7c4401f9fa2b92e8b9dd56d9c",
+                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/0c7aa3f9c1ee114fa5a051b16e0b10355c611b99",
+                "reference": "0c7aa3f9c1ee114fa5a051b16e0b10355c611b99",
                 "shasum": ""
             },
             "require": {
@@ -3649,7 +3649,6 @@
                 "illuminate/view": "^9.2|^10.0|^11.0|^12.0",
                 "php": ">=8.0.2"
             },
-            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -3674,32 +3673,38 @@
             ],
             "description": "Laravel frontend adapter for reading and rendering Pilot CMS content.",
             "support": {
-                "source": "https://github.com/PilotCMS/pilot-laravel/tree/main",
+                "source": "https://github.com/PilotCMS/pilot-laravel/tree/v0.1.0",
                 "issues": "https://github.com/PilotCMS/pilot-laravel/issues"
             },
-            "time": "2026-08-10T17:35:38+00:00"
+            "time": "2026-08-17T21:07:21+00:00"
         },
         {
             "name": "pilotcms/core",
-            "version": "v0.1.1",
+            "version": "v0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/core.git",
-                "reference": "81c9f1686c2a2bc9dc802e09e4cb4274f030ad94"
+                "reference": "7df8992ee9b79ff481e0ac81bca8df47b13460ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/core/zipball/81c9f1686c2a2bc9dc802e09e4cb4274f030ad94",
-                "reference": "81c9f1686c2a2bc9dc802e09e4cb4274f030ad94",
+                "url": "https://api.github.com/repos/PilotCMS/core/zipball/7df8992ee9b79ff481e0ac81bca8df47b13460ed",
+                "reference": "7df8992ee9b79ff481e0ac81bca8df47b13460ed",
                 "shasum": ""
             },
             "require": {
                 "illuminate/console": "^12.0",
                 "illuminate/database": "^12.0",
+                "illuminate/http": "^12.0",
+                "illuminate/routing": "^12.0",
                 "illuminate/support": "^12.0",
+                "illuminate/view": "^12.0",
+                "laravel/fortify": "^1.30",
+                "livewire/flux": "^2.9.0",
+                "livewire/livewire": "^4.0",
                 "nuwave/lighthouse": "^6.64",
                 "php": "^8.4.1",
-                "pilot/laravel": "dev-main",
+                "pilot/laravel": "^0.1",
                 "spatie/laravel-permission": "^6.24",
                 "symfony/process": "^7.2"
             },
@@ -3720,12 +3725,12 @@
             "license": [
                 "MIT"
             ],
-            "description": "The versioned CMS engine for Pilot.",
+            "description": "The complete versioned CMS application for Pilot.",
             "support": {
-                "source": "https://github.com/PilotCMS/core/tree/v0.1.1",
+                "source": "https://github.com/PilotCMS/core/tree/v0.2.0",
                 "issues": "https://github.com/PilotCMS/core/issues"
             },
-            "time": "2026-08-15T21:06:29+00:00"
+            "time": "2026-08-17T21:08:16+00:00"
         },
         {
             "name": "pragmarx/google2fa",
@@ -11570,9 +11575,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "pilot/laravel": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

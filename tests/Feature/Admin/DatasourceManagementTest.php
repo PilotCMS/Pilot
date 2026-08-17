@@ -1,9 +1,9 @@
 <?php
 
-use App\Livewire\Admin\Datasources\Index;
 use App\Models\User;
 use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
+use Pilot\Core\Livewire\Admin\Datasources\Index;
 use Pilot\Core\Models\Datasource;
 use Pilot\Core\Models\DatasourceEntry;
 use Pilot\Core\Models\Space;

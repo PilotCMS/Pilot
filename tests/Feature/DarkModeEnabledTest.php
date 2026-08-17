@@ -43,16 +43,16 @@ test('appearance settings expose light dark and system modes', function () {
 });
 
 test('tailwind and runtime dark mode are enabled', function () {
-    expect(File::get(resource_path('css/app.css')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/app.css')))
         ->toContain('@custom-variant dark (&:where(.dark, .dark *));')
         ->toContain(':root.dark')
         ->toContain('scrollbar-color: var(--border-strong) transparent;')
         ->toContain('background: var(--text-tertiary);');
 
-    expect(File::get(resource_path('css/jaunt/tokens/colors.css')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/colors.css')))
         ->toContain('[data-theme="dark"]');
 
-    expect(File::get(resource_path('js/app.js')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/js/app.js')))
         ->not->toContain('disableDarkMode')
         ->not->toContain("root.classList.remove('dark')")
         ->not->toContain("window.localStorage.getItem('flux.appearance') !== 'light'");
@@ -71,13 +71,13 @@ test('admin topbar theme control toggles and describes the target appearance', f
 });
 
 test('legacy admin listing rows define dark mode dividers and hover states', function () {
-    expect(File::get(resource_path('views/livewire/admin/blocks/index.blade.php')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/blocks/index.blade.php')))
         ->toContain('dark:border-strong dark:bg-hover dark:text-tertiary')
         ->toContain('dark:border-white/10 dark:hover:bg-white/[0.04]');
 });
 
 test('redesigned content listing uses semantic dark mode surfaces', function () {
-    expect(File::get(resource_path('views/livewire/admin/content/index.blade.php')))
+    expect(File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/content/index.blade.php')))
         ->toContain('cms-shell')
         ->toContain('cms-table-head')
         ->toContain('cms-table-row')

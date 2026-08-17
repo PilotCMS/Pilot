@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\File;
 
 test('admin button contracts include consistent size and interaction states', function () {
-    $stylesheet = File::get(resource_path('css/app.css'));
+    $stylesheet = File::get(base_path('vendor/pilotcms/core/resources/css/app.css'));
 
     expect($stylesheet)
         ->toContain('.cms-btn:focus-visible')
@@ -24,8 +24,10 @@ test('admin button contracts include consistent size and interaction states', fu
 test('raw blade buttons declare a safe button type', function () {
     $missingTypes = [];
 
-    foreach (File::allFiles(resource_path('views')) as $file) {
-        $relativePath = str_replace(resource_path('views').DIRECTORY_SEPARATOR, '', $file->getPathname());
+    $viewsPath = base_path('vendor/pilotcms/core/resources/views');
+
+    foreach (File::allFiles($viewsPath) as $file) {
+        $relativePath = str_replace($viewsPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
 
         if ($relativePath === 'components/jaunt/forms/icon-button.blade.php') {
             continue;
@@ -47,10 +49,10 @@ test('raw blade buttons declare a safe button type', function () {
 });
 
 test('segmented controls expose their selected state', function () {
-    $contentIndex = File::get(resource_path('views/livewire/admin/content/index.blade.php'));
-    $assetIndex = File::get(resource_path('views/livewire/admin/assets/index.blade.php'));
-    $editor = File::get(resource_path('views/livewire/admin/content/editor.blade.php'));
-    $javascript = File::get(resource_path('js/app.js'));
+    $contentIndex = File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/content/index.blade.php'));
+    $assetIndex = File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/assets/index.blade.php'));
+    $editor = File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/content/editor.blade.php'));
+    $javascript = File::get(base_path('vendor/pilotcms/core/resources/js/app.js'));
 
     expect($contentIndex)
         ->toContain('role="group" aria-label="Content type filter"')

@@ -1,7 +1,7 @@
 <?php
 
 it('publishes public installation documentation for Pilot, Incontext, and the Laravel connector', function () {
-    $documentationPath = public_path('docs/index.html');
+    $documentationPath = base_path('vendor/pilotcms/core/resources/docs/index.html');
 
     expect($documentationPath)->toBeFile();
 
@@ -22,4 +22,6 @@ it('publishes public installation documentation for Pilot, Incontext, and the La
         ->toContain('X-Frame-Options: SAMEORIGIN')
         ->toContain('frame-ancestors')
         ->toContain('PATCH /_pilot/in-context/blocks/{block}');
+
+    $this->get('/docs')->assertOk()->assertSee('Pilot CMS Documentation');
 });

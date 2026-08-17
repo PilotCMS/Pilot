@@ -1,11 +1,11 @@
 <?php
 
-use App\Livewire\Admin\Assets\AssetPickerModal;
-use App\Livewire\Admin\Assets\Index;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Pilot\Core\Livewire\Admin\Assets\AssetPickerModal;
+use Pilot\Core\Livewire\Admin\Assets\Index;
 use Pilot\Core\Models\Asset;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\Content;

@@ -1,12 +1,12 @@
 <?php
 
-use App\Livewire\Admin\Content\BlockEditor;
-use App\Livewire\Admin\Content\Editor;
-use App\Livewire\Admin\Spaces\Index as SpacesIndex;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
+use Pilot\Core\Livewire\Admin\Content\BlockEditor;
+use Pilot\Core\Livewire\Admin\Content\Editor;
+use Pilot\Core\Livewire\Admin\Spaces\Index as SpacesIndex;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\BlockType;
 use Pilot\Core\Models\Content;

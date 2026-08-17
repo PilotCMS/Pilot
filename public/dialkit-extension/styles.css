@@ -1,9 +1,0 @@
-#dialkit-highlight {
-  position: fixed;
-  z-index: 2147483646;
-  border-radius: 10px;
-  outline: 2px solid #9cc3ff;
-  background: rgba(156, 195, 255, 0.12);
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-}

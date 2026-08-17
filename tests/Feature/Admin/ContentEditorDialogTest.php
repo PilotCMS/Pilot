@@ -1,10 +1,10 @@
 <?php
 
-use App\Livewire\Admin\Content\BlockEditor;
-use App\Livewire\Admin\Content\ContentSyncPoller;
-use App\Livewire\Admin\Content\Editor;
 use App\Models\User;
 use Livewire\Livewire;
+use Pilot\Core\Livewire\Admin\Content\BlockEditor;
+use Pilot\Core\Livewire\Admin\Content\ContentSyncPoller;
+use Pilot\Core\Livewire\Admin\Content\Editor;
 use Pilot\Core\Models\Activity;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\BlockComment;

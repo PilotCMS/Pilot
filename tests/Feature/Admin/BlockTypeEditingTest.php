@@ -1,7 +1,7 @@
 <?php
 
-use App\Livewire\Admin\Blocks\Edit;
 use Livewire\Livewire;
+use Pilot\Core\Livewire\Admin\Blocks\Edit;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\BlockType;
 use Pilot\Core\Models\Content;

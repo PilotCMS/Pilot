@@ -1,9 +1,9 @@
 <?php
 
-use App\Livewire\Admin\Content\Editor;
-use App\Livewire\Admin\Spaces\Edit;
 use App\Models\User;
 use Livewire\Livewire;
+use Pilot\Core\Livewire\Admin\Content\Editor;
+use Pilot\Core\Livewire\Admin\Spaces\Edit;
 use Pilot\Core\Models\Block;
 use Pilot\Core\Models\BlockType;
 use Pilot\Core\Models\CmsSetting;
