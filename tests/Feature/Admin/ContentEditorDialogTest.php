@@ -86,6 +86,70 @@ it('does not render nonfunctional settings links in the content editor sidebar',
         ->assertDontSee('Languages');
 });
 
+it('renders a searchable collapsible content tree with only the current parent expanded initially', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+
+    $currentFolder = Content::create([
+        'space_id' => $space->id,
+        'type' => 'folder',
+        'slug' => 'guides',
+        'name' => 'Guides',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $otherFolder = Content::create([
+        'space_id' => $space->id,
+        'type' => 'folder',
+        'slug' => 'news',
+        'name' => 'News',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $content = Content::create([
+        'space_id' => $space->id,
+        'parent_id' => $currentFolder->id,
+        'type' => 'page',
+        'slug' => 'summer-guide',
+        'name' => 'Summer Guide',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Content::create([
+        'space_id' => $space->id,
+        'parent_id' => $otherFolder->id,
+        'type' => 'page',
+        'slug' => 'company-news',
+        'name' => 'Company News',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    $this->actingAs($user);
+
+    $response = $this->get(route('admin.content.editor', $content));
+
+    $response
+        ->assertOk()
+        ->assertSee('x-model.debounce.150ms="contentSearch"', false)
+        ->assertSee('placeholder="Search pages"', false)
+        ->assertSee("x-on:click=\"toggleFolder({$currentFolder->id})\"", false)
+        ->assertSee("x-show=\"isFolderExpanded({$otherFolder->id})\"", false);
+
+    expect($response->getContent())
+        ->toMatch('/expandedFolderIds:\s+\['.$currentFolder->id.'\]/');
+});
+
 it('uses a conservative content sync polling interval', function () {
     $user = User::factory()->create();
     $space = Space::create([

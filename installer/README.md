@@ -26,4 +26,4 @@ pilot new <directory> --branch=main
 pilot new <directory> --no-build
 ```
 
-By default the command downloads the latest GitHub release archive from `WindfallInc/Pilot`. It falls back to the `main` branch until the first release exists.
+By default the command downloads the latest GitHub release archive from `PilotCMS/Pilot`. It falls back to the `main` branch until the first release exists.

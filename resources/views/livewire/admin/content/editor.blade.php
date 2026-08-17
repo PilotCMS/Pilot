@@ -17,6 +17,8 @@
         conflictMessage: @entangle('conflictMessage'),
         drawerOpen: @entangle('drawerOpen').live,
         leftSidebarCollapsed: @entangle('leftSidebarCollapsed').live,
+        contentSearch: '',
+        expandedFolderIds: @if($content->parent_id) [{{ (int) $content->parent_id }}] @else [] @endif,
         compactWorkspace: false,
         get inspectorOpen() {
             return this.drawerOpen;
@@ -29,6 +31,26 @@
         },
         set leftCollapsed(value) {
             this.leftSidebarCollapsed = value;
+        },
+        isFolderExpanded(folderId) {
+            return this.contentSearch.trim() !== '' || this.expandedFolderIds.includes(Number(folderId));
+        },
+        toggleFolder(folderId) {
+            const id = Number(folderId);
+
+            if (this.expandedFolderIds.includes(id)) {
+                this.expandedFolderIds = this.expandedFolderIds.filter((expandedId) => expandedId !== id);
+            } else {
+                this.expandedFolderIds.push(id);
+            }
+        },
+        contentNameMatches(name) {
+            return String(name).toLocaleLowerCase().includes(this.contentSearch.trim().toLocaleLowerCase());
+        },
+        folderMatches(name, childNames) {
+            return this.contentSearch.trim() === ''
+                || this.contentNameMatches(name)
+                || childNames.some((childName) => this.contentNameMatches(childName));
         },
         applyWorkspaceWidth() {
             this.compactWorkspace = window.matchMedia('(max-width: 1499px)').matches;
@@ -474,17 +496,51 @@
                 <button type="button" x-on:click="leftCollapsed = true" class="cms-iconbtn text-tertiary" title="Collapse pages" aria-label="Collapse pages" aria-expanded="true" aria-controls="content-tree"><x-jaunt.icon name="panel-left-close" size="sm" class="pointer-events-none" /></button>
             </div>
         </div>
+        <div class="shrink-0 border-b border-subtle bg-card p-2">
+            <label class="cms-input w-full" aria-label="Search pages">
+                <x-jaunt.icon name="search" size="sm" class="shrink-0 text-tertiary" />
+                <input
+                    type="search"
+                    x-model.debounce.150ms="contentSearch"
+                    placeholder="Search pages"
+                    autocomplete="off"
+                />
+            </label>
+        </div>
         <div class="min-h-0 flex-1 overflow-y-auto p-2">
             @foreach($this->contentTree as $item)
                 @if($item->isFolder())
-                    <div>
-                        <a href="{{ route('admin.content.index', ['folder' => $item->id]) }}" wire:navigate class="group flex h-8 w-full items-center gap-2 rounded-sm px-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] text-secondary transition-colors duration-fast hover:bg-hover hover:text-primary">
-                            <x-jaunt.icon name="folder" size="sm" class="!h-[15px] !w-[15px] shrink-0 text-tertiary group-hover:text-secondary" />
-                            <span class="min-w-0 flex-1 truncate">{{ $item->name }}</span>
-                        </a>
-                        <div>
+                    <div
+                        wire:key="editor-tree-folder-{{ $item->id }}"
+                        x-show="folderMatches(@js($item->name), @js(($item->children ?? collect())->pluck('name')->all()))"
+                    >
+                        <div class="group flex h-8 w-full items-center rounded-sm text-[13px] leading-[19.5px] tracking-[-0.154px] text-secondary transition-colors duration-fast hover:bg-hover hover:text-primary">
+                            <button
+                                type="button"
+                                x-on:click="toggleFolder({{ $item->id }})"
+                                x-bind:aria-expanded="isFolderExpanded({{ $item->id }})"
+                                aria-controls="editor-folder-{{ $item->id }}"
+                                class="flex h-8 w-7 shrink-0 items-center justify-center rounded-sm text-tertiary hover:text-primary"
+                                title="Toggle {{ $item->name }}"
+                                aria-label="Toggle {{ $item->name }}"
+                            >
+                                <span class="transition-transform duration-fast ease-standard" x-bind:class="isFolderExpanded({{ $item->id }}) && 'rotate-90'">
+                                    <x-jaunt.icon name="chevron-right" size="xs" class="pointer-events-none" />
+                                </span>
+                            </button>
+                            <a href="{{ route('admin.content.index', ['folder' => $item->id]) }}" wire:navigate class="flex min-w-0 flex-1 items-center gap-2 self-stretch pr-[9px]">
+                                <x-jaunt.icon name="folder" size="sm" class="!h-[15px] !w-[15px] shrink-0 text-tertiary group-hover:text-secondary" />
+                                <span class="min-w-0 flex-1 truncate">{{ $item->name }}</span>
+                            </a>
+                        </div>
+                        <div id="editor-folder-{{ $item->id }}" x-show="isFolderExpanded({{ $item->id }})">
                             @foreach($item->children ?? [] as $child)
-                                <a href="{{ route('admin.content.editor', $child) }}" wire:navigate class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm pl-[23px] pr-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $child->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}">
+                                <a
+                                    href="{{ route('admin.content.editor', $child) }}"
+                                    wire:navigate
+                                    x-show="contentNameMatches(@js($child->name))"
+                                    class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm pl-[27px] pr-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $child->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}"
+                                >
                                     <x-jaunt.icon name="file-text" size="sm" class="!h-[15px] !w-[15px] shrink-0 {{ $child->id === $content->id ? 'text-primary' : 'text-tertiary group-hover:text-secondary' }}" />
                                     <span class="min-w-0 flex-1 truncate">{{ $child->name }}</span>
                                     @if($child->status === 'published')
@@ -497,7 +553,7 @@
                         </div>
                     </div>
                 @else
-                    <a href="{{ route('admin.content.editor', $item) }}" wire:navigate class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm px-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $item->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}">
+                    <a href="{{ route('admin.content.editor', $item) }}" wire:navigate x-show="contentNameMatches(@js($item->name))" class="group flex h-8 w-full cursor-pointer items-center gap-2 rounded-sm px-[9px] text-[13px] leading-[19.5px] tracking-[-0.154px] transition-colors duration-fast {{ $item->id === $content->id ? 'bg-selected font-medium text-primary' : 'font-normal text-secondary hover:bg-hover hover:text-primary' }}">
                         <x-jaunt.icon name="file-text" size="sm" class="!h-[15px] !w-[15px] shrink-0 {{ $item->id === $content->id ? 'text-primary' : 'text-tertiary group-hover:text-secondary' }}" />
                         <span class="min-w-0 flex-1 truncate">{{ $item->name }}</span>
                         @if($item->status === 'published')

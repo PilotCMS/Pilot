@@ -23,7 +23,7 @@ use ZipArchive;
 #[AsCommand(name: 'new', description: 'Create a new Pilot CMS project')]
 class NewCommand extends Command
 {
-    private const REPOSITORY = 'WindfallInc/Pilot';
+    private const REPOSITORY = 'PilotCMS/Pilot';
 
     protected function configure(): void
     {
