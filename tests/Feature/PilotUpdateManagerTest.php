@@ -81,3 +81,52 @@ it('stops when Composer files change after an update is queued', function () {
     expect(fn () => $this->manager->assertComposerFilesUnchanged())
         ->toThrow(RuntimeException::class, 'changed after this update was requested');
 });
+
+it('launches the updater with PHP CLI and captures startup errors', function () {
+    config(['cms.updates.self_update' => true, 'cms.updates.php_binary' => PHP_BINARY]);
+    $this->files->put($this->application.'/artisan', '<?php fwrite(STDERR, "Updater boot failed");');
+
+    $state = $this->manager->start('v0.2.12');
+
+    expect($state['status'])->toBe('queued');
+
+    for ($attempt = 0; $attempt < 100 && ! str_contains($this->manager->log(), 'Updater boot failed'); $attempt++) {
+        usleep(20000);
+    }
+
+    expect($this->manager->log())->toContain('Updater boot failed');
+    $this->travel(31)->seconds();
+    expect($this->manager->status())
+        ->toMatchArray(['status' => 'failed'])
+        ->and($this->manager->status()['message'])->toContain('did not start');
+});
+
+it('rejects an FPM executable before queuing an update', function () {
+    $binary = $this->application.'/php-fpm';
+    $this->files->put($binary, "#!/bin/sh\nprintf 'fpm-fcgi|80507'\n");
+    chmod($binary, 0755);
+    config(['cms.updates.self_update' => true, 'cms.updates.php_binary' => $binary]);
+
+    expect(fn () => $this->manager->start('v0.2.12'))
+        ->toThrow(RuntimeException::class, 'require PHP CLI');
+    expect($this->manager->status()['status'])->toBe('idle');
+});
+
+it('rejects a missing PHP executable before queuing an update', function () {
+    config(['cms.updates.self_update' => true, 'cms.updates.php_binary' => $this->application.'/missing-php']);
+
+    expect(fn () => $this->manager->start('v0.2.12'))
+        ->toThrow(RuntimeException::class, 'A PHP CLI executable is required');
+    expect($this->manager->status()['status'])->toBe('idle');
+});
+
+it('keeps a running update active beyond the startup timeout', function () {
+    $statePath = $this->storage.'/app/pilot/update.json';
+    $this->files->ensureDirectoryExists(dirname($statePath));
+    $this->files->put($statePath, json_encode([
+        'status' => 'running',
+        'started_at' => now()->subSeconds(31)->toIso8601String(),
+    ], JSON_THROW_ON_ERROR));
+
+    expect($this->manager->status()['status'])->toBe('running');
+});

@@ -3841,16 +3841,16 @@
         },
         {
             "name": "pilotcms/core",
-            "version": "v0.2.11",
+            "version": "v0.2.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/core.git",
-                "reference": "555c65aab4727bb51d84c4107b22d6ccf11d6835"
+                "reference": "f61c5f677c6918304e01c0c7fa5a78effcbdf475"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/core/zipball/555c65aab4727bb51d84c4107b22d6ccf11d6835",
-                "reference": "555c65aab4727bb51d84c4107b22d6ccf11d6835",
+                "url": "https://api.github.com/repos/PilotCMS/core/zipball/f61c5f677c6918304e01c0c7fa5a78effcbdf475",
+                "reference": "f61c5f677c6918304e01c0c7fa5a78effcbdf475",
                 "shasum": ""
             },
             "require": {
@@ -3889,10 +3889,10 @@
             ],
             "description": "The complete versioned CMS application for Pilot.",
             "support": {
-                "source": "https://github.com/PilotCMS/core/tree/v0.2.11",
+                "source": "https://github.com/PilotCMS/core/tree/v0.2.12",
                 "issues": "https://github.com/PilotCMS/core/issues"
             },
-            "time": "2026-09-09T18:04:07+00:00"
+            "time": "2026-09-09T18:49:55+00:00"
         },
         {
             "name": "pilotcms/mcp",
