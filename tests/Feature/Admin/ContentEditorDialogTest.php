@@ -12,7 +12,10 @@ use Pilot\Core\Models\BlockType;
 use Pilot\Core\Models\Content;
 use Pilot\Core\Models\ContentPresence;
 use Pilot\Core\Models\ContentRevision;
+use Pilot\Core\Models\Datasource;
+use Pilot\Core\Models\DatasourceEntry;
 use Pilot\Core\Models\Space;
+use Pilot\Core\Models\SpacePreviewTarget;
 use Pilot\Core\Support\Cms\ContentLifecycle;
 use Pilot\Core\Support\Cms\ContentRevisionInspector;
 use Pilot\Core\Support\Cms\ContentSyncFingerprint;
@@ -84,6 +87,107 @@ it('does not render nonfunctional settings links in the content editor sidebar',
     Livewire::test(Editor::class, ['content' => $content])
         ->assertDontSee('General')
         ->assertDontSee('Languages');
+});
+
+it('renders and updates multiselect block fields as arrays', function () {
+    $blockType = BlockType::create([
+        'key' => 'article-card',
+        'name' => 'Article Card',
+        'schema' => ['fields' => [[
+            'type' => 'multiselect',
+            'key' => 'topics',
+            'label' => 'Topics',
+            'placeholder' => 'Find topics...',
+            'options' => [
+                ['value' => 'design', 'label' => 'Design'],
+                ['value' => 'engineering', 'label' => 'Engineering'],
+            ],
+        ]]],
+        'is_global' => false,
+    ]);
+
+    Livewire::test(BlockEditor::class, [
+        'block' => [
+            'id' => 123,
+            'type' => 'article-card',
+            'data' => ['topics' => ['design']],
+        ],
+        'blockType' => $blockType,
+    ])
+        ->assertSee('Find topics...')
+        ->assertSee('aria-multiselectable="true"', false)
+        ->call('updateField', 'topics', ['design', 'engineering'])
+        ->assertSet('data.topics', ['design', 'engineering'])
+        ->assertDispatched('block-updated');
+});
+
+it('resolves datasource options within the edited content space', function () {
+    $space = Space::factory()->create(['name' => 'Website']);
+    $otherSpace = Space::factory()->create(['name' => 'Other']);
+    $content = Content::factory()->create(['space_id' => $space->id]);
+
+    $datasource = Datasource::create([
+        'space_id' => $space->id,
+        'name' => 'Topics',
+        'slug' => 'topics',
+    ]);
+    DatasourceEntry::create([
+        'datasource_id' => $datasource->id,
+        'key' => 'engineering',
+        'value' => ['en' => 'Engineering'],
+        'order' => 0,
+    ]);
+
+    $otherDatasource = Datasource::create([
+        'space_id' => $otherSpace->id,
+        'name' => 'Topics',
+        'slug' => 'topics',
+    ]);
+    DatasourceEntry::create([
+        'datasource_id' => $otherDatasource->id,
+        'key' => 'wrong-space',
+        'value' => ['en' => 'Wrong space'],
+        'order' => 0,
+    ]);
+
+    $field = [
+        'type' => 'multiselect',
+        'key' => 'topics',
+        'label' => 'Topics',
+        'option_source' => 'datasource',
+        'datasource' => 'topics',
+        'options' => [['value' => 'inline', 'label' => 'Inline fallback']],
+    ];
+    $selectField = array_merge($field, [
+        'type' => 'select',
+        'key' => 'primary_topic',
+        'label' => 'Primary topic',
+    ]);
+    $blockType = BlockType::create([
+        'key' => 'article-card',
+        'name' => 'Article Card',
+        'schema' => ['fields' => [$field, $selectField]],
+        'is_global' => false,
+    ]);
+
+    $component = Livewire::test(BlockEditor::class, [
+        'block' => [
+            'id' => 123,
+            'content_id' => $content->id,
+            'type' => 'article-card',
+            'data' => ['topics' => [], 'primary_topic' => ''],
+        ],
+        'blockType' => $blockType,
+    ]);
+
+    expect($component->instance()->optionsForField($field))
+        ->toBe([['value' => 'engineering', 'label' => 'Engineering']]);
+
+    $component
+        ->assertSee('Engineering')
+        ->assertSeeHtml('<option value="engineering"')
+        ->assertDontSee('Wrong space')
+        ->assertDontSee('Inline fallback');
 });
 
 it('renders a searchable collapsible content tree with only the current parent expanded initially', function () {
@@ -291,6 +395,34 @@ it('keeps an external image url absolute when switching an image field', functio
     expect($block->refresh()->data['image'])->toBe($externalUrl);
 });
 
+it('prevents browser navigation when dropping an image and can clear the current image field', function () {
+    $blockType = BlockType::create([
+        'key' => 'image',
+        'name' => 'Image',
+        'schema' => ['fields' => [[
+            'type' => 'image',
+            'key' => 'image',
+            'label' => 'Image',
+        ]]],
+        'is_global' => false,
+    ]);
+
+    Livewire::test(BlockEditor::class, [
+        'block' => [
+            'id' => 123,
+            'type' => 'image',
+            'data' => ['image' => '/assets/42/hero.jpg'],
+        ],
+        'blockType' => $blockType,
+    ])
+        ->assertSeeHtml('x-on:dragover.prevent')
+        ->assertSeeHtml('x-on:drop.prevent.stop')
+        ->assertSee('Remove image')
+        ->call('updateField', 'image', '')
+        ->assertSet('data.image', '')
+        ->assertDispatched('block-updated');
+});
+
 it('updates a nested json object field in the cms block editor', function () {
     $blockType = BlockType::create([
         'key' => 'itinerary',
@@ -362,16 +494,18 @@ it('renders rich text fields with the wysiwyg editor', function () {
         'blockType' => $blockType,
     ])
         ->assertSeeHtml('class="pilot-richtext')
-        ->assertSeeHtml('contenteditable="true"')
+        ->assertSeeHtml('data-flux-editor')
         ->assertSeeHtml('pilotRichTextEditor')
         ->assertSeeHtml('Expand rich text editor')
+        ->assertSeeHtml('x-on:pilot-close-expanded-richtext.window')
         ->assertSeeHtml("'is-expanded': expanded")
         ->assertDontSeeHtml('pilot-richtext-modal')
-        ->assertSeeHtml('aria-label="Text formatting"')
-        ->assertSee('Heading 6')
-        ->assertDontSeeHtml('aria-label="Text color"')
-        ->assertSeeHtml('data-lucide="align-left"')
-        ->assertSeeHtml('data-lucide="code"');
+        ->assertSeeHtml('aria-label="Rich text editor"')
+        ->assertSeeHtml('data-editor="heading"')
+        ->assertSeeHtml('data-editor="undo"')
+        ->assertSeeHtml('data-editor="redo"')
+        ->assertSeeHtml('pilot-richtext-toolgroup')
+        ->assertDontSeeHtml('aria-label="Text color"');
 });
 
 it('expands schema repeater items and updates their nested fields', function () {
@@ -425,7 +559,9 @@ it('expands schema repeater items and updates their nested fields', function () 
         'blockType' => $blockType,
     ])
         ->assertSee('Images 1')
-        ->assertDontSee('Image URL')
+        ->assertSeeHtml('x-on:click="expandedItem = expandedItem === 0 ? null : 0"')
+        ->assertSeeHtml('x-show="expandedItem === 0"')
+        ->assertDontSeeHtml('wire:click="toggleRepeaterItem')
         ->call('toggleRepeaterItem', 'images', 0)
         ->assertSet('expandedRepeaterItems.images.0', true)
         ->assertSee('Caption')
@@ -450,6 +586,59 @@ it('expands schema repeater items and updates their nested fields', function () 
     ])
         ->assertSet('expandedRepeaterItems.images.0', true)
         ->assertSee('Image URL');
+});
+
+it('reorders schema repeater items and keeps the expanded item with its content', function () {
+    $blockType = BlockType::create([
+        'key' => 'gallery',
+        'name' => 'Gallery',
+        'schema' => [
+            'fields' => [
+                [
+                    'type' => 'repeater',
+                    'key' => 'images',
+                    'label' => 'Images',
+                    'fields' => [
+                        ['type' => 'text', 'key' => 'caption', 'label' => 'Caption'],
+                    ],
+                ],
+            ],
+        ],
+        'is_global' => false,
+    ]);
+
+    $block = [
+        'id' => 457,
+        'type' => 'gallery',
+        'data' => [
+            'images' => [
+                ['caption' => 'First image'],
+                ['caption' => 'Second image'],
+                ['caption' => 'Third image'],
+            ],
+        ],
+    ];
+
+    Livewire::test(BlockEditor::class, [
+        'block' => $block,
+        'blockType' => $blockType,
+        'expandedRepeaterItems' => ['images' => [0 => true]],
+    ])
+        ->assertSeeHtml('wire:sort="sortRepeaterItem"')
+        ->assertSeeHtml('wire:sort:item="images::item-0"')
+        ->assertSeeHtml('wire:sort:handle')
+        ->call('sortRepeaterItem', 'images::item-0', 2)
+        ->assertSet('data.images.0.caption', 'Second image')
+        ->assertSet('data.images.1.caption', 'Third image')
+        ->assertSet('data.images.2.caption', 'First image')
+        ->assertSet('expandedRepeaterItems.images.0', null)
+        ->assertSet('expandedRepeaterItems.images.2', true)
+        ->assertDispatched('repeater-expansion-updated')
+        ->assertDispatched('block-updated')
+        ->call('sortRepeaterItem', 'images::item-0', null)
+        ->assertSet('data.images.2.caption', 'First image')
+        ->call('sortRepeaterItem', null, 1)
+        ->assertSet('data.images.2.caption', 'First image');
 });
 
 it('moves top level blocks with the compose editor arrow controls', function () {
@@ -617,6 +806,63 @@ it('shows the add block action on the preview panel', function () {
         ->assertSee("e.key.toLowerCase() === 'b'", false);
 });
 
+it('waits for refreshed previews to paint before crossfading frames', function () {
+    $user = User::factory()->create();
+    $space = Space::factory()->create();
+    SpacePreviewTarget::factory()->create([
+        'space_id' => $space->id,
+        'url' => 'https://preview.example.com',
+        'is_default' => true,
+    ]);
+    $content = Content::factory()->create([
+        'space_id' => $space->id,
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSeeHtml('PREVIEW UPDATE STORYBOARD')
+        ->assertSeeHtml('paintSettle: 48')
+        ->assertSeeHtml('crossfade: 220')
+        ->assertSeeHtml('window.requestAnimationFrame')
+        ->assertSeeHtml('this.previewSwapStage = 2')
+        ->assertSee('transitionDuration: `${previewMotion.crossfade}ms`', false)
+        ->assertSeeHtml('motion-reduce:transition-none');
+});
+
+it('patches text fields in place and retains frame refreshes as a fallback', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+    BlockType::factory()->create([
+        'key' => 'hero',
+        'schema' => ['fields' => [
+            ['key' => 'title', 'type' => 'text'],
+            ['key' => 'image', 'type' => 'image'],
+        ]],
+    ]);
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'data' => ['title' => 'Before', 'image' => '/before.jpg'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('updateBlock', $block->id, 'title', 'After')
+        ->assertDispatched('preview-field-patch', blockId: $block->id, fieldKey: 'title', value: 'After')
+        ->assertNotDispatched('preview-frame-refresh');
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content->fresh()])
+        ->call('updateBlock', $block->id, 'image', '/after.jpg')
+        ->assertDispatched('preview-frame-refresh')
+        ->assertNotDispatched('preview-field-patch');
+});
+
 it('renders searchable block choices in the add block modal', function () {
     $user = User::factory()->create();
     $space = Space::create([
@@ -672,6 +918,12 @@ it('can collapse the editor side panels for a wider canvas', function () {
     $this->actingAs($user);
 
     Livewire::test(Editor::class, ['content' => $content])
+        ->assertSet('leftSidebarCollapsed', true)
+        ->assertSet('drawerOpen', false)
+        ->assertSee('drawerOpen: false', false)
+        ->assertSee('leftSidebarCollapsed: true', false)
+        ->assertDontSee("entangle('drawerOpen')", false)
+        ->assertDontSee("entangle('leftSidebarCollapsed')", false)
         ->assertSee('Collapse pages')
         ->assertSee('Collapse inspector')
         ->assertSee('cms-drawer-header', false)
@@ -679,11 +931,41 @@ it('can collapse the editor side panels for a wider canvas', function () {
         ->assertSee('x-on:click="openPages()"', false)
         ->assertSee('Expand pages')
         ->assertDontSee('title="Open pages"', false)
-        ->assertSee('x-on:click="inspectorOpen = false"', false)
+        ->assertSee('x-on:click="closeInspector()"', false)
+        ->assertSee("window.dispatchEvent(new CustomEvent('pilot-close-expanded-richtext'", false)
         ->assertSee('x-on:click="openInspector()"', false)
-        ->assertSee("marginRight: inspectorOpen ? 'var(--admin-rail-width)' : '44px'", false)
-        ->assertSee("width: inspectorOpen ? 'var(--admin-rail-width)' : '44px'", false)
+        ->assertSee('cms-editor-workspace', false)
+        ->assertSee('style="--editor-pages-width: 44px; --editor-inspector-width: 44px;"', false)
+        ->assertSee("'--editor-pages-width': leftCollapsed ? '44px' : '263px'", false)
+        ->assertSee("'--editor-inspector-width': inspectorOpen ? 'var(--admin-rail-width)' : '44px'", false)
+        ->assertDontSee('marginRight: inspectorOpen', false)
+        ->assertDontSee("width: inspectorOpen ? 'var(--admin-rail-width)'", false)
+        ->assertSeeHtml("e.code === 'Backslash'")
+        ->assertSeeHtml('this.togglePanels()')
+        ->assertSeeHtml("event.data?.type === 'pilot-preview-toggle-panels'")
+        ->assertSeeHtml('aria-keyshortcuts="Meta+\\ Control+\\"')
+        ->assertSeeHtml('x-on:click="blockLibraryOpen = true"')
+        ->assertDontSeeHtml('wire:click="$set(\'blockLibraryOpen\', true)"')
+        ->assertSeeHtml('x-on:click="rightPanelTab = \'content\'"')
+        ->assertSeeHtml('x-show="rightPanelTab === \'comments\'"')
+        ->assertDontSeeHtml('wire:click="$wire.set(\'rightPanelTab\'')
+        ->assertSee('Toggle all panels with ⌘\\')
         ->assertSee('Expand inspector');
+});
+
+it('uses an in-app confirmation for preview widget block deletion', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create([
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSeeHtml('this.requestBlockDeletion(event.data.blockId)')
+        ->assertSeeHtml('x-on:click="confirmBlockDeletion()"')
+        ->assertSeeHtml('role="alertdialog"')
+        ->assertDontSeeHtml("confirm('Delete this block?')");
 });
 
 it('refreshes selected block fields when content changes outside the editor', function () {
@@ -805,6 +1087,61 @@ it('does not treat its own block field autosave as an external change', function
         ->assertSet('saveState', 'saved')
         ->assertSet('conflictMessage', null)
         ->assertSet('blocks.0.data.title', 'After');
+});
+
+it('does not autosave unchanged content or block fields', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+    $block = Block::create([
+        'content_id' => $content->id,
+        'type' => 'hero',
+        'position' => 0,
+        'data' => ['title' => 'Welcome'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->call('updateContent', 'name', 'Home')
+        ->call('updateBlock', $block->id, 'title', 'Welcome')
+        ->assertSet('previewVersion', 1)
+        ->assertNotDispatched('saved')
+        ->assertNotDispatched('preview-frame-refresh');
+
+    expect(ContentRevision::query()->where('content_id', $content->id)->count())->toBe(0);
+});
+
+it('binds autosave fields to blur instead of change', function () {
+    $user = User::factory()->create();
+    $space = Space::create([
+        'name' => 'Marketing',
+        'slug' => 'marketing',
+    ]);
+    $content = Content::create([
+        'space_id' => $space->id,
+        'type' => 'page',
+        'slug' => 'home',
+        'name' => 'Home',
+        'status' => 'draft',
+        'created_by' => $user->id,
+        'updated_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSee('wire:blur=', false)
+        ->assertDontSee('wire:change=', false);
 });
 
 it('can add a nested block inside a container block', function () {
@@ -1197,6 +1534,7 @@ it('opens revisions and checkpoint workflows in a modal', function () {
         ->assertSet('revisionModalOpen', true)
         ->assertSee('Checkpoint label')
         ->assertSeeHtml('x-on:keydown.escape.window="$wire.closeRevisionModal()"')
+        ->assertSeeHtml('class="fixed inset-0 z-dialog"')
         ->assertSeeHtml('class="fixed z-[60]')
         ->assertSeeHtml('-translate-y-1/2')
         ->assertSeeHtml('top: 3rem;')

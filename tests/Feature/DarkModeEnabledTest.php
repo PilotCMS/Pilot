@@ -50,7 +50,13 @@ test('tailwind and runtime dark mode are enabled', function () {
         ->toContain('background: var(--text-tertiary);');
 
     expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/colors.css')))
-        ->toContain('[data-theme="dark"]');
+        ->toContain('[data-theme="dark"]')
+        ->toContain('--gray-800:  #2b303b;')
+        ->toContain('--gray-950:  #1d2027;')
+        ->toContain('--text-secondary:  var(--gray-300);');
+
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/materials.css')))
+        ->toContain('--material-chrome-bg:    rgba(33, 37, 45, 0.72);');
 
     expect(File::get(base_path('vendor/pilotcms/core/resources/js/app.js')))
         ->not->toContain('disableDarkMode')
@@ -82,4 +88,38 @@ test('redesigned content listing uses semantic dark mode surfaces', function () 
         ->toContain('cms-table-head')
         ->toContain('cms-table-row')
         ->toContain('cms-rail');
+});
+
+test('dark cards share resting and hover elevation', function () {
+    $styles = File::get(base_path('vendor/pilotcms/core/resources/css/app.css'));
+    $cards = File::get(base_path('vendor/pilotcms/core/resources/views/components/jaunt/data/card.blade.php'));
+    $assets = File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/assets/index.blade.php'));
+
+    expect($styles)
+        ->toContain('[data-theme="dark"] .cms-panel {')
+        ->toContain('[data-theme="dark"] .cms-panel[class*="transition-shadow"]')
+        ->toContain('[data-theme="dark"] .cms-fab:hover');
+
+    expect($cards)
+        ->toContain('shadow-sm dark:shadow-sm')
+        ->toContain('hover:shadow-md dark:hover:shadow-md');
+
+    expect($assets)
+        ->toContain('shadow-xs dark:shadow-sm')
+        ->toContain('hover:shadow-md dark:hover:shadow-md');
+});
+
+test('dashboard continue editing cards use explicit resting and hover states', function () {
+    $styles = File::get(base_path('vendor/pilotcms/core/resources/css/app.css'));
+    $dashboard = File::get(base_path('vendor/pilotcms/core/resources/views/livewire/admin/dashboard.blade.php'));
+
+    expect($dashboard)
+        ->toContain('class="dashboard-continue-editing"')
+        ->toContain('cms-panel dashboard-continue-editing-card block transition-shadow');
+
+    expect($styles)
+        ->toContain('.cms-panel.dashboard-continue-editing-card,')
+        ->toContain('.cms-panel.dashboard-continue-editing-card:hover,')
+        ->toContain("box-shadow: var(--shadow-sm);\n        transform: translateY(0);")
+        ->toContain("box-shadow: var(--shadow-md);\n        transform: translateY(-1px);");
 });

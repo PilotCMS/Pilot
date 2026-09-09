@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "53b3b8085f8e6bf61a1205a667897b0e",
+    "content-hash": "ec972baa87e024410f07bb57e8cbfc36",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1602,6 +1602,80 @@
             "time": "2026-08-11T13:59:27+00:00"
         },
         {
+            "name": "laravel/mcp",
+            "version": "v0.9.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/mcp.git",
+                "reference": "7ca5b923630118696602d14348cd0466a5e853ec"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/mcp/zipball/7ca5b923630118696602d14348cd0466a5e853ec",
+                "reference": "7ca5b923630118696602d14348cd0466a5e853ec",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "illuminate/console": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/container": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/contracts": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/http": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/json-schema": "^12.41.1|^13.0",
+                "illuminate/routing": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/support": "^11.45.3|^12.41.1|^13.0",
+                "illuminate/validation": "^11.45.3|^12.41.1|^13.0",
+                "php": "^8.2",
+                "symfony/process": "^7.4.5|^8.0.5"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.20",
+                "orchestra/testbench": "^9.15|^10.8|^11.0",
+                "pestphp/pest": "^3.8.5|^4.3.2",
+                "phpstan/phpstan": "^2.1.27",
+                "rector/rector": "^2.2.4"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Mcp": "Laravel\\Mcp\\Facades\\Mcp"
+                    },
+                    "providers": [
+                        "Laravel\\Mcp\\Server\\McpServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Mcp\\": "src/",
+                    "Laravel\\Mcp\\Server\\": "src/Server/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Rapidly build MCP servers for your Laravel applications.",
+            "homepage": "https://github.com/laravel/mcp",
+            "keywords": [
+                "laravel",
+                "mcp"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/mcp/issues",
+                "source": "https://github.com/laravel/mcp"
+            },
+            "time": "2026-08-13T15:01:07+00:00"
+        },
+        {
             "name": "laravel/passkeys",
             "version": "v0.2.1",
             "source": {
@@ -2542,6 +2616,79 @@
                 "source": "https://github.com/livewire/flux/tree/v2.16.0"
             },
             "time": "2026-08-09T17:23:35+00:00"
+        },
+        {
+            "name": "livewire/flux-pro",
+            "version": "2.16.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://composer.fluxui.dev/download/a2785ad0-57b4-455c-8f7d-4f2810c5080b/flux-pro-2.16.0.zip",
+                "reference": "60a4c24de8676775a18c672561796f105a80bf72",
+                "shasum": "dbfe0b2c330b271e828e828ee69bcf5a34639d3a"
+            },
+            "require": {
+                "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/view": "^10.0|^11.0|^12.0|^13.0",
+                "laravel/prompts": "^0.1.24|^0.2|^0.3",
+                "livewire/flux": "2.16.0|dev-main",
+                "livewire/livewire": "^3.7.4|^4.0|dev-main",
+                "php": "^8.1",
+                "symfony/console": "^6.0|^7.0|^8.0"
+            },
+            "require-dev": {
+                "livewire/volt": "*",
+                "orchestra/testbench": "^10.8|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Flux": "FluxPro\\FluxPro"
+                    },
+                    "providers": [
+                        "FluxPro\\FluxProServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "FluxPro\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "App\\": "workbench/app/"
+                }
+            },
+            "scripts": {
+                "serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php vendor/bin/testbench workbench:build --ansi",
+                    "@php vendor/bin/testbench serve --port 3000 --ansi"
+                ]
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Caleb Porzio",
+                    "email": "calebporzio@gmail.com"
+                }
+            ],
+            "description": "The pro version of Flux, the official UI component library for Livewire.",
+            "keywords": [
+                "components",
+                "flux",
+                "laravel",
+                "livewire",
+                "ui"
+            ],
+            "time": "2026-08-10T16:07:15+00:00"
         },
         {
             "name": "livewire/livewire",
@@ -3629,25 +3776,29 @@
         },
         {
             "name": "pilot/laravel",
-            "version": "v0.1.0",
+            "version": "v0.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/pilot-laravel.git",
-                "reference": "0c7aa3f9c1ee114fa5a051b16e0b10355c611b99"
+                "reference": "0fedb91bfed67438b4135bd4ff6a802270c45ab3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/0c7aa3f9c1ee114fa5a051b16e0b10355c611b99",
-                "reference": "0c7aa3f9c1ee114fa5a051b16e0b10355c611b99",
+                "url": "https://api.github.com/repos/PilotCMS/pilot-laravel/zipball/0fedb91bfed67438b4135bd4ff6a802270c45ab3",
+                "reference": "0fedb91bfed67438b4135bd4ff6a802270c45ab3",
                 "shasum": ""
             },
             "require": {
-                "illuminate/contracts": "^9.2|^10.0|^11.0|^12.0",
-                "illuminate/database": "^9.2|^10.0|^11.0|^12.0",
-                "illuminate/routing": "^9.2|^10.0|^11.0|^12.0",
-                "illuminate/support": "^9.2|^10.0|^11.0|^12.0",
-                "illuminate/view": "^9.2|^10.0|^11.0|^12.0",
+                "illuminate/contracts": "^9.2|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/database": "^9.2|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/routing": "^9.2|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^9.2|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/view": "^9.2|^10.0|^11.0|^12.0|^13.0",
                 "php": ">=8.0.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.6|^10.0|^11.5|^12.0"
             },
             "type": "library",
             "extra": {
@@ -3668,28 +3819,38 @@
                     "Pilot\\Laravel\\": "src/"
                 }
             },
+            "autoload-dev": {
+                "psr-4": {
+                    "Pilot\\Laravel\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ]
+            },
             "license": [
                 "MIT"
             ],
             "description": "Laravel frontend adapter for reading and rendering Pilot CMS content.",
             "support": {
-                "source": "https://github.com/PilotCMS/pilot-laravel/tree/v0.1.0",
+                "source": "https://github.com/PilotCMS/pilot-laravel/tree/v0.1.1",
                 "issues": "https://github.com/PilotCMS/pilot-laravel/issues"
             },
-            "time": "2026-08-17T21:07:21+00:00"
+            "time": "2026-09-09T18:03:47+00:00"
         },
         {
             "name": "pilotcms/core",
-            "version": "v0.2.6",
+            "version": "v0.2.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PilotCMS/core.git",
-                "reference": "babbb4399d7348a33da9169d342534f6e21088a8"
+                "reference": "555c65aab4727bb51d84c4107b22d6ccf11d6835"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PilotCMS/core/zipball/babbb4399d7348a33da9169d342534f6e21088a8",
-                "reference": "babbb4399d7348a33da9169d342534f6e21088a8",
+                "url": "https://api.github.com/repos/PilotCMS/core/zipball/555c65aab4727bb51d84c4107b22d6ccf11d6835",
+                "reference": "555c65aab4727bb51d84c4107b22d6ccf11d6835",
                 "shasum": ""
             },
             "require": {
@@ -3701,10 +3862,11 @@
                 "illuminate/view": "^12.0",
                 "laravel/fortify": "^1.30",
                 "livewire/flux": "^2.9.0",
+                "livewire/flux-pro": "^2.16",
                 "livewire/livewire": "^4.0",
                 "nuwave/lighthouse": "^6.64",
                 "php": "^8.4.1",
-                "pilot/laravel": "^0.1",
+                "pilot/laravel": "^0.1.1",
                 "spatie/laravel-permission": "^6.24",
                 "symfony/process": "^7.2"
             },
@@ -3727,10 +3889,54 @@
             ],
             "description": "The complete versioned CMS application for Pilot.",
             "support": {
-                "source": "https://github.com/PilotCMS/core/tree/v0.2.6",
+                "source": "https://github.com/PilotCMS/core/tree/v0.2.11",
                 "issues": "https://github.com/PilotCMS/core/issues"
             },
-            "time": "2026-08-17T21:49:57+00:00"
+            "time": "2026-09-09T18:04:07+00:00"
+        },
+        {
+            "name": "pilotcms/mcp",
+            "version": "v0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PilotCMS/mcp.git",
+                "reference": "c697d51598e88ea4effdb50c53a6c3d0c7cede82"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PilotCMS/mcp/zipball/c697d51598e88ea4effdb50c53a6c3d0c7cede82",
+                "reference": "c697d51598e88ea4effdb50c53a6c3d0c7cede82",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/mcp": "^0.9",
+                "laravel/sanctum": "^4.2",
+                "livewire/livewire": "^4.0",
+                "php": "^8.4.1",
+                "pilotcms/core": "^0.2.11"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Pilot\\Mcp\\PilotMcpServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Pilot\\Mcp\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Draft-only MCP page building for Pilot CMS.",
+            "support": {
+                "source": "https://github.com/PilotCMS/mcp/tree/v0.1.0",
+                "issues": "https://github.com/PilotCMS/mcp/issues"
+            },
+            "time": "2026-09-09T18:03:48+00:00"
         },
         {
             "name": "pragmarx/google2fa",
@@ -8804,80 +9010,6 @@
                 "source": "https://github.com/laravel/boost"
             },
             "time": "2026-08-07T05:46:02+00:00"
-        },
-        {
-            "name": "laravel/mcp",
-            "version": "v0.9.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/mcp.git",
-                "reference": "7ca5b923630118696602d14348cd0466a5e853ec"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/mcp/zipball/7ca5b923630118696602d14348cd0466a5e853ec",
-                "reference": "7ca5b923630118696602d14348cd0466a5e853ec",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "illuminate/console": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/container": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/contracts": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/http": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/json-schema": "^12.41.1|^13.0",
-                "illuminate/routing": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/support": "^11.45.3|^12.41.1|^13.0",
-                "illuminate/validation": "^11.45.3|^12.41.1|^13.0",
-                "php": "^8.2",
-                "symfony/process": "^7.4.5|^8.0.5"
-            },
-            "require-dev": {
-                "laravel/pint": "^1.20",
-                "orchestra/testbench": "^9.15|^10.8|^11.0",
-                "pestphp/pest": "^3.8.5|^4.3.2",
-                "phpstan/phpstan": "^2.1.27",
-                "rector/rector": "^2.2.4"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "Mcp": "Laravel\\Mcp\\Facades\\Mcp"
-                    },
-                    "providers": [
-                        "Laravel\\Mcp\\Server\\McpServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Laravel\\Mcp\\": "src/",
-                    "Laravel\\Mcp\\Server\\": "src/Server/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Taylor Otwell",
-                    "email": "taylor@laravel.com"
-                }
-            ],
-            "description": "Rapidly build MCP servers for your Laravel applications.",
-            "homepage": "https://github.com/laravel/mcp",
-            "keywords": [
-                "laravel",
-                "mcp"
-            ],
-            "support": {
-                "issues": "https://github.com/laravel/mcp/issues",
-                "source": "https://github.com/laravel/mcp"
-            },
-            "time": "2026-08-13T15:01:07+00:00"
         },
         {
             "name": "laravel/pail",

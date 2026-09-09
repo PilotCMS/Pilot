@@ -74,6 +74,9 @@ it('uses relative asset urls in picker thumbnails', function () {
     Livewire::test(AssetPickerModal::class)
         ->call('open', 'image')
         ->assertSeeHtml('aria-label="Select Example Image"')
+        ->assertSeeHtml('x-on:click="setViewMode(\'grid\')"')
+        ->assertSeeHtml('x-if="viewMode === \'list\'"')
+        ->assertDontSeeHtml('wire:click="setViewMode')
         ->assertSee($asset->relativeUrl());
 });
 
@@ -205,7 +208,7 @@ it('deletes generated thumbnails with unused assets', function () {
     Storage::disk('public')->assertMissing($asset->thumbnail_path);
 });
 
-it('scopes upload modal loading state to file and submit requests', function () {
+it('waits for file preparation before submitting the asset upload form', function () {
     $user = User::factory()->create();
 
     Space::create([
@@ -216,10 +219,95 @@ it('scopes upload modal loading state to file and submit requests', function () 
     $this->actingAs($user);
 
     Livewire::test(Index::class)
-        ->set('showUploadModal', true)
-        ->assertSeeHtml('wire:loading.attr="disabled" wire:target="uploadFiles,uploadAssets"')
-        ->assertSeeHtml('wire:loading.remove wire:target="uploadFiles,uploadAssets"')
-        ->assertSeeHtml('wire:loading wire:target="uploadFiles,uploadAssets"');
+        ->call('openUploadModal')
+        ->assertSeeHtml('x-on:livewire-upload-start="preparingFiles = true"')
+        ->assertSeeHtml('x-bind:disabled="preparingFiles"')
+        ->assertSeeHtml('wire:loading.attr="disabled" wire:target="uploadAssets"')
+        ->assertSeeHtml('wire:loading.remove wire:target="uploadAssets"')
+        ->assertSeeHtml('wire:loading wire:target="uploadAssets"');
+});
+
+it('uploads multiple selected assets on the first submission without redirecting', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $space = Space::create(['name' => 'Website', 'slug' => 'website']);
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)
+        ->call('openUploadModal')
+        ->set('uploadFiles', [
+            UploadedFile::fake()->image('first.jpg', 640, 360),
+            UploadedFile::fake()->image('second.jpg', 800, 600),
+        ])
+        ->call('uploadAssets')
+        ->assertSet('uploadFiles', [])
+        ->assertSet('showUploadModal', false)
+        ->assertNoRedirect();
+
+    expect(Asset::query()->where('space_id', $space->id)->pluck('filename')->all())
+        ->toEqualCanonicalizing(['first.jpg', 'second.jpg']);
+});
+
+it('uploads images and edits globally shared details from the asset picker', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $space = Space::create(['name' => 'Website', 'slug' => 'website']);
+
+    $this->actingAs($user);
+
+    $component = Livewire::test(AssetPickerModal::class)
+        ->call('open', 'hero_image', true)
+        ->assertSet('showUpload', true)
+        ->set('uploadFiles', [UploadedFile::fake()->image('picker.jpg', 1200, 800)])
+        ->call('uploadAssets');
+
+    $asset = Asset::query()->where('filename', 'picker.jpg')->firstOrFail();
+
+    $component
+        ->assertSet('editingAssetId', $asset->id)
+        ->set('editDisplayName', 'Homepage Hero')
+        ->set('editAlt', 'A mountain reflected in a lake')
+        ->set('editTags', 'homepage, mountains')
+        ->call('setFocalPoint', 30, 65)
+        ->call('saveAndSelectAsset')
+        ->assertSet('show', false)
+        ->assertSet('editingAssetId', null)
+        ->assertDispatched('asset-selected');
+
+    $asset->refresh();
+
+    expect($asset->space_id)->toBe($space->id)
+        ->and($asset->display_name)->toBe('Homepage Hero')
+        ->and($asset->alt)->toBe('A mountain reflected in a lake')
+        ->and($asset->focal_x)->toBe(30.0)
+        ->and($asset->focal_y)->toBe(65.0)
+        ->and($asset->tags()->pluck('name')->all())->toEqualCanonicalizing(['homepage', 'mountains']);
+});
+
+it('renders picker upload, editing, and unobstructed view controls', function () {
+    $user = User::factory()->create();
+    $space = Space::create(['name' => 'Website', 'slug' => 'website']);
+    $asset = Asset::factory()->create([
+        'space_id' => $space->id,
+        'mime' => 'image/jpeg',
+        'display_name' => 'Hero',
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test(AssetPickerModal::class)
+        ->call('open', 'hero_image')
+        ->assertSee('Upload')
+        ->assertSeeHtml('aria-label="Asset view"')
+        ->assertSeeHtml('class="mt-3 flex justify-end"')
+        ->assertSeeHtml('aria-label="Edit Hero details"')
+        ->call('editAsset', $asset->id)
+        ->assertSee('Changes apply everywhere this asset is used.')
+        ->assertSee('Save globally')
+        ->assertSee('Save & use image');
 });
 
 it('persists governance metadata from the asset detail panel', function () {

@@ -18,7 +18,7 @@ If you're tempted to write `bg-gray-800` in a component "to make dark mode work,
 
 | Palette | Steps | Role |
 |---|---|---|
-| `gray` | 0, 25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000 | UI chrome, text, borders, surfaces. Slightly **warm** — the stone-tinted neutral the InterfaceCraft samples sit on, not a cool "software" gray. |
+| `gray` | 0, 25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 1000 | UI chrome, text, borders, surfaces. Light mode uses warm, paper-like neutrals; dark mode shifts to a Spacegray Ocean-inspired blue-gray ramp. |
 | `gray-900` (as `--accent`) | — | **The primary action.** Ink, not a hue: near-black on light, near-white on dark. Also `--border-selected`, the dark ring that marks a choice. |
 | `blue` | 50–900 | **`--brand`** — links, focus rings (`--ring`), and data/viz emphasis. *Not* the primary action, and never a selection fill. |
 | `indigo` | 50–900 | **Exclusively** AI. Never used for anything the user authored themselves — that separation is what makes "this came from the assistant" legible at a glance without a label. |

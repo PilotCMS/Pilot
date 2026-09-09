@@ -14,6 +14,7 @@ use Pilot\Core\Models\ContentReference;
 use Pilot\Core\Models\ContentType;
 use Pilot\Core\Models\Redirect;
 use Pilot\Core\Models\Space;
+use Pilot\Core\Support\Cms\ContentCollectionResolver;
 use Pilot\Core\Support\Cms\ContentLifecycle;
 
 it('creates content with a content type and exposes the type in delivery payloads', function () {
@@ -38,7 +39,7 @@ it('creates content with a content type and exposes the type in delivery payload
         ->assertJsonPath('story.name', $content->name);
 });
 
-it('creates redirects when content slugs change and resolves them publicly', function () {
+it('creates redirects when content slugs change', function () {
     $user = User::factory()->create();
     $space = Space::factory()->create();
     $content = Content::factory()->published()->create([
@@ -51,9 +52,6 @@ it('creates redirects when content slugs change and resolves them publicly', fun
     app(ContentLifecycle::class)->updateContent($content, ['slug' => 'new-page'], $user->id);
 
     expect(Redirect::query()->where('source', '/old-page')->where('destination', '/new-page')->exists())->toBeTrue();
-
-    $this->get('/old-page')
-        ->assertRedirect('/new-page');
 });
 
 it('handles review, scheduled publishing, and revision restore', function () {
@@ -258,6 +256,173 @@ it('suggests internal page links for repeater link fields', function () {
         ->assertSet('data.links.0.href', 'mailto:sales@example.com');
 });
 
+it('resolves mapped content collections with taxonomy filters ordering and limits', function () {
+    $user = User::factory()->create();
+    $space = Space::factory()->create();
+    $pageType = ContentType::factory()->create(['key' => 'page']);
+    $itineraryType = ContentType::factory()->create([
+        'key' => 'itinerary',
+        'schema' => ['fields' => [
+            ['key' => 'summary', 'type' => 'textarea', 'label' => 'Summary'],
+            ['key' => 'cover_image', 'type' => 'image', 'label' => 'Cover image'],
+        ]],
+    ]);
+    $owner = Content::factory()->published()->create([
+        'space_id' => $space->id,
+        'content_type_id' => $pageType->id,
+        'created_by' => $user->id,
+    ]);
+
+    foreach ([
+        ['name' => 'Yellowstone Loop', 'slug' => 'yellowstone-loop', 'tags' => ['summer'], 'categories' => ['Road Trips']],
+        ['name' => 'Glacier Family Week', 'slug' => 'glacier-family-week', 'tags' => ['summer', 'family'], 'categories' => ['Road Trips']],
+        ['name' => 'Winter Powder', 'slug' => 'winter-powder', 'tags' => ['winter'], 'categories' => ['Road Trips']],
+    ] as $itinerary) {
+        Content::factory()->published()->create([
+            'space_id' => $space->id,
+            'content_type_id' => $itineraryType->id,
+            'name' => $itinerary['name'],
+            'slug' => $itinerary['slug'],
+            'categories' => $itinerary['categories'],
+            'tags' => $itinerary['tags'],
+            'meta' => [
+                'summary' => ['en' => $itinerary['name'].' summary'],
+                'cover_image' => '/images/'.$itinerary['slug'].'.jpg',
+            ],
+            'created_by' => $user->id,
+        ]);
+    }
+
+    Content::factory()->create([
+        'space_id' => $space->id,
+        'content_type_id' => $itineraryType->id,
+        'name' => 'Draft itinerary',
+        'tags' => ['summer'],
+        'created_by' => $user->id,
+    ]);
+
+    $items = app(ContentCollectionResolver::class)->resolve($owner, [
+        'type' => 'content_collection',
+        'source_content_type' => 'itinerary',
+        'mappings' => [
+            ['target' => 'title', 'source' => 'name'],
+            ['target' => 'body', 'source' => 'meta.summary'],
+            ['target' => 'image', 'source' => 'meta.cover_image'],
+            ['target' => 'url', 'source' => '$url'],
+            ['target' => 'kicker', 'source' => 'categories.0'],
+        ],
+    ], [
+        'categories' => ['Road Trips'],
+        'tags' => ['summer'],
+        'limit' => 2,
+        'order_by' => 'name',
+        'order_direction' => 'asc',
+    ], 'en');
+
+    expect($items)->toHaveCount(2)
+        ->and(array_column($items, 'title'))->toBe(['Glacier Family Week', 'Yellowstone Loop'])
+        ->and($items[0]['body'])->toBe('Glacier Family Week summary')
+        ->and($items[0]['url'])->toBe('/glacier-family-week')
+        ->and($items[0]['kicker'])->toBe('Road Trips');
+
+    $blockType = BlockType::factory()->create([
+        'key' => 'itinerary-cards',
+        'schema' => ['fields' => [[
+            'type' => 'content_collection',
+            'key' => 'cards',
+            'source_content_type' => 'itinerary',
+            'mappings' => [
+                ['target' => 'title', 'source' => 'name'],
+                ['target' => 'url', 'source' => '$url'],
+            ],
+        ]]],
+    ]);
+    Block::factory()->create([
+        'content_id' => $owner->id,
+        'type' => $blockType->key,
+        'data' => ['cards' => [
+            'categories' => ['Road Trips'],
+            'tags' => ['summer'],
+            'limit' => 1,
+            'order_by' => 'name',
+            'order_direction' => 'asc',
+        ]],
+    ]);
+
+    $this->getJson('/api/v1/spaces/'.$space->slug.'/contents/'.$owner->slug)
+        ->assertOk()
+        ->assertJsonPath('story.body.0.data.cards.0.title', 'Glacier Family Week')
+        ->assertJsonPath('story.body.0.data.cards.0.url', '/glacier-family-week')
+        ->assertJsonPath('story.body.0.data._content_collections.cards.limit', 1);
+});
+
+it('edits content collection query controls on a component instance', function () {
+    $user = User::factory()->create();
+    $content = Content::factory()->create(['created_by' => $user->id]);
+    $blockType = BlockType::factory()->create([
+        'key' => 'dynamic-cards',
+        'schema' => ['fields' => [[
+            'type' => 'content_collection',
+            'key' => 'cards',
+            'label' => 'Cards',
+            'source_content_type' => 'itinerary',
+            'mappings' => [['target' => 'title', 'source' => 'name']],
+        ]]],
+    ]);
+    $block = Block::factory()->create([
+        'content_id' => $content->id,
+        'type' => $blockType->key,
+        'data' => ['cards' => []],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(BlockEditor::class, ['block' => $block->toArray(), 'blockType' => $blockType])
+        ->assertSee('Dynamic')
+        ->call('updateContentCollectionOption', 'cards', 'categories', 'Road Trips, Family, Road Trips')
+        ->call('updateContentCollectionOption', 'cards', 'tags', 'summer, scenic')
+        ->call('updateContentCollectionOption', 'cards', 'limit', 200)
+        ->call('updateContentCollectionOption', 'cards', 'order_by', 'name')
+        ->call('updateContentCollectionOption', 'cards', 'order_direction', 'asc')
+        ->assertSet('data.cards.categories', ['Road Trips', 'Family'])
+        ->assertSet('data.cards.tags', ['summer', 'scenic'])
+        ->assertSet('data.cards.limit', 50)
+        ->assertSet('data.cards.order_by', 'name')
+        ->assertSet('data.cards.order_direction', 'asc');
+});
+
+it('edits structured fields declared by a content type', function () {
+    $user = User::factory()->create();
+    $contentType = ContentType::factory()->create([
+        'name' => 'Itinerary',
+        'key' => 'itinerary',
+        'schema' => ['fields' => [
+            ['key' => 'summary', 'type' => 'textarea', 'label' => 'Summary', 'translatable' => true],
+            ['key' => 'duration', 'type' => 'number', 'label' => 'Duration'],
+            ['key' => 'cover_image', 'type' => 'image', 'label' => 'Cover image'],
+        ]],
+    ]);
+    $content = Content::factory()->create([
+        'content_type_id' => $contentType->id,
+        'meta' => ['summary' => ['en' => 'Original summary'], 'duration' => 5],
+        'created_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Editor::class, ['content' => $content])
+        ->assertSee('Itinerary fields')
+        ->assertSee('Original summary')
+        ->assertSee('Cover image')
+        ->call('updateContentTypeField', 'summary', 'Updated summary', true)
+        ->call('updateContentTypeField', 'duration', 7, false)
+        ->assertHasNoErrors();
+
+    expect($content->fresh()->meta)
+        ->toMatchArray([
+            'summary' => ['en' => 'Updated summary'],
+            'duration' => 7,
+        ]);
+});
+
 it('does not delete content when its space is deleted', function () {
     $space = Space::factory()->create();
     $content = Content::factory()->create([
@@ -280,30 +445,4 @@ it('prevents deleting a space that still has content', function () {
         ->assertDispatched('error');
 
     expect(Space::whereKey($space->id)->exists())->toBeTrue();
-});
-
-it('renders canonical robots and open graph seo metadata', function () {
-    $user = User::factory()->create();
-    $space = Space::factory()->create(['slug' => 'website']);
-
-    Content::factory()->published()->create([
-        'space_id' => $space->id,
-        'slug' => 'seo-page',
-        'name' => 'SEO Page',
-        'created_by' => $user->id,
-        'meta' => [
-            'meta_title' => 'Custom SEO Title',
-            'meta_description' => 'Custom SEO description',
-            'canonical_url' => 'https://example.com/seo-page',
-            'og_image' => 'https://example.com/og.jpg',
-            'noindex' => true,
-        ],
-    ]);
-
-    $this->get('/seo-page')
-        ->assertOk()
-        ->assertSee('<link rel="canonical" href="https://example.com/seo-page">', false)
-        ->assertSee('<meta name="robots" content="noindex,nofollow">', false)
-        ->assertSee('<meta property="og:title" content="Custom SEO Title">', false)
-        ->assertSee('<meta property="og:image" content="https://example.com/og.jpg">', false);
 });

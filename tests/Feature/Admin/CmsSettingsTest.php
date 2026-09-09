@@ -8,7 +8,6 @@ use Livewire\Livewire;
 use Pilot\Core\Database\Seeders\RoleSeeder;
 use Pilot\Core\Http\Controllers\Api\PreviewController;
 use Pilot\Core\Livewire\Admin\Settings\Index;
-use Pilot\Core\Models\Block;
 use Pilot\Core\Models\CmsSetting;
 use Pilot\Core\Models\Content;
 use Pilot\Core\Models\Space;
@@ -31,9 +30,13 @@ it('allows admins to view the cms settings area', function () {
         ->get(route('admin.settings.index'))
         ->assertOk()
         ->assertSee('CMS Settings')
-        ->assertSee('Public website')
+        ->assertSee('API')
+        ->assertSee('preview')
+        ->assertSee('Delivery controls')
+        ->assertDontSee('Public website')
         ->assertSee('Update available')
         ->assertSee('v9.9.9')
+        ->assertSee('rolls back failures automatically')
         ->assertDontSee('do-not-render-this-secret');
 });
 
@@ -74,16 +77,9 @@ it('saves cms settings from the admin screen', function () {
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
-    Space::create([
-        'name' => 'Website',
-        'slug' => 'website',
-    ]);
-
     $this->actingAs($admin);
 
     Livewire::test(Index::class)
-        ->set('defaultSpace', 'website')
-        ->set('homeSlug', 'homepage')
         ->set('defaultLocale', 'es')
         ->set('draftApiEnabled', false)
         ->set('previewLinksEnabled', false)
@@ -91,65 +87,10 @@ it('saves cms settings from the admin screen', function () {
         ->call('save')
         ->assertHasNoErrors();
 
-    expect(CmsSetting::get('default_space'))->toBe('website');
-    expect(CmsSetting::get('home_slug'))->toBe('homepage');
     expect(CmsSetting::get('default_locale'))->toBe('es');
     expect(CmsSetting::get('draft_api_enabled'))->toBeFalse();
     expect(CmsSetting::get('preview_links_enabled'))->toBeFalse();
     expect(CmsSetting::get('preview_expiration_minutes'))->toBe(120);
-});
-
-it('uses saved public rendering settings for the home route', function () {
-    $user = User::factory()->create();
-    $unusedSpace = Space::create([
-        'name' => 'Unused',
-        'slug' => 'unused',
-    ]);
-    $website = Space::create([
-        'name' => 'Website',
-        'slug' => 'website',
-    ]);
-
-    Content::create([
-        'space_id' => $unusedSpace->id,
-        'type' => 'page',
-        'slug' => 'home',
-        'name' => 'Unused Home',
-        'status' => 'published',
-        'published_at' => now(),
-        'created_by' => $user->id,
-        'updated_by' => $user->id,
-    ]);
-
-    $home = Content::create([
-        'space_id' => $website->id,
-        'type' => 'page',
-        'slug' => 'homepage',
-        'name' => 'Website Home',
-        'status' => 'published',
-        'published_at' => now(),
-        'created_by' => $user->id,
-        'updated_by' => $user->id,
-    ]);
-
-    Block::create([
-        'content_id' => $home->id,
-        'type' => 'hero',
-        'position' => 0,
-        'data' => [
-            'title' => 'Configured Home',
-        ],
-    ]);
-
-    CmsSetting::setMany([
-        'default_space' => 'website',
-        'home_slug' => 'homepage',
-    ]);
-
-    $this->get(route('home'))
-        ->assertOk()
-        ->assertSee('Configured Home')
-        ->assertDontSee('Unused Home');
 });
 
 it('can disable draft api responses', function () {
@@ -208,8 +149,6 @@ it('resets cms settings back to environment defaults', function () {
     $admin->assignRole('Admin');
 
     CmsSetting::setMany([
-        'default_space' => 'website',
-        'home_slug' => 'homepage',
         'default_locale' => 'es',
         'draft_api_enabled' => false,
         'preview_links_enabled' => false,
@@ -220,8 +159,7 @@ it('resets cms settings back to environment defaults', function () {
 
     Livewire::test(Index::class)
         ->call('resetToEnvironmentDefaults')
-        ->assertSet('homeSlug', config('cms.home_slug', 'home'))
-        ->assertSet('defaultLocale', 'en')
+        ->assertSet('defaultLocale', config('cms.default_locale', 'en'))
         ->assertSet('draftApiEnabled', true)
         ->assertSet('previewLinksEnabled', true)
         ->assertSet('previewExpirationMinutes', 60);

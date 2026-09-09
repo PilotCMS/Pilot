@@ -1,99 +1,45 @@
 # Pilot CMS Developer Guide
 
-This guide explains how developers should pull CMS content into websites and map block components safely.
+Pilot Core is the CMS and delivery API. It does not register public website routes or own client-facing Blade views, components, or themes.
 
-For the complete current delivery, templating, REST, and live-preview contract, see:
+## Delivery options
 
-- `docs/cms-delivery-live-preview.md`
-
-## 1) Public website rendering in this repo
-
-Public rendering is server-side and route-driven:
-
-- `/` -> `PageController@home`
-- `/{slug}` -> `PageController@show`
-
-Controller: `app/Http/Controllers/Site/PageController.php`
-
-### Rendering rules
-
-A page is renderable only when:
-
-- `type = page`
-- `status = published`
-- `published_at` is not null
-- slug matches the route
-
-This prevents draft content from leaking publicly.
-
-## 2) Theme contract (important)
-
-The controller passes these variables to the theme page view:
-
-- `$content` (`Pilot\Core\Support\Cms\ContentPayload`)
-- `$space` (`Pilot\Core\Models\Space`)
-- `$blocks` (`Collection<array<string,mixed>>`)
-- `$theme` (string)
-
-Each block arrives as:
-
-- `_uid`: numeric block id or headless draft uid
-- `id`: numeric block id or headless draft uid
-- `component`: block type key (e.g. `hero`, `image`)
-- `data`: locale-flattened fields for current app locale
-- `children`: nested blocks with the same shape
-- `editor`: editor metadata for preview contexts
-
-## 3) Theme structure
-
-A theme should follow:
-
-- `resources/views/themes/{theme}/layout.blade.php`
-- `resources/views/themes/{theme}/page.blade.php`
-- `resources/views/themes/{theme}/components/_render-block.blade.php`
-- `resources/views/themes/{theme}/components/{component}.blade.php`
-- `resources/views/themes/{theme}/components/fallback.blade.php`
-
-`_render-block` should resolve by `component` key and fallback if missing.
-
-## 4) Configuration
-
-From `.env`:
-
-- `CMS_THEME=default` (or `marketing`)
-- `CMS_DEFAULT_SPACE=website` (space slug)
-- `CMS_HOME_SLUG=home`
-
-Config file: `config/cms.php`
-
-## 5) Headless content pull (external frontend)
-
-Use the API when building a separate frontend app.
-
-Published content:
+For any frontend, consume the REST or GraphQL delivery API:
 
 - `GET /api/v1/spaces/{space}/contents?version=published&locale=en`
 - `GET /api/v1/spaces/{space}/contents/{slug}?version=published&locale=en`
+- the same REST endpoints with `version=draft` and Sanctum authentication
+- `GET /api/v1/preview/{content}?signature=...&expires=...` for signed draft payloads
 
-Draft content:
+For a Laravel frontend, install `pilot/laravel`. The frontend application owns its routes, page layout, block components, assets, SEO markup, redirects, and visual theme.
 
-- same endpoints with `version=draft`
-- requires Sanctum auth
+## CMS configuration
 
-Signed preview endpoint:
+Core uses these delivery settings:
 
-- `GET /api/v1/preview/{content}?signature=...&expires=...`
+```dotenv
+CMS_DEFAULT_LOCALE=en
+```
 
-## 6) Component development workflow
+The admin settings screen can override the default locale, draft API access, signed preview availability, and preview expiration.
 
-1. Create/edit block schema in Admin -> Block types.
-2. Implement matching theme component view: `components/{block-key}.blade.php`.
-3. Keep fallback component in place for unmapped blocks.
-4. Add/update tests for published render, fallback behavior, and live preview when relevant.
+## Laravel frontend workflow
 
-## 7) Recommended rollout for production sites
+1. Install `pilot/laravel` in a separate Laravel application.
+2. Publish and configure the connector.
+3. Add the application's base URL as a preview target in the Pilot space settings.
+4. Copy the generated `PILOT_PREVIEW_SECRET` into the frontend environment.
+5. Define the frontend page routes and controller.
+6. Build a Blade component for each stable block type key.
+7. Include the connector's editor bridge and in-context views when previews require them.
 
-1. Start with server-rendered theme in Pilot.
-2. Stabilize component set and schema.
-3. Add versioned API consumers (if headless is required).
-4. Keep block keys stable; treat keys as public API contracts.
+Keep block type keys stable because they are part of the delivery API contract. A frontend should provide its own fallback for an unknown block type.
+
+## Ownership boundary
+
+| Concern | Owner |
+| --- | --- |
+| Content, schemas, assets, publishing, revisions | Pilot Core |
+| Published and draft payload delivery | Pilot Core APIs |
+| Laravel content normalization and preview bridge | `pilot/laravel` |
+| Public routes, HTML, components, SEO, redirects, theme | Frontend application |

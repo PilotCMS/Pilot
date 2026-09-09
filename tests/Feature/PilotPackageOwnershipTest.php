@@ -32,7 +32,18 @@ test('legacy hosts can be migrated to package owned routes and assets idempotent
         $files->put($host.'/composer.json', json_encode([
             'autoload' => ['psr-4' => ['App\\' => 'app/', 'Tweaker\\' => 'packages/tweaker/src/']],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
-        $files->put($host.'/routes/web.php', "<?php\nrequire __DIR__.'/admin.php';\n");
+        $files->put($host.'/routes/web.php', <<<'PHP'
+<?php
+
+use Pilot\Core\Http\Controllers\Site\PageController;
+
+Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/{slug}', [PageController::class, 'show'])
+    ->where('slug', '.*')
+    ->name('site.page');
+
+require __DIR__.'/admin.php';
+PHP);
         $files->put($host.'/routes/console.php', "<?php\nuse Illuminate\\Support\\Facades\\Schedule;\nSchedule::command('pilot:publish-scheduled')->everyMinute();\n");
         $files->put($host.'/resources/css/app.css', 'legacy css');
         $files->put($host.'/resources/js/app.js', 'legacy js');
@@ -45,6 +56,8 @@ test('legacy hosts can be migrated to package owned routes and assets idempotent
         expect($files->get($host.'/bootstrap/app.php'))->not->toContain('routes/api.php');
         expect($files->get($host.'/bootstrap/providers.php'))->not->toContain('Tweaker');
         expect($files->get($host.'/routes/web.php'))->not->toContain('routes/admin.php');
+        expect($files->get($host.'/routes/web.php'))->not->toContain('PageController');
+        expect($files->get($host.'/routes/web.php'))->not->toContain("Route::get('/{slug}'");
         expect($files->get($host.'/routes/console.php'))->not->toContain('pilot:publish-scheduled');
         expect($files->get($host.'/resources/css/app.css'))->toContain('vendor/pilotcms/core/resources/css/app.css');
         expect($files->get($host.'/resources/js/app.js'))->toContain('vendor/pilotcms/core/resources/js/app.js');

@@ -27,6 +27,10 @@ test('the latest Jaunt geometry elevation and material tokens are installed', fu
         ->toContain("@import './jaunt/tokens/materials.css';")
         ->toContain('background: var(--material-chrome-bg);')
         ->toContain('--color-slate-900: var(--gray-900);');
+
+    expect(File::get(base_path('vendor/pilotcms/core/resources/css/jaunt/tokens/elevation.css')))
+        ->toContain('--shadow-md: 0 2px 6px rgba(8, 11, 17, 0.24), 0 8px 20px rgba(8, 11, 17, 0.20);')
+        ->toContain('--shadow-xl: 0 10px 24px rgba(8, 11, 17, 0.32), 0 34px 72px rgba(8, 11, 17, 0.30);');
 });
 
 test('the design-system update keeps the existing application stack', function () {

@@ -29,7 +29,8 @@ Use the same supported PHP binary for Composer, Artisan, queues, and tests. If y
 Install the Pilot installer once with Composer:
 
 ```bash
-composer global require pilotcms/installer
+composer global config repositories.pilot-installer vcs https://github.com/PilotCMS/pilot-installer.git
+composer global require pilotcms/installer:^0.2.3
 ```
 
 Create a project in a new directory, the current directory, or an explicit path:
@@ -40,7 +41,7 @@ pilot new .
 pilot new --path=/absolute/path/to/my-project
 ```
 
-The installer downloads the latest stable Pilot release, installs its PHP and frontend dependencies, creates the environment file and key, builds the assets, and prepares public storage. If the repository does not have a tagged release yet, it installs `main`. Use `--branch=<name>` to intentionally install another branch or `--no-build` to skip npm.
+The installer downloads the latest stable Pilot release, installs its PHP and admin asset dependencies, creates the environment file and key, builds the assets, and prepares public storage. If the repository does not have a tagged release yet, it installs `main`. Use `--branch=<name>` to intentionally install another branch or `--no-build` to skip npm.
 
 When Laravel Herd is installed, the project is linked automatically and the installer prints its `.test/setup` URL. Add `--secure` for HTTPS, `--site=<name>` to choose the Herd site name, or `--no-herd` to skip this step.
 
@@ -92,9 +93,11 @@ Pilot's versioned CMS application is installed as `pilotcms/core`. Update it fro
 pilot update
 ```
 
-The command updates Pilot Core and its compatible dependencies, connects legacy host files to the package-owned application, installs the managed frontend dependencies, runs pending database migrations, rebuilds frontend assets, and clears application caches. Commit changes to `composer.json` and `composer.lock` first; use `pilot update --dry-run` to check for a release or `--no-build` when frontend assets are built elsewhere.
+The command updates Pilot Core and its compatible dependencies, connects legacy host files to the package-owned application, installs the managed admin dependencies, runs pending database migrations, rebuilds admin assets, and clears application caches. Successful Pilot updates fingerprint their resulting `composer.json` and `composer.lock`, so later admin updates can distinguish updater-owned changes from project edits. Project edits must still be committed or reverted first. Use `pilot update --dry-run` to check for a release or `--no-build` when admin assets are built elsewhere.
 
-Environment configuration, the user model, storage, and uploaded content remain in the Laravel host. Versioned CMS routes, admin components, views, migrations, and frontend sources are loaded from Core so fresh and updated installations run the same managed product code.
+Admin-initiated updates run as a guarded transaction: Pilot performs disk, tool, and database preflight checks; enters maintenance mode; backs up Composer files and the active SQLite, MySQL/MariaDB, or PostgreSQL database; updates and rebuilds the app; and verifies the installed Core version, database connection, route boot, and an internal `/login` response. A failed update or health check automatically restores dependencies, the database, and frontend assets. Set `PILOT_UPDATE_HEALTH_PATH` to change the internal path or `PILOT_UPDATE_HEALTH_URL` to add an external HTTP check after maintenance mode is lifted. Backups are stored under `storage/app/pilot/updates` and the latest three are retained by default.
+
+Environment configuration, the user model, storage, and uploaded content remain in the Laravel host. Versioned CMS routes, admin components, views, migrations, and admin sources are loaded from Core so fresh and updated installations run the same managed product code. Public routes, page views, block renderers, and themes belong to a separate client application; Laravel frontends should install `pilot/laravel`.
 
 Start the local development stack with:
 
@@ -197,8 +200,8 @@ The system comes with several built-in block types:
 ## Adding a New Block Type
 
 1. Create a project seeder that adds the block type and call it from `database/seeders/DatabaseSeeder.php`
-2. Create a Blade renderer in `resources/views/blocks/{key}.blade.php`
-3. Create field renderers in `resources/views/admin/fields/{type}.blade.php` if needed
+2. In each consuming frontend, create the matching renderer or component for the block key
+3. Add custom admin field renderers only when the schema needs a new field type
 
 Example block type schema:
 
@@ -262,8 +265,8 @@ php artisan test
 
 The application uses:
 
-- **Laravel 11** - PHP framework
-- **Livewire 3** - Full-stack framework
+- **Laravel 12** - PHP framework
+- **Livewire 4** - Full-stack framework
 - **Flux UI** - UI component library
 - **Tailwind CSS** - Utility-first CSS
 - **Alpine.js** - JavaScript framework
