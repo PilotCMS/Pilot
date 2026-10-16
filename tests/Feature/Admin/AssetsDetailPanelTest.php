@@ -48,7 +48,7 @@ it('renders asset detail panel with copy link control without blade errors', fun
         ->assertSee('x-bind:title');
 });
 
-it('uses relative asset urls in picker thumbnails', function () {
+it('uses relative JIT image urls in picker thumbnails', function () {
     $user = User::factory()->create();
 
     $space = Space::create([
@@ -77,7 +77,8 @@ it('uses relative asset urls in picker thumbnails', function () {
         ->assertSeeHtml('x-on:click="setViewMode(\'grid\')"')
         ->assertSeeHtml('x-if="viewMode === \'list\'"')
         ->assertDontSeeHtml('wire:click="setViewMode')
-        ->assertSee($asset->relativeUrl());
+        ->assertSee($asset->thumbnailRelativeUrl())
+        ->assertDontSee($asset->relativeUrl());
 });
 
 it('renders external stock assets without requiring a configured filesystem disk', function () {
@@ -172,7 +173,7 @@ it('extracts technical metadata when uploading assets', function () {
         ->and($asset->checksum)->toBe($expectedChecksum)
         ->and($asset->metadata['client_original_name'])->toBe('hero.jpg')
         ->and($asset->thumbnail_path)->toBe("assets/thumbnails/{$asset->id}.webp")
-        ->and($asset->thumbnailUrl())->toContain("assets/thumbnails/{$asset->id}.webp");
+        ->and($asset->thumbnailUrl())->toContain("/assets/{$asset->id}/hero.jpg?size=640x480", 'format=webp');
 
     Storage::disk('public')->assertExists($asset->path);
     Storage::disk('public')->assertExists($asset->thumbnail_path);
